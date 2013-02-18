@@ -1,0 +1,218 @@
+function read_bj_V4_1_roc_batch
+%created on 05/02/13 for GitHub version control.
+%Modified from read_jack_V4_1_roc_batch.
+% excludename='F:\blanco\excludeSTNbest';
+% count=1;
+% fid=fopen(excludename,'r');
+% while ~feof(fid)
+%     [A]=fscanf(fid,'%s', 1);%read channel name
+%     skipSessions(count,1)=str2num(A(3:end));
+%     [values]=textscan(fid,'%d','\n');
+%     a=values{1,1};
+%     skipSessions(count,2:length(a)+1)=a;%session #s
+%     count=count+1;
+% end;
+% fclose(fid);
+readROCdata=1;
+area='v1_1';
+roving=0;
+readMat=1;
+writeAllChROCs=1;
+animal='jack';
+if strcmp(animal,'jack')
+    if strcmp(area,'v4_1')
+        testContrasts=[10 15 20 25 27 28 29 31 32 33 35 40 50 60];
+        channels=[1:5 5.2 6 8 10 10.2 10.3 24 35 37 39 40 41 41.2 49 50 52:54 54.2 56];
+        %     load F:\jack\j_v4_1_roc_analysis\skipSessions3.mat skipSessions
+        load F:\jack\before_300113\j_v4_1_roc_analysis\matchPsycho.mat matchPsycho
+        matchPsychos=matchPsycho;
+        sampleContrasts=30;
+    elseif strcmp(area,'v1_1')
+        testContrasts=[5 10 15 20 22 25 28 32 35 40 45 50 60 90];
+        channels=[7 9 11 12 13 14 15 16 17 18 19 20 21 22 23 25 26 27 28 29 30 31 32 51 55];%V1
+        %     load F:\jack\j_v1_roc_analysis\skipSessions.mat skipSessions
+        matchPsychos=[1.1132    1.2655    3.1478    2.9851    2.8393    3.7162    3.6281    3.8087    4.9904    4.5375    4.7654    6.0910    5.4338  5.2111    5.9167    6.3703    5.3660    5.8289    5.7449    5.3160    4.9920 5.954266];
+        %     save F:\jack\j_v1_roc_analysis\matchPsycho.mat matchPsycho
+        %     load F:\jack\j_v1_roc_analysis\matchPsycho.mat matchPsycho
+        sampleContrasts=30;
+    elseif strcmp(area,'v1_2')
+        testContrasts=[5 10 12 15 18 22 25 28 35 45 63 90;5 10 15 22 25 28 32 35 38 45 60 90;5 10 15 25 32 35 38 42 45 50 60 90];
+        %     folder=['F:\jack\j_',area,'_roc_analysis_4'];
+        channels=[7 9 11 12 13 14 15 16 17 18 19 20 21 22 23 25 26 27 28 29 30 31 32 51 55];%V1
+        %     load F:\jack\j_v1_roc_analysis\skipSessions.mat skipSessions
+        matchPsychos=[3.07938700000000,2.87958400000000,3.17158300000000,2.93521500000000,2.94817400000000,4.23809600000000,2.84097300000000,2.61777400000000,3.63265900000000,3.22375100000000,3.48242500000000,3.39577400000000,2.97385400000000,4.16349400000000,2.75796400000000,3.21038800000000;5.44221900000000,4.65254900000000,3.81094000000000,3.39508200000000,6.72751000000000,4.97165500000000,4.75584500000000,4.44484100000000,6.35690400000000,4.71201400000000,6.32046400000000,9.44618800000000,4.01218400000000,3.94694400000000,3.98977600000000,4.09238200000000;3.34557800000000,3.17020300000000,3.46141100000000,4.46330200000000,4.57009000000000,4.54507500000000,4.20404500000000,5.33858600000000,5.30728400000000,6.60871200000000,3.83883200000000,4.33161300000000,3.86917800000000,4.28745200000000,3.11034700000000,3.20167800000000;];
+        sampleContrasts=[20 30 40];
+    end
+elseif strcmp(animal,'blanco')
+    if strcmp(area,'v4_1')
+        testContrasts=[10 15 20 25 27 28 29 31 32 33 35 40 50 60];
+        %     load F:\jack\j_v4_1_roc_analysis\skipSessions3.mat
+        %     skipSessions
+        sampleContrasts=30;
+    elseif strcmp(area,'v1_1')
+        testContrasts=[5 10 15 20 22 25 28 32 35 40 45 50 60 90];
+        %     load F:\jack\j_v1_roc_analysis\skipSessions.mat skipSessions
+        sampleContrasts=30;
+    elseif strcmp(area,'v1_2')
+        testContrasts=[5 10 12 15 18 22 25 28 35 45 63 90;5 10 15 22 25 28 32 35 38 45 60 90;5 10 15 25 32 35 38 42 45 50 60 90];
+        %     folder=['F:\jack\j_',area,'_roc_analysis_4'];
+        channels=[7 9 11 12 13 14 15 16 17 18 19 20 21 22 23 25 26 27 28 29 30 31 32 51 55];%V1
+        %     load F:\jack\j_v1_roc_analysis\skipSessions.mat skipSessions
+        sampleContrasts=[20 30 40];
+    end    
+end
+matchPsychoFileName=['matchPsycho_',area,'.mat'];
+matchPsychoPathName=fullfile('F:','PL','psycho_data',animal,matchPsychoFileName);
+loadText=['load ',matchPsychoPathName,' matchPsycho'];
+eval(loadText);
+matchPsychos=matchPsycho;
+folder=fullfile('F:','PL','ROC_mat_files',animal);
+skipSessions=0;%skipSessions: removed sessions 26 from all channels; skipSessions2: conservative removal; skipSessions3: strict removal
+% load('F:\jack\j_v1_2_roc_analysis_4\skipSessions2.mat')
+channels = main_channels(animal,area);
+if writeAllChROCs==1
+    for i=1:length(channels)
+        chNum=channels(i);
+        for j=1:length(sampleContrasts)
+            sampleContrast=sampleContrasts(j);
+            testContrast=testContrasts(j,:);
+            appendFolderText=[];
+            appendText=[];
+            appendFolderText=['\sample_',num2str(sampleContrast)];
+            appendText=['_',num2str(sampleContrast)];
+            psychoname=['psycho_constants_',area];
+            psychoPathname=fullfile('F:','PL','psycho_data',animal,psychoname);
+            matchPsycho=matchPsychos(j,:);
+            %         saveText=['save ',folder,appendFolderText,'\matchPsycho.mat matchPsycho'];
+            %         eval(saveText)
+            %         loadText=['load ',folder,appendFolderText,'\matchPsycho.mat matchPsycho'];
+            %         eval(loadText)
+            if readROCdata==1
+                allChROC=[];
+                saveText=['save ',folder,'\allChROC',appendText,'.mat allChROC'];
+                eval(saveText)
+                %note that ch 41 has good sorted file for only 1 session.
+                %Also, no ROC file generated for chs 56 and 58.
+                %to calculate and write correlation coefficients:
+                %     if chNum<10
+                %         chNum=['0',num2str(chNum)];
+                %     end
+                if round(chNum)~=chNum
+                    rocFileName=[num2str(round(channels(i))),'_',num2str(10*(channels(i)-round(channels(i)))),appendText];
+                else
+                    rocFileName=[num2str(round(channels(i))),appendText];
+                end
+                rocMatFileName=[rocFileName,'_roc.mat'];
+                rocMatPathName=fullfile(folder,rocMatFileName);
+                rocPathName=fullfile(folder,rocFileName);
+                if exist(rocMatPathName,'file')
+                    read_bj_V4_1_roc(rocPathName,psychoPathname,testContrast,sampleContrast,skipSessions,chNum,area,folder,appendText,animal)
+                end
+            end
+        end
+    end
+end
+%combine ROC values across channels:
+loadText=['load ',folder,'\allChROC.mat allChROC'];
+eval(loadText);
+sessions=unique(allChROC(:,2));
+fighandle2=figure('Color',[1,1,1],'Units','Normalized','Position',[0.14, 0.46, 0.8, 0.4]);
+set(fighandle2, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+orient landscape
+allChSlopes=[];%neurometric and session number
+allChC50s=[];
+allChSlopesNP=[];%neurometric and psychometric slopes
+for i=1:length(sessions)
+    session=sessions(i);
+    rowInd=find(allChROC(:,2)==session);
+    chs=allChROC(rowInd,1);
+    if chs~=unique(chs)
+        sprintf('duplicate channel data for session %s!',num2str(session))
+        pause
+    end
+    allChvals=allChROC(rowInd,3:end);%compile ROC values, neurometric slopes, and C50s, across channels for each session
+%     if length(chs)==length(channels)
+%         allChSlopes=[allChSlopes allChvals(:,end-1)];
+%         allChC50s=[allChC50s allChvals(:,end)];
+%     else
+%         padding=NaN(length(channels)-length(chs),1);
+%         slopePadded=[allChvals(:,end-1);padding];
+%         allChSlopes=[allChSlopes slopePadded];
+%         c50sPadded=[allChvals(:,end);padding];
+%         allChC50s=[allChC50s c50sPadded];
+%     end
+    for j=1:length(chs)
+        allChSlopes=[allChSlopes;session allChvals(j,end-1)];
+        allChC50s=[real(allChC50s);session allChvals(j,end)];
+        allChSlopesNP=[allChSlopesNP;allChvals(j,end-1) matchPsycho(i)];
+    end
+    avSlopes(i)=mean(allChvals(:,end-1));
+    avC50s(i)=real(mean(allChvals(:,end)));
+    stdSlopes(i)=std(allChvals(:,end-1));
+    stdC50s(i)=std(allChvals(:,end));
+    test=subplot(1,3,1);
+    plot(session,allChvals(:,end-1),'ok');hold on
+    title('neurometric slope vs time')
+    test=subplot(1,3,2);
+    plot(session,allChvals(:,end),'ok');hold on
+    title('c50 vs time')
+    test=subplot(1,3,3);
+    plot(matchPsycho(i),allChvals(:,end-1),'ok');hold on
+    title('neurometric slope vs psychometric slope')
+end
+[RHO,PVAL]=corr(allChSlopes)
+test=subplot(1,3,1);
+ptext=sprintf('r= %f  p= %f',RHO(1,2),PVAL(1,2));
+yLimVals=get(gca,'YLim');
+xLimVals=get(gca,'XLim');
+text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+[RHO,PVAL]=corr(allChC50s)
+test=subplot(1,3,2);
+ptext=sprintf('r= %f  p= %f',RHO(1,2),PVAL(1,2));
+yLimVals=get(gca,'YLim');
+xLimVals=get(gca,'XLim');
+text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+[RHO,PVAL]=corr(allChSlopesNP)
+test=subplot(1,3,3);
+ptext=sprintf('r= %f  p= %f',RHO(1,2),PVAL(1,2));
+yLimVals=get(gca,'YLim');
+xLimVals=get(gca,'XLim');
+text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+%V1 non-roving: slope correlation R=0.4670, p=0; C50 correlation R=0.1020,
+%p=0.0177 neuro versus psycho slope correlation R=0.4045, p=0.
+coefFilename=['all_roc_neuro_psycho_',area];
+coefPathname=fullfile('F:','PL','ROC_coef_images',animal,coefFilename);
+set(gcf,'PaperPositionMode','auto')
+printtext=sprintf('print -dpng %s',coefPathname);
+eval(printtext);
+% fighandle2=figure('Color',[1,1,1],'Units','Normalized','Position',[0.14, 0.46, 0.8, 0.4]);
+% set(fighandle2, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+% orient landscape
+% test=subplot(1,3,1);
+% plot(sessions,avSlopes,'ko');hold on
+% errorbar(sessions,avSlopes,stdSlopes);hold on
+% title('mean neurometric slope across channels vs time')
+% a=[avSlopes' sessions];
+% b=[avC50s' sessions];
+% [coefficients1 p1]=corrcoef(a); 
+% [coefficients2 p2]=corrcoef(b); 
+% coefficients(1,1:2)=[coefficients1(2) coefficients2(2)];
+% coefficients(2,1:2)=[p1(2) p2(2)]
+% ptext=sprintf('r= %f  p= %f',coefficients(1,1),coefficients(2,1));
+% yLimVals=get(gca,'YLim');
+% xLimVals=get(gca,'XLim');
+% text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+% test=subplot(1,3,2);
+% plot(sessions,avC50s,'ko');hold on
+% errorbar(sessions,avC50s,stdSlopes);hold on
+% title('mean C50 across channels vs time')
+% ptext=sprintf('r= %f  p= %f',coefficients(1,2),coefficients(2,2));
+% yLimVals=get(gca,'YLim');
+% xLimVals=get(gca,'XLim');
+% text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+% coeffname=[folder,'/mean_roc_neuro_psycho'];
+% set(gcf,'PaperPositionMode','auto')
+% printtext=sprintf('print -dpng %s',coeffname);
+% eval(printtext);
+    
+

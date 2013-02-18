@@ -1,0 +1,14 @@
+function fname = roc_vals_finder(animal, session, channel)
+
+animal = lower(animal);
+
+if ispc
+    if strcmp(getComputerName(),'alex40')
+        root_roc_vals_folder = fullfile('F:','PL','rocvals',animal);
+    end
+end
+
+fname = fullfile( ...
+    root_roc_vals_folder , ...
+    [num2str(channel),'_',num2str(session),'_rocvals.mat']);
+end
