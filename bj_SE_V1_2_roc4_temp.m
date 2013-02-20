@@ -45,16 +45,18 @@ function[rocvals]=bj_SE_V1_2_roc4(animal,channel,session,verbose)
 % artifactTrialsPath=fullfile('F:','PL','pl_corr_art_trials',animal,artifactTrialsName);
 % loadText=['load ',artifactTrialsPath,' rlist removeTrialsTimestamps'];
 % eval(loadText);%removeTrialsTimestamps column 1: NLX_TRIAL_START; column 21: NLX_TRIAL_END
-removeTrialsTimestamps=[];
+skip=[];
 if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the same time- when .1 is processed.
     splitSess=1;
     [file_of_int,testContrasts,sampleContrasts,expt_type,rotated,area]=session_metadata(session,animal);
     if length(sampleContrasts)==36
         sampleContrasts=[30 20 40];
         testContrasts=[testContrasts(1:12);testContrasts(13:24);testContrasts(25:36)];
+        allConditions=[13:24;1:12;25:36];
     elseif length(sampleContrasts)==14
         sampleContrasts=30;
         roving=0;
+        allConditions=[1:12];
     end    
     
     nseName=['SpikeCh_',num2str(channel),'_.nse'];
@@ -75,7 +77,7 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
         for k=1:length(sampleContrasts)
             sampleContrast=sampleContrasts(k);
             testContrast=testContrasts(k,:);
-            conditions=1:length(testContrast);
+            conditions=allConditions(k,:);
             fig=figure('Color',[1,1,1],'Units', 'Normalized', 'Position',[0.2, 0.04, 0.5, 0.9]);
             set(fig,'PaperUnits','centimeters','PaperType','A4','PaperOrientation', 'portrait', 'PaperPosition', [0.63452 0.63452 21 28.41]);
             numconds=length(testContrast);
@@ -111,14 +113,17 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                         valsPath=fullfile('F:','PL','vals_perf',animal,valsFileName);
                         load(valsPath);
                     end
-                    if length(sampleContrasts)==36
-                        vals=vals{k};
+                    if length(sampleContrasts)==3
+                        if sampleContrast==30
+                            vals=vals{1};
+                        elseif sampleContrast==20
+                            vals=vals{2};
+                        elseif sampleContrast==40
+                            vals=vals{3};
+                        end
                     end
                     for i=1:size(vals,1)
-                        if ~isempty(find(vals(i,1)==removeTrialsTimestamps(:,1), 1))&&~isempty(find(vals(i,21)==removeTrialsTimestamps(:,2), 1))
-%                             sprintf(['skipped trial number ',num2str(i),' for sample contrast of ',num2str(sampleContrasts(k)),', session ',num2str(session)])
-                        end
-                        if isempty(find(vals(i,1)==removeTrialsTimestamps(:,1), 1))&&isempty(find(vals(i,21)==removeTrialsTimestamps(:,2), 1))
+                        if isempty(find(skip==i,1))
                             if vals(i,4)==conditions(h)%check condition number
                                 %     for j=1:size(vals,2)
                                 %     SE_EV_TimeStamps(j)=find(SE_TimeStamps<vals(i,j+1)&&SE_TimeStamps>=vals(i,j));
