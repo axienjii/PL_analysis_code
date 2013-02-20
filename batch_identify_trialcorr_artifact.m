@@ -53,6 +53,7 @@ initialThreshDrawing=1;
 if initialThreshDrawing==1
     plotFigs=1;
     allNumRemoveTrials=sessions';
+    allRemoveTrialsStats=[];
     histoFig=figure;
     if strcmp(animal,'blanco')
         if strncmp(area,'v4',2)
@@ -132,10 +133,18 @@ if initialThreshDrawing==1
     for i=1:length(sessions)
         loadText=['load F:\PL\vals_perf\',animal,'\vals_',num2str(sessions(i)),'.mat'];
         eval(loadText)
+        if strcmp(area,'v1_2')
+        totalNumTrials(i,1)=size(vals{1},1)+size(vals{2},1)+size(vals{3},1);
+        else
         totalNumTrials(i,1)=size(vals,1);
+        end
     end
     allNumRemoveTrials
     allTotalNumTrials=[sessions' totalNumTrials]
+    for cutoff=2:length(cutoffs)+1
+        allRemoveTrialsStats=[allRemoveTrialsStats allNumRemoveTrials(:,cutoff)./totalNumTrials*100];
+    end
+    allRemoveTrialsStats=[allNumRemoveTrials allTotalNumTrials(:,2) allRemoveTrialsStats];
 end
 
 %Once histograms have been generated and scrutinised, and threshold values
