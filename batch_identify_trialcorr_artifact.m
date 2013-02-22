@@ -49,7 +49,7 @@ parfor iter = icopy:ncopies:length(sessions)
     fclose all;
 end
 
-initialThreshDrawing=1;
+initialThreshDrawing=0;
 if initialThreshDrawing==1
     plotFigs=1;
     allNumRemoveTrials=sessions';
@@ -223,6 +223,9 @@ totalNumTrials=zeros(length(sessions),1);
 for i=1:length(sessions)
     loadText=['load F:\PL\vals_perf\',animal,'\vals_',num2str(sessions(i)),'.mat'];
     eval(loadText)
+    if strcmp(area,'v1_2')
+        vals=[vals{1};vals{2};vals{3}];
+    end
     totalNumTrials(i,1)=size(vals,1);
 end
 allRemoveTrialsStats=[allNumRemoveTrials totalNumTrials allNumRemoveTrials(:,2)./totalNumTrials*100]
