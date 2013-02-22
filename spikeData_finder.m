@@ -1,4 +1,4 @@
-function fname = spikeData_finder(animal, session, channel)
+function fname = spikeData_finder(animal, session, channel,sampleText)
 
 animal = lower(animal);
 
@@ -10,5 +10,5 @@ end
 
 fname = fullfile( ...
     root_roc_vals_folder , ...
-    [num2str(channel),'_',num2str(session),'_30.mat']);
+    [num2str(channel),'_',num2str(session),'_',num2str(sampleText),'.mat']);
 end
