@@ -51,7 +51,12 @@ parfor iter = icopy:(length(channels)*length(sessions))
 %     
 %     try
         % Check if file with ROC values already exists
-        output_fname = spikeData_finder(animal, session, channel);
+        if strcmp(area,'v1_2')
+            sampleText=40;
+        else
+            sampleText=30;
+        end
+        output_fname = spikeData_finder(animal, session, channel,sampleText);
         % If it does, skip this one
         if ~exist(output_fname, 'file')
             bj_SE_V1_2_roc4_temp(animal, channel, session, max(0,verbose-1))% if not, create it
