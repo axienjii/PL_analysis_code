@@ -1,0 +1,18 @@
+function move_artifact_images
+animal='jack';
+area='v1_2';
+fileFormats=[{'eps'} {'png'}];
+channels = main_channels(animal,area);
+sessions = main_raw_sessions(animal,area);
+for j=1:length(channels)
+    channel=channels(j);
+    for i=1:length(sessions)
+        session=sessions(i);
+        for k=1:2
+            sourcePath=['F:\PL\PSTHs\jack\',num2str(channel),'\',fileFormats{k},'\',num2str(channel),'_',num2str(session),'_.',fileFormats{k}];
+            destinPath=['F:\PL\with_artifact_trials\PSTHs\jack',num2str(channel),'\',fileFormats{k},'\',num2str(channel),'_',num2str(session),'_.',fileFormats{k}];
+            movefile(sourcePath,destinPath);
+        end
+    end
+end
+    
