@@ -41,11 +41,10 @@ function[rocvals]=bj_SE_V1_2_roc4(animal,channel,session,verbose)
 %The third time period can be visualised in its entirety: 'set(test,'XLim',[512 1536]);'
 %OR only for the first 512 ms: 'set(test,'XLim',[512 1024]);,' as desired.
 
-% artifactTrialsName=[num2str(session),'_corrtrialartifact.mat'];
-% artifactTrialsPath=fullfile('F:','PL','pl_corr_art_trials',animal,artifactTrialsName);
-% loadText=['load ',artifactTrialsPath,' rlist removeTrialsTimestamps'];
-% eval(loadText);%removeTrialsTimestamps column 1: NLX_TRIAL_START; column 21: NLX_TRIAL_END
-skip=[];
+artifactTrialsName=[num2str(session),'_corrtrialartifact.mat'];
+artifactTrialsPath=fullfile('F:','PL','pl_corr_art_trials',animal,artifactTrialsName);
+loadText=['load ',artifactTrialsPath,' rlist removeTrialsTimestamps'];
+eval(loadText);%removeTrialsTimestamps column 1: NLX_TRIAL_START; column 21: NLX_TRIAL_END
 if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the same time- when .1 is processed.
     splitSess=1;
     [file_of_int,testContrasts,sampleContrasts,expt_type,rotated,area]=session_metadata(session,animal);
@@ -123,7 +122,7 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                         end
                     end
                     for i=1:size(vals,1)
-                        if isempty(find(skip==i,1))
+                        if isempty(find(vals(i,1)==removeTrialsTimestamps(:,1), 1))&&isempty(find(vals(i,21)==removeTrialsTimestamps(:,2), 1))
                             if vals(i,4)==conditions(h)%check condition number
                                 %     for j=1:size(vals,2)
                                 %     SE_EV_TimeStamps(j)=find(SE_TimeStamps<vals(i,j+1)&&SE_TimeStamps>=vals(i,j));
@@ -377,6 +376,7 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                     mkdir(imageFolderName);
                 end
                 imageName=fullfile(imageFolderName,spikeDataName);
+                %export_fig(imageName,formats{j});
                 printtext=sprintf('print -d%s %s',formats{j},imageName);
                 eval(printtext);
             end
