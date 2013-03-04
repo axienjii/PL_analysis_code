@@ -85,14 +85,31 @@ for chNum=1:length(channels)
             meanSpontanRate=[meanSpontanRate mean(numSpikes1)/529*1000];%list of spontan rate during each session, across trials and conditions
             sessionLabels=[sessionLabels;session lineCounter];
         elseif readNSE==1
-            folder=['F:\blanco\before_240811\v4_1_sorted_spikes\4\',num2str(session)];
+%             step=1;
+%             folder=['F:\blanco\before_300113\v4_1_sorted_spikes\4\',num2str(session)];%monitor artifact present
+            step=2;
+            step=3;
+            folder=['I:\pl_spnorm_nse\blanco\',num2str(session)];%monitor artifact removed, spontaneous activity matched across sessions            
             listing=dir(folder);
             if size(listing,1)>2
                 for q=3:size(listing,1)
                     fileName=listing(q,1).name;
                     ind=find(fileName=='_');
-                    if ~isempty(ind)
-                        ch=fileName(ind(1)+1:ind(2)-1);
+                    if length(ind)==2
+                        if step==1
+                            ch=fileName(ind(1)+1:ind(2)-1);
+                        elseif step==2
+                            if strcmp(fileType,'spk__spnorm.nse')
+                                ch=fileName(ind(1)+1:ind(2)-1);
+                            else
+                                ch=[];
+                            end
+                            elseif step==3
+                                fileType=[fileName(1:ind(1)),fileName(ind(2):end)];
+                                if strcmp(fileType,'SpikeCh__.NSE')
+                                    ch=fileName(ind(1)+1:ind(2)-1);
+                                end
+                        end
                         if strcmp(ch,num2str(channel))
                             nse_fname=[folder,'\',fileName];
                             file_of_int = session_metadata(session, animal);
