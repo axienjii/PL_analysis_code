@@ -76,3 +76,29 @@ parfor iter = icopy:(length(channels)*length(sessions))
 %         end
 %     end
 end
+
+formats=[{'eps'} {'png'}];
+for iter = icopy:(length(channels)*length(sessions))
+    if iter<istart
+        continue;
+    end
+    isess = ceil(iter/length(channels));
+    ichan = mod(iter-1,length(channels))+1;
+    
+    session = sessions(isess);
+    channel = channels(ichan);
+    if strcmp(area,'v1_2')
+        sampleContrasts=[20 30 40];
+    else
+        sampleContrasts=30;
+    end
+    for i=1:length(sampleContrasts)
+        figFileName=['F:\PL\PSTHs\',animal,'\',num2str(channel),'\fig\',num2str(channel),'_',num2str(session),'_',num2str(sampleContrasts(i)),'.fig'];
+        uiopen(figFileName,1)
+        for j=1:2
+            printFileName=['F:\PL\PSTHs\',animal,'\',num2str(channel),'\',formats{j},'\',num2str(channel),'_',num2str(session),'_',num2str(sampleContrasts(i)),'.',formats{j}];
+            print(sprintf('-d%s',formats{j}),'-r300',printFileName)
+        end
+        close all
+    end
+end
