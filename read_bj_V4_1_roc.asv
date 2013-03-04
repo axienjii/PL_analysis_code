@@ -1,4 +1,4 @@
-function []=read_bj_V4_1_roc(rocname,psychoname,testContrast,sampleContrast,skipSessions,chNum,area,folder,appendText,animal)
+function []=read_bj_V4_1_roc(rocname,psychoname,testContrast,sampleContrast,skipSessions,chNum,area,folder,appendText,animal,sessions)
 %created on 05/02/13 for GitHub version control.
 %Modified from read_jack_V4_1_roc.
 %Combines ROC values across channels into mat file, allChROC.mat.
@@ -26,11 +26,12 @@ excludeSessions=[26 50 306 312 316 322:328 342];
 % loadText=['load ',folder,'\allChROC',appendText,'.mat allChROC'];
 % eval(loadText)
 rocMatFileName=[rocname,'_roc.mat'];
-excludeSessHighSSE=1;%set to 1 to exclude sessions with poor Weibull fit
+excludeSessHighSSE=0;%set to 1 to exclude sessions with poor Weibull fit
 SSEcutoff=0.09;
 excludeOutliers=0;
 slSigmaMultiple=3;
 c50SigmaMultiple=3;
+calculateTangent=1;
             
 xvals=testContrast(1):1:testContrast(end);
 
@@ -46,9 +47,12 @@ for rowNum=1:size(rocValsMat,1)
         end
     end
     if skip==0
-        VALUES(goodCount,:)=rocValsMat{rowNum,3};
-        session1(goodCount)=rocValsMat{rowNum,2};
-        goodCount=goodCount+1;
+        sessionRow=rocValsMat{rowNum,2};
+        if ~isempty(find(sessionRow==sessions))
+            VALUES(goodCount,:)=rocValsMat{rowNum,3};
+            session1(goodCount)=rocValsMat{rowNum,2};
+            goodCount=goodCount+1;
+        end
     end
 end
     
@@ -114,7 +118,11 @@ for i=1:numsessions
         X0=[-2 30 0.2 0.1];
     end
     X=fminsearch(@fit_weibull,X0,[],testContrast,rocvals,[],'least_square',[1 1 0 0],[20 100 0 0],[1 1 0 0],[-20 10 0 0]);
-    slopeNeuro(1,i)=X(1); 
+    if calculateTangent==0
+        slopeNeuro(1,i)=X(1);
+    elseif calculateTangent==1
+        dydx_30(1,i)=X(1)*X(3)*exp(-(30/X(2))^X(1) )*30^(X(1)-1)*(1/X(2))^X(1);
+    end
     c50(1,i)=X(2).*(-log((0.5-X(4))/X(3))).^(1/X(1));
 %     [X,fval]=fminsearch('weib_sim_min_max',X0,options,testContrast,rocvals);
 %     slopeNeuro(1,i)=X(2);      
@@ -219,6 +227,11 @@ for i=1:numsessions
     %         PSE=X(1).*(-log(0.5)).^(1/X(2));
     %         yvals=max(perfvals)-(max(perfvals)-min(perfvals))*exp(-((xvals/X(1)).^X(2)));
     slopePsycho(1,i)=X(1);
+    if calculateTangent==0
+        slopePsycho(1,i)=X(1);
+    elseif calculateTangent==1
+        dydx_30(1,i)=X(1)*X(3)*exp(-(30/X(2))^X(1) )*30^(X(1)-1)*(1/X(2))^X(1);
+    end
     PSE=X(2).*(-log((0.5-X(4))/X(3))).^(1/X(1));
     subplot(ceil((numsessions)/5),5,subplotInd);
     plot(testContrast,perfvals,'ok');
