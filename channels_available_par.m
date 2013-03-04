@@ -41,7 +41,7 @@ function channels = cached_channels_available(animal,area)
     if ispc
         if strcmpi(animal,'blanco')
             if strcmpi(area,'v4')||strcmpi(area,'v4_2')
-                channels= [1 2 3 4 7 12 13 14 15 18 20 22 24 33 34 36 37 38 40 42 49 50 51 52 53 54 55 57 59 60];
+                channels= [1 2 3 4 7 12 13 14 18 20 22 24 33 34 36 37 38 40 42 49 50 51 52 53 54 55 57 59 60];
             else
                 channels=[8 9 10 11 15 17 19 21 23 25 26 27 28 29 31 44 45 46 48 61 62 63 64];
             end
