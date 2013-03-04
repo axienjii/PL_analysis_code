@@ -45,6 +45,8 @@ artifactTrialsName=[num2str(session),'_corrtrialartifact.mat'];
 artifactTrialsPath=fullfile('F:','PL','pl_corr_art_trials',animal,artifactTrialsName);
 loadText=['load ',artifactTrialsPath,' rlist removeTrialsTimestamps'];
 eval(loadText);%removeTrialsTimestamps column 1: NLX_TRIAL_START; column 21: NLX_TRIAL_END
+% removeTrialsTimestamps=[0 0];
+plotRedArtifacts=1;
 if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the same time- when .1 is processed.
     splitSess=1;
     [file_of_int,testContrasts,sampleContrasts,expt_type,rotated,area]=session_metadata(session,animal);
@@ -122,7 +124,19 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                         end
                     end
                     for i=1:size(vals,1)
-                        if isempty(find(vals(i,1)==removeTrialsTimestamps(:,1), 1))&&isempty(find(vals(i,21)==removeTrialsTimestamps(:,2), 1))
+                        not_artifact_trial=isempty(find(vals(i,1)==removeTrialsTimestamps(:,1), 1))&&isempty(find(vals(i,21)==removeTrialsTimestamps(:,2), 1));
+                        if not_artifact_trial
+                            rasterColour='k';
+                            plotTrial=1;
+                        elseif ~not_artifact_trial%this trial contains movement-induced artifacts
+                            if plotRedArtifacts==1
+                                rasterColour='r';
+                                plotTrial=1;
+                            elseif plotRedArtifacts==0
+                                plotTrial=0;
+                            end
+                        end
+                        if plotTrial
                             if vals(i,4)==conditions(h)%check condition number
                                 %     for j=1:size(vals,2)
                                 %     SE_EV_TimeStamps(j)=find(SE_TimeStamps<vals(i,j+1)&&SE_TimeStamps>=vals(i,j));
@@ -151,7 +165,7 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                                     assignedspikes(h,numTrialsCond(h),1:length(temp2))=spikeTimes;
                                     test=subplot(numconds,5,h*5-4);
                                     for m=1:length(spikeTimes)%raster plots
-                                        plot([spikeTimes(m)/1000 spikeTimes(m)/1000],[100+numTrialsCond(h)-0.5 100+numTrialsCond(h)+0.5],'k');hold on
+                                        plot([spikeTimes(m)/1000 spikeTimes(m)/1000],[100+numTrialsCond(h)-0.5 100+numTrialsCond(h)+0.5],rasterColour);hold on
                                     end
                                     if numTrialsCond(h)==1
                                         matarray(h,1,:)={spikeTimes/1000};
@@ -177,7 +191,7 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                                     assignedspikes(h,numTrialsCond(h),1:length(temp2))=spikeTimes;
                                     test=subplot(numconds,5,h*5-3);
                                     for m=1:length(spikeTimes)%raster plots
-                                        plot([spikeTimes(m)/1000 spikeTimes(m)/1000],[100+numTrialsCond(h)-0.5 100+numTrialsCond(h)+0.5],'k');hold on
+                                        plot([spikeTimes(m)/1000 spikeTimes(m)/1000],[100+numTrialsCond(h)-0.5 100+numTrialsCond(h)+0.5],rasterColour);hold on
                                     end
                                     if numTrialsCond(h)==1
                                         matarray(h,2,:)={spikeTimes/1000};
@@ -203,7 +217,7 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                                     assignedspikes(h,numTrialsCond(h),1:length(temp2))=spikeTimes;
                                     test=subplot(numconds,5,h*5-2);
                                     for m=1:length(spikeTimes)%raster plots
-                                        plot([spikeTimes(m)/1000 spikeTimes(m)/1000],[100+numTrialsCond(h)-0.5 100+numTrialsCond(h)+0.5],'k');hold on
+                                        plot([spikeTimes(m)/1000 spikeTimes(m)/1000],[100+numTrialsCond(h)-0.5 100+numTrialsCond(h)+0.5],rasterColour);hold on
                                     end
                                     if numTrialsCond(h)==1
                                         matarray(h,3,:)={spikeTimes/1000};
@@ -229,7 +243,7 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                                     assignedspikes(h,numTrialsCond(h),1:length(temp2))=spikeTimes;
                                     test=subplot(numconds,5,h*5-1);
                                     for m=1:length(spikeTimes)%raster plots
-                                        plot([spikeTimes(m)/1000 spikeTimes(m)/1000],[100+numTrialsCond(h)-0.5 100+numTrialsCond(h)+0.5],'k');hold on
+                                        plot([spikeTimes(m)/1000 spikeTimes(m)/1000],[100+numTrialsCond(h)-0.5 100+numTrialsCond(h)+0.5],rasterColour);hold on
                                     end
                                     if numTrialsCond(h)==1
                                         matarray(h,4,:)={spikeTimes/1000};
@@ -255,7 +269,7 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                                     assignedspikes(h,numTrialsCond(h),1:length(temp2))=spikeTimes;
                                     test=subplot(numconds,5,h*5);
                                     for m=1:length(spikeTimes)%raster plots
-                                        plot([spikeTimes(m)/1000 spikeTimes(m)/1000],[100+numTrialsCond(h)-0.5 100+numTrialsCond(h)+0.5],'k');hold on
+                                        plot([spikeTimes(m)/1000 spikeTimes(m)/1000],[100+numTrialsCond(h)-0.5 100+numTrialsCond(h)+0.5],rasterColour);hold on
                                     end
                                     if numTrialsCond(h)==1
                                         matarray(h,5,:)={spikeTimes/1000};
@@ -370,7 +384,8 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
             eval(saveText);
             
             formats=[{'eps'} {'png'}];
-            for j=1:2
+            formats={'fig'};
+            for j=1:1%2
                 imageFolderName=fullfile('F:','PL','PSTHs',animal,num2str(channel),formats{j});
                 if ~exist(imageFolderName,'dir')
                     mkdir(imageFolderName);
@@ -378,7 +393,7 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                 imageName=fullfile(imageFolderName,spikeDataName);
                 %export_fig(imageName,formats{j});
                 printtext=sprintf('print -d%s %s',formats{j},imageName);
-                eval(printtext);
+                saveas(fig,imageName,'fig') 
             end
             
             %write ROC values and Weibull function constants to file:
