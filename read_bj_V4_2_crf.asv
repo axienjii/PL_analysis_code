@@ -1,0 +1,414 @@
+function []=read_bj_V4_2_crf(crfname,psychoname,testContrast,sampleContrast,skipSessions,chNum)
+%Modified from read_blanco_V1_crf
+%Written by Xing 27/09/10
+%
+%Reads from file containing average spike activity levels (14 per analysis window) across sessions,
+%for an individual channel at a time, as well as the two time points
+%flanking each period. Performs contrast response function curve fitting
+%with Naka Rushton function for each period for each session, generating as many
+%curves for each session as there are time windows to analyse. 
+%Also reads in data from file containing performance values, which is common
+%to all channels, and has one set of 14 values per session. Performs
+%psychometric curve fitting, generates 1 curve for each session.
+%Calculates value of slopes of psychometric and CRF for
+%each session, generates a graph combining slopes across sessions, for
+%CRF data, and another graph for psychometric data. Plots a third
+%graph of CRF slopes against psychometric slopes.
+%Checks for correlations between
+%1. CRF slope and time 2. Psychometric slope and time
+%3. CRF against psychometric slope.
+%Writes correlation coefficients to file, crf_correlation_coefs, as well as
+%values of slopes and session numbers. Coefs: 1,1 CRF with time 1,2 Psycho with
+%time, 1,3 CRF with Psycho. p-vals: 2,1 CRF with time 2,2 Psycho with
+%time, 2,3 CRF with Psycho.
+
+writeCoefs=1;
+
+X0=[30 2];
+options = optimset('Display','off','MaxFunEvals',10^6,'MaxIter',10^6,'TolFun',1.0E-6,'TolX',1.0E-6);
+xvals=testContrast(1):1:testContrast(end);
+
+fid=fopen(psychoname,'r');%read file and calculate number of sessions
+[A,count1]=fscanf (fid,'%s ', inf);
+numsessions=count1/17
+fclose(fid);
+
+count=1;
+INFO=zeros(numsessions,10);
+session2=zeros(1,numsessions);
+slopePsycho=zeros(1,numsessions);
+
+fid=fopen(psychoname,'r');
+while (count<=numsessions)
+    [ID,N]=fscanf (fid,'%d', 1);%and session ID
+    session2(1,count)=ID;
+    [values,count2]=fscanf(fid,'%f', [1,16]);
+    VALUES(count,1:16)=values;
+    count=count+1;
+end;
+ind=find(session2==3551);
+session2(ind)=355;
+ind=find(session2==3552);
+session2(ind)=355.5;
+[sessionSorted2 index]=sort(session2);
+for i=1:numsessions
+    VALUESsorted(i,1:14)=VALUES(index(i),1:14);
+end
+VALUES=VALUESsorted;
+
+figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.8, 0.8]);
+for i=1:numsessions
+    perfvals=VALUES(i,1:14);%psychometric performance for each session
+    [X,fval]=fminsearch('weib_sim_min_max',X0,options,testContrast,perfvals);
+    slopePsycho(1,i)=X(2);
+%     subplot(ceil(numsessions/5),5,i);
+    subplot(6,5,i);
+    plot(testContrast,perfvals,'ok');
+    hold on
+    yvals=max(perfvals)-(max(perfvals)-min(perfvals))*exp(-((xvals/X(1)).^X(2)));
+    plot(xvals,yvals,'r');
+    line(sampleContrast,0:0.01:1);
+    ylim([min(perfvals),max(perfvals)]);
+    subplottitle=num2str(sessionSorted2(1,i));
+    title(subplottitle);
+    set(gca,'YTick',[0 0.5 1]);set(gca,'YLim',[0 1]);
+    if i==1
+        ptext=sprintf('%s',psychoname);
+        orient landscape
+        yLimVals=get(gca,'YLim');
+        text('Position',[-10 yLimVals(2)+0.4],'FontSize',9,'String',ptext);
+    end
+end
+printtext=sprintf('print -dpng %s',psychoname);
+% eval(printtext);
+
+fid=fopen(crfname,'r');%read file and calculate number of sessions
+[A,count1]=fscanf (fid,'%s ', inf);
+numRows=count1/18
+fclose(fid);
+count=1;
+INFO=zeros(numRows,10);
+session1=zeros(1,numRows);
+VALUES=zeros(numRows,16);
+
+goodCount=1;
+fid=fopen(crfname,'r');
+while (count<=numRows)
+    %first row of values is generally for pre-response-onset period,
+    %subsequent rows for subsequent analysis periods
+    [A]=fscanf(fid,'%s', 1);%read channel name
+    [ID]=fscanf (fid,'%d', 1);%and session ID
+    [values]=fscanf(fid,'%f', [1,16]);
+    count=count+1;
+    ind=find(A=='_');
+    if length(ind)>1
+        A(ind(2))='.';
+    end
+    ind=find(skipSessions(:,1)==str2num(A(7:end)));
+    skip=0;
+    if ~isempty(ind)
+        if find(skipSessions(ind,:)==ID)
+            skip=1;
+        end
+    end
+    if skip==0
+        INFO(goodCount,1:length(A))=A;
+        session1(1,goodCount)=ID;
+        VALUES(goodCount,1:16)=values(1:16);%first 2 values are start/end time points of analysis period, followed by 14 CRF vals- note difference from read_blanco_V4_1_crf, where first 14 were CRF values, followed by 2 dummy values. In curernt function, all 16 values are used.
+        goodCount=goodCount+1;
+    end
+end;
+VALUES=VALUES(1:goodCount-1,:);
+session1=session1(1:goodCount-1);
+timeInd=find(VALUES(:,1)==1024);
+if length(timeInd)<2
+    currdir=cd
+    cd 'F:\blanco\v4_2_crf_analysis'
+    fid=fopen('defunct_channels','a+');
+    ind=find(crfname=='h');
+    fprintf(fid,'COC_Ch%s_w',crfname(ind+1:end));
+    fprintf(fid,'\n');
+    fclose(fid);
+    chdirtext=sprintf('cd ''%s''',currdir);
+    eval(chdirtext);
+    cd
+else
+    numAnalysisPeriods=timeInd(2)-1;%as first time point is always 0 ms- look for index where 2nd '0' appears
+    numsessions=(goodCount-1)/numAnalysisPeriods;
+    INFO=INFO(1:goodCount-1,10);
+    % session1=session1(1:numsessions);
+    % VALUESsorted=zeros(numRows,16);
+    slopeNeuro=zeros(1,numsessions);
+    C50Neuro=zeros(1,numsessions);
+    ind=find(session1==3551);
+    session1(ind)=355;
+    ind=find(session1==3552);
+    session1(ind)=355.5;
+    
+    % [sessionSorted1 index]=sort(session1);
+    sessionSorted1=session1;%sessions are in order to no need to sort
+    % for i=1:numsessions
+    %     VALUESsorted(i,1:16)=VALUES(index(i),1:16);
+    % end
+    % VALUES=VALUESsorted;
+    
+    fittingFunction='n_r';
+    options = optimset('Display','off','MaxFunEvals',10^6,'MaxIter',10^6,'TolFun',1.0E-6,'TolX',1.0E-6);
+
+    for timeWindow=1:numAnalysisPeriods
+        all_miny=[];
+        all_maxy=[];
+        fighandle1=  figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+        set(fighandle1, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+        analyseRows=timeInd+timeWindow-1;
+        for i=1:length(analyseRows)
+            crfvals=VALUES(analyseRows(i),3:16);%for channel of interest, for each session (1:14 in previous function)
+            subplot(ceil(length(timeInd)/5),5,i);
+            plot(testContrast,crfvals,'ok');
+            hold on
+                X0=[max(crfvals) 30 0.1 min(crfvals)];
+            if mean(crfvals(1:3))>mean(crfvals(12:14))%||chNum==13.2||chNum==24||chNum==42
+                X0=[max(crfvals) 30 -0.1 min(crfvals)];%negative slope
+            end
+%             X0=[30 2];
+%             if mean(crfvals(1:3))>mean(crfvals(12:14))%||chNum==13.2||chNum==24||chNum==42
+%                 X0=[30 -2];
+%             end
+            [X]=fminsearch(fittingFunction,X0,options,testContrast,crfvals);
+%             if X(1)>200||X(2)==0
+%                 if X0(2)==-2
+%                     X0=[30 2];
+%                     [Xpos]=fminsearch('crf',X0,options,testContrast,crfvals);
+%                     if abs(Xpos(1)-30)<abs(X(1)-30)
+%                         X=Xpos;
+%                     end
+%                 elseif X0(2)==2
+%                     X0=[30 -2];
+%                     [Xneg]=fminsearch('crf',X0,options,testContrast,crfvals);
+%                     if abs(Xneg(1)-30)<abs(X(1)-30)
+%                         X=Xneg;
+%                     end
+%                 end
+%             end
+            slopeNeuro(1,i)=X(3);
+            C50Neuro(1,i)=X(2);
+            yvals=X(1)*(xvals.^X(3)./(xvals.^X(3)+X(2)^X(3)))+X(4);
+%             slopeNeuro(1,i)=X(2);
+%             yvals=max(crfvals)-(max(crfvals)-min(crfvals)).*exp(-((xvals./X(1)).^X(2)));
+            plot(xvals,yvals,'r');
+            set(gca,'XLim',[0 testContrast(end)+5]);
+            all_miny=[all_miny min(yvals)];
+            all_maxy=[all_maxy max(yvals)];
+            line(sampleContrast,0:0.01:1);
+            %     ylim([min(crfvals),max(crfvals)]);
+            % ylim([0 1]);
+            subplottitle=num2str(sessionSorted1(1,analyseRows(i)));
+            title(subplottitle);            
+        end
+        for sessionNum=1:numsessions
+            subplot(ceil(length(timeInd)/5),5,sessionNum);
+            set(gca,'YLim',[min(all_miny) max(all_maxy)]);
+            if C50Neuro(sessionNum)<100
+                coefsText=sprintf('sl: %.3f     c50: %.1f',slopeNeuro(sessionNum),C50Neuro(sessionNum));
+            else
+                coefsText=sprintf('sl: %.3f     c50: *',slopeNeuro(sessionNum));
+            end
+%             coefsText=sprintf('sl: %.3f',slopeNeuro(sessionNum));
+            yLimVals=get(gca,'YLim');
+            text('Position',[5 yLimVals(2)-(yLimVals(2)-yLimVals(1))/10],'FontSize',8,'String',coefsText);
+            if sessionNum==1
+                toptext=sprintf('%s    %d to %d ms',crfname,VALUES(timeWindow,1),VALUES(timeWindow,2));
+                orient landscape
+                yLimVals=get(gca,'YLim');
+                text('Position',[-10 max(all_maxy)+0.1*max(all_maxy)*ceil(length(timeInd)/5)],'FontSize',9,'String',toptext);
+            end
+        end
+        crfFigName=[crfname,'w',num2str(timeWindow)];%where 'w' stands for 'time window'
+        printtext=sprintf('print -dpng %s',crfFigName);
+        eval(printtext);
+        
+        fighandle2=figure('Color',[1,1,1],'Units','Normalized','Position',[0.14, 0.46, 0.8, 0.4]);
+        set(fighandle2, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+        orient landscape
+        %plot slope vals against ordinal, not actual, session numbers:
+        % test=subplot(1,3,1);
+        % plot(1:length(sessionSorted1),slopeNeuro,'ok');
+        % test=subplot(1,3,2);
+        % plot(1:length(sessionSorted2),slopePsycho,'ok');
+        test=subplot(1,3,1);
+        plot(sessionSorted1(analyseRows),slopeNeuro,'ok');
+        yLimVals=get(gca,'YLim');
+        xLimVals=get(gca,'XLim');
+        text('Position',[xLimVals(1) yLimVals(2)+0.05*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',toptext);
+        test=subplot(1,3,2);
+        plot(sessionSorted2,slopePsycho,'ok');
+        test=subplot(1,3,3);
+        matchPsycho=zeros(1,length(slopeNeuro));%find slopePsycho for sessions where data from slopeNeuro is available
+        for i=1:length(slopeNeuro)
+            ind=find(sessionSorted1(analyseRows(i))==sessionSorted2);
+            matchPsycho(i)=slopePsycho(ind(1));%if 2 cells present for 1 channel, simply duplicates value of slopePsycho for that session
+        end
+        plot(matchPsycho,slopeNeuro,'ok');
+        
+        slopeNeuro
+        slopePsycho
+        matchPsycho
+        sessionSorted1(analyseRows)
+        sessionSorted2
+        session1
+        session2
+        a=[sessionSorted1(analyseRows)' slopeNeuro']
+        b=[sessionSorted2' slopePsycho']
+        c=[slopeNeuro' matchPsycho']
+        [coefficients1 p1]=corrcoef(a);
+        [coefficients2 p2]=corrcoef(b);
+        [coefficients3 p3]=corrcoef(c);
+        if length(coefficients1)>1
+            coefficients(1,1:3)=[coefficients1(2) coefficients2(2) coefficients3(2)];
+            coefficients(2,1:3)=[p1(2) p2(2) p3(2)]
+            subplot(1,3,1);
+            ptext=sprintf('r= %f  p= %f',coefficients(1,1),coefficients(2,1));
+            yLimVals=get(gca,'YLim');
+            xLimVals=get(gca,'XLim');
+            text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+            subplot(1,3,2);
+            ptext=sprintf('r= %f  p= %f',coefficients(1,2),coefficients(2,2));
+            yLimVals=get(gca,'YLim');
+            xLimVals=get(gca,'XLim');
+            text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+            subplot(1,3,3);
+            ptext=sprintf('r= %f  p= %f',coefficients(1,3),coefficients(2,3));
+            yLimVals=get(gca,'YLim');
+            xLimVals=get(gca,'XLim');
+            text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+            coeffname=[crfname,'_sl_psycho_w',num2str(timeWindow)];
+            set(gcf,'PaperPositionMode','auto')
+            printtext=sprintf('print -dpng %s',coeffname);
+            eval(printtext);
+            if writeCoefs==1
+                %write correlation coefficients, session numbers, and slope values to file:
+                currdir=cd
+                cd 'F:\blanco\v4_2_crf_analysis'
+                fid=fopen('crf_correlation_coefs_slope','a+');
+                ind=find(crfname=='h');
+                fprintf(fid,'COC_Ch%s_w%d',crfname(ind+1:end),timeWindow);
+                fprintf(fid,' %f %f %f',coefficients(1,1),coefficients(1,2),coefficients(1,3));
+                fprintf(fid,' %f %f %f',coefficients(2,1),coefficients(2,2),coefficients(2,3));
+                for j=1:length(sessionSorted1)
+                    fprintf(fid,' %f',sessionSorted1(j));
+                end
+                for j=1:length(slopeNeuro)
+                    fprintf(fid,' %f',slopeNeuro(j));
+                end
+                fprintf(fid,'\n');
+                for j=1:length(sessionSorted2)
+                    fprintf(fid,' %f',sessionSorted2(j));
+                end
+                for j=1:length(slopePsycho)
+                    fprintf(fid,' %f',slopePsycho(j));
+                end
+                fprintf(fid,'\n');
+                for j=1:length(matchPsycho)
+                    fprintf(fid,' %f',matchPsycho(j));
+                end
+                fprintf(fid,'\n');
+                fclose(fid);
+                chdirtext=sprintf('cd ''%s''',currdir);
+                eval(chdirtext);
+                cd
+            end
+        end
+        
+        %perform same analysis for c50:
+        fighandle3=figure('Color',[1,1,1],'Units','Normalized','Position',[0.14, 0.46, 0.8, 0.4]);
+        set(fighandle3, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+        orient landscape
+        %plot slope vals against ordinal, not actual, session numbers:
+        % test=subplot(1,3,1);
+        % plot(1:length(sessionSorted1),slopeNeuro,'ok');
+        % test=subplot(1,3,2);
+        % plot(1:length(sessionSorted2),slopePsycho,'ok');
+        test=subplot(1,3,1);
+        plot(sessionSorted1(analyseRows),C50Neuro,'ok');
+        yLimVals=get(gca,'YLim');
+        xLimVals=get(gca,'XLim');
+        text('Position',[xLimVals(1) yLimVals(2)+0.05*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',toptext);
+        test=subplot(1,3,2);
+        plot(sessionSorted2,slopePsycho,'ok');
+        test=subplot(1,3,3);
+%         matchPsycho=zeros(1,length(C50Neuro));%find slopePsycho for sessions where data from C50Neuro is available
+%         for i=1:length(C50Neuro)
+%             ind=find(sessionSorted1(analyseRows(i))==sessionSorted2);
+%             matchPsycho(i)=slopePsycho(ind(1));%if 2 cells present for 1 channel, simply duplicates value of slopePsycho for that session
+%         end
+        plot(matchPsycho,C50Neuro,'ok');
+        
+        C50Neuro
+        matchPsycho
+        sessionSorted1(analyseRows)
+        sessionSorted2
+        session1
+        session2
+        a=[sessionSorted1(analyseRows)' C50Neuro']
+        c=[C50Neuro' matchPsycho']
+        [coefficients1 p1]=corrcoef(a);
+        [coefficients3 p3]=corrcoef(c);
+        if length(coefficients1)>1
+            coefficients(1,1:3)=[coefficients1(2) coefficients2(2) coefficients3(2)];
+            coefficients(2,1:3)=[p1(2) p2(2) p3(2)]
+            subplot(1,3,1);
+            ptext=sprintf('r= %f  p= %f',coefficients(1,1),coefficients(2,1));
+            yLimVals=get(gca,'YLim');
+            xLimVals=get(gca,'XLim');
+            text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+            subplot(1,3,2);
+            ptext=sprintf('r= %f  p= %f',coefficients(1,2),coefficients(2,2));
+            yLimVals=get(gca,'YLim');
+            xLimVals=get(gca,'XLim');
+            text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+            subplot(1,3,3);
+            ptext=sprintf('r= %f  p= %f',coefficients(1,3),coefficients(2,3));
+            yLimVals=get(gca,'YLim');
+            xLimVals=get(gca,'XLim');
+            text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+            coeffname=[crfname,'_C50_psycho_w',num2str(timeWindow)];
+            set(gcf,'PaperPositionMode','auto')
+            printtext=sprintf('print -dpng %s',coeffname);
+            eval(printtext);
+            if writeCoefs==1
+                %write correlation coefficients, session numbers, and slope values to file:
+                currdir=cd
+                cd 'F:\blanco\v4_2_crf_analysis'
+                fid=fopen('crf_correlation_coefs_c50','a+');
+                ind=find(crfname=='h');
+                fprintf(fid,'COC_Ch%s_w%d',crfname(ind+1:end),timeWindow);
+                fprintf(fid,' %f %f %f',coefficients(1,1),coefficients(1,2),coefficients(1,3));
+                fprintf(fid,' %f %f %f',coefficients(2,1),coefficients(2,2),coefficients(2,3));
+                for j=1:length(sessionSorted1)
+                    fprintf(fid,' %f',sessionSorted1(j));
+                end
+                for j=1:length(C50Neuro)
+                    fprintf(fid,' %.4f',C50Neuro(j));
+                end
+                fprintf(fid,'\n');
+                for j=1:length(sessionSorted2)
+                    fprintf(fid,' %f',sessionSorted2(j));
+                end
+                for j=1:length(slopePsycho)
+                    fprintf(fid,' %f',slopePsycho(j));
+                end
+                fprintf(fid,'\n');
+                for j=1:length(matchPsycho)
+                    fprintf(fid,' %f',matchPsycho(j));
+                end
+                fprintf(fid,'\n');
+                fclose(fid);
+                chdirtext=sprintf('cd ''%s''',currdir);
+                eval(chdirtext);
+                cd
+            end
+        end
+        %     pause
+        close all
+    end
+end

@@ -1,0 +1,34 @@
+function read_bj_V4_2_crf_batch(folder)
+
+% excludename='F:\blanco\excludeSTNbest';
+% count=1;
+% fid=fopen(excludename,'r');
+% while ~feof(fid)
+%     [A]=fscanf(fid,'%s', 1);%read channel name
+%     skipSessions(count,1)=str2num(A(3:end));
+%     [values]=textscan(fid,'%d','\n');
+%     a=values{1,1};
+%     skipSessions(count,2:length(a)+1)=a;%session #s
+%     count=count+1;
+% end;
+% fclose(fid);
+
+%to calculate and write correlation coefficients:
+channels = main_channels(animal,area);
+[sampleContrasts testContrasts]=area_metadata(area)
+for i=1:length(channels)
+    chNum=channels(i);
+    %     if chNum<10
+    %         chNum=['0',num2str(chNum)];
+    %     end
+    if round(ch)~=ch
+        CRFmatName=['CRF_Ch',num2str(round(ch)),'_',num2str(10*(ch-round(ch))),'.mat'];
+    else
+        CRFmatName=['CRF_Ch',num2str(ch),'.mat'];
+    end
+    CRFmatPath=fullfile('F:','PL','CRF',animal,area,CRFmatName);    
+    loadText=['load ',CRFmatPath,' CRFmat'];
+    eval(loadText);
+        for 
+        read_blanco_crf(crfname,psychoname,testContrast,sampleContrast,skipSessions,folder)
+end
