@@ -18,7 +18,8 @@ area='v1_1';
 roving=0;
 readMat=1;
 writeAllChROCs=1;
-animal='jack';
+animal='blanco';
+sessions = main_raw_sessions(animal,area);
 if strcmp(animal,'jack')
     if strcmp(area,'v4_1')
         testContrasts=[10 15 20 25 27 28 29 31 32 33 35 40 50 60];
@@ -106,7 +107,7 @@ if writeAllChROCs==1
                 rocMatPathName=fullfile(folder,rocMatFileName);
                 rocPathName=fullfile(folder,rocFileName);
                 if exist(rocMatPathName,'file')
-                    read_bj_V4_1_roc(rocPathName,psychoPathname,testContrast,sampleContrast,skipSessions,chNum,area,folder,appendText,animal)
+                    read_bj_V4_1_roc(rocPathName,psychoPathname,testContrast,sampleContrast,skipSessions,chNum,area,folder,appendText,animal,sessions)
                 end
             end
         end

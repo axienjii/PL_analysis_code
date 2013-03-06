@@ -26,14 +26,24 @@ excludeSessions=[26 50 306 312 316 322:328 342];
 % loadText=['load ',folder,'\allChROC',appendText,'.mat allChROC'];
 % eval(loadText)
 rocMatFileName=[rocname,'_roc.mat'];
-excludeSessHighSSE=0;%set to 1 to exclude sessions with poor Weibull fit
+excludeSessHighSSE=1;%set to 1 to exclude sessions with poor Weibull fit
 SSEcutoff=0.09;
-excludeOutliers=0;
+excludeOutliers=1;
 slSigmaMultiple=3;
 c50SigmaMultiple=3;
 calculateTangent=1;
+plotDiffC50_30=1;
             
 xvals=testContrast(1):1:testContrast(end);
+
+manualCutoffMatText=['load F:\PL\ROC_mat_files\',animal,'\manual_cutoff.mat manualCutoff'];
+eval(manualCutoffMatText);
+ind=find(chNum==manualCutoff(:,1));
+if ~isempty(ind)
+    manual_cutoff=manualCutoff(ind,2);
+else
+    manual_cutoff=100;
+end
 
 loadMatText=['load ',rocMatFileName];
 eval(loadMatText)
@@ -94,12 +104,18 @@ if excludeSessHighSSE==1
     numsessions=length(sessionSorted1);
     if excludeOutliers==1   %within reduced pool of sessions with good SSE, further examine slope and C50 values for outliers
         loadText=['load ',slC50MatPathname,'.mat sessionSorted1 slopeNeuro c50'];
+        c50=real(c50);
         eval(loadText)       
         slsigma=std(slopeNeuro);
         c50sigma=std(c50);
         sloutliers=abs((slopeNeuro-mean(slopeNeuro)))>slSigmaMultiple*slsigma;
         c50outliers=abs((c50-mean(c50)))>c50SigmaMultiple*c50sigma;
-        ind=sloutliers+c50outliers;%find sessions where slope and/or C50 values are outliers (union)
+        c50outliersHighcut=c50>manual_cutoff;%manual exclusion for obvious outliers
+        c50outliersLowcut=c50<0;%manual exclusion for obvious outliers
+%         if sum(c50outliersHighcut)>0
+%             pause
+%         end
+        ind=sloutliers+c50outliers+c50outliersHighcut+c50outliersLowcut;%find sessions where slope and/or C50 values are outliers (union)
         sessionSorted1=sessionSorted1(~ind);%keep sessions that do not have outliers
         VALUES=VALUES(~ind,:);
         numsessions=length(sessionSorted1);
@@ -117,11 +133,11 @@ for i=1:numsessions
     elseif sum(rocvals(1:3))>sum(rocvals(end-2:end))
         X0=[-2 30 0.2 0.1];
     end
-    X=fminsearch(@fit_weibull,X0,[],testContrast,rocvals,[],'least_square',[1 1 0 0],[20 100 0 0],[1 1 0 0],[-20 10 0 0]);
+    X=fminsearch(@fit_weibull,X0,[],testContrast,rocvals,[],'least_square',[1 1 0 0],[20 100 0 0],[1 1 0 0],[-20 0 0 0]);
     if calculateTangent==0
         slopeNeuro(1,i)=X(1);
     elseif calculateTangent==1
-        dydx_30(1,i)=X(1)*X(3)*exp(-(30/X(2))^X(1) )*30^(X(1)-1)*(1/X(2))^X(1);
+        slopeNeuro(1,i)=X(1)*X(3)*exp(-(30/X(2))^X(1) )*30^(X(1)-1)*(1/X(2))^X(1);
     end
     c50(1,i)=X(2).*(-log((0.5-X(4))/X(3))).^(1/X(1));
 %     [X,fval]=fminsearch('weib_sim_min_max',X0,options,testContrast,rocvals);
@@ -130,7 +146,10 @@ for i=1:numsessions
 %     yvals=max(rocvals)-(max(rocvals)-min(rocvals)).*exp(-((xvals./X(1)).^X(2)));
     plot(testContrast,rocvals,'ok');
     hold on
-    line(c50(1,i),0:0.01:1,'Color','r');
+    if plotDiffC50_30==1
+        diffc50(1,i)=abs(c50(1,i)-30);
+    end
+        line(c50(1,i),0:0.01:1,'Color','r');
     yvals=1-X(4)-X(3).*exp(-(xvals./X(2)).^X(1));
     fitted_yvals=1-X(4)-X(3).*exp(-(testContrast./X(2)).^X(1));
     residuals = rocvals-fitted_yvals;
@@ -173,7 +192,11 @@ eval(printtext);
 appendROC(1:numsessions,1)=chNum;
 appendROC(1:numsessions,2)=sessionSorted1;
 appendROC(1:numsessions,3:length(testContrast)+2)=VALUES;
-appendROC=[appendROC slopeNeuro' c50'];
+if plotDiffC50_30==1
+    appendROC=[appendROC slopeNeuro' c50' diffc50'];
+else
+    appendROC=[appendROC slopeNeuro' c50'];
+end
 % allChROC=[allChROC;appendROC];
 % if excludeSessHighSSE==0
 %     saveText=['save ',folder,'\allChROC.mat allChROC'];
@@ -225,12 +248,12 @@ for i=1:numsessions
     %         [X,fval]=fminsearch('weib_sim_min_max',X0,options,testContrast,perfvals);
     %         slopePsycho(1,i)=X(2);
     %         PSE=X(1).*(-log(0.5)).^(1/X(2));
-    %         yvals=max(perfvals)-(max(perfvals)-min(perfvals))*exp(-((xvals/X(1)).^X(2)));
-    slopePsycho(1,i)=X(1);
+    %         yvals=max(perfvals)-(max(perfvals)-min(perfvals))*exp(-((xval
+    %         s/X(1)).^X(2)));
     if calculateTangent==0
         slopePsycho(1,i)=X(1);
     elseif calculateTangent==1
-        dydx_30(1,i)=X(1)*X(3)*exp(-(30/X(2))^X(1) )*30^(X(1)-1)*(1/X(2))^X(1);
+        slopePsycho(1,i)=X(1)*X(3)*exp(-(30/X(2))^X(1) )*30^(X(1)-1)*(1/X(2))^X(1);
     end
     PSE=X(2).*(-log((0.5-X(4))/X(3))).^(1/X(1));
     subplot(ceil((numsessions)/5),5,subplotInd);
@@ -254,15 +277,24 @@ end
 printtext=sprintf('print -dpng %s',psychoname);
 eval(printtext);
 
-fighandle2=figure('Color',[1,1,1],'Units','Normalized','Position',[0.14, 0.46, 0.8, 0.4]);
-set(fighandle2, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
-orient landscape
+if plotDiffC50_30==1
+    fig=figure('Color',[1,1,1],'Units', 'Normalized', 'Position',[0.2, 0.04, 0.5, 0.9]);
+    set(fig,'PaperUnits','centimeters','PaperType','A4','PaperOrientation', 'portrait', 'PaperPosition', [0.63452 0.63452 21 28.41]);
+else
+    fighandle2=figure('Color',[1,1,1],'Units','Normalized','Position',[0.14, 0.46, 0.8, 0.4]);
+    set(fighandle2, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+    orient landscape
+end
 %plot slope vals against ordinal, not actual, session numbers:
 % test=subplot(1,3,1);
 % plot(1:length(sessionSorted1),slopeNeuro,'ok');
 % test=subplot(1,3,2);
 % plot(1:length(sessionSorted2),slopePsycho,'ok');
-test=subplot(1,3,1);
+if plotDiffC50_30==1
+    subplot(2,2,1);
+else
+    subplot(1,3,1);
+end
 example_ch_54=0;
 if example_ch_54==1
     xvals=0:20;
@@ -270,11 +302,23 @@ if example_ch_54==1
     brob = robustfit(xvals,slopeNeuro);
     plot(xvals,brob(1)+brob(2)*xvals,'k','LineWidth',4);hold on
     title('neurometric slope vs time')
-    subplot(1,3,2)
-    test=subplot(1,3,2);
-    plot(xvals,c50,'sb');
-    title('c50 vs time')
-    test=subplot(1,3,3);
+    if plotDiffC50_30==1
+        subplot(1,3,3);
+        plot(xvals,c50,'sb');
+        title('c50 vs time')
+        subplot(2,2,4);
+        plot(xvals,diffc50,'sb');
+        title('abs(c50-30) vs time')
+    else
+        subplot(1,3,2);
+        plot(xvals,c50,'sb');
+        title('c50 vs time')
+    end
+    if plotDiffC50_30==1
+        subplot(2,2,2);
+    else
+        subplot(1,3,3);
+    end
     matchPsycho=zeros(1,length(slopeNeuro));%find slopePsycho for sessions where data from slopeNeuro is available
     for i=1:length(slopeNeuro)
         ind=find(sessionSorted1(i)==sessionSorted2);
@@ -286,11 +330,24 @@ else
 %     plot(sessionSorted1,slopeNeuro,'ok');
     plot(1:length(sessionSorted1),slopeNeuro,'ok');
     title('neurometric slope vs time')
-    test=subplot(1,3,2);
+    if plotDiffC50_30==1
+        subplot(2,2,3);
+        plot(1:length(c50),c50,'ok');
+        title('c50 vs time')
+        subplot(2,2,4);
+        plot(1:length(sessionSorted1),diffc50,'ok');
+        title('abs(c50-30) vs time')
+    else
+        subplot(1,3,2);
+        plot(1:length(sessionSorted1),c50,'ok');
+        title('c50 vs time')
+    end
 %     plot(sessionSorted1,c50,'ok');    
-    plot(1:length(sessionSorted1),c50,'ok');   
-    title('c50 vs time')
-    test=subplot(1,3,3);
+    if plotDiffC50_30==1
+        subplot(2,2,2);
+    else
+        subplot(1,3,3);
+    end
     matchPsycho=zeros(1,length(slopeNeuro));%find slopePsycho for sessions where data from slopeNeuro is available
     for i=1:length(slopeNeuro)
         ind=find(sessionSorted1(i)==sessionSorted2);
@@ -306,14 +363,43 @@ end
 % sessionSorted2
 % session1
 % session2
-c50=real(c50);
 a=[sessionSorted1' slopeNeuro'];
+c50=real(c50);
 b=[sessionSorted1' c50'];
 c=[slopeNeuro' matchPsycho'];
 [coefficients1 p1]=corrcoef(a); 
 [coefficients2 p2]=corrcoef(b); 
 [coefficients3 p3]=corrcoef(c);
+if plotDiffC50_30==1
+    diffc50=real(diffc50);
+    d=[sessionSorted1' diffc50'];
+    [coefficients4 p4]=corrcoef(d);
+end
 if length(coefficients1)>1
+if plotDiffC50_30==1
+    coefficients(1,1:4)=[coefficients1(2) coefficients2(2) coefficients3(2) coefficients4(2)];
+    coefficients(2,1:4)=[p1(2) p2(2) p3(2) p4(2)]
+    subplot(2,2,1);
+    ptext=sprintf('r= %f  p= %f',coefficients(1,1),coefficients(2,1));
+    yLimVals=get(gca,'YLim');
+    xLimVals=get(gca,'XLim');
+    text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+    subplot(2,2,3);
+    ptext=sprintf('r= %f  p= %f',coefficients(1,2),coefficients(2,2));
+    yLimVals=get(gca,'YLim');
+    xLimVals=get(gca,'XLim');
+    text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+    subplot(2,2,2);
+    ptext=sprintf('r= %f  p= %f',coefficients(1,3),coefficients(2,3));
+    yLimVals=get(gca,'YLim');
+    xLimVals=get(gca,'XLim');
+    text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);  
+    subplot(2,2,4);
+    ptext=sprintf('r= %f  p= %f',coefficients(1,4),coefficients(2,4));
+    yLimVals=get(gca,'YLim');
+    xLimVals=get(gca,'XLim');
+    text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);   
+else
     coefficients(1,1:3)=[coefficients1(2) coefficients2(2) coefficients3(2)];
     coefficients(2,1:3)=[p1(2) p2(2) p3(2)]
     subplot(1,3,1);
@@ -331,6 +417,7 @@ if length(coefficients1)>1
     yLimVals=get(gca,'YLim');
     xLimVals=get(gca,'XLim');
     text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+end
     set(gcf,'PaperPositionMode','auto')
     if excludeSessHighSSE==0
         rocCoefImagename=[num2str(chNum),appendText,'_roc_coefs'];
