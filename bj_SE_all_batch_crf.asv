@@ -1,4 +1,4 @@
-function bj_SE_all_batch_crf
+function bj_SE_all_batch_crf(animal,area)
 %Written by Xing on 27/09/10
 %Modified from blanco_SE_all_batch_roc
 %
@@ -15,8 +15,8 @@ function bj_SE_all_batch_crf
 %(0:average over whole epoch, 1:subdivide into time windows), 
 %3rd input arg is minusSpon (0:don't subtract, 1:subtract).
 
-animal='blanco';
-area='v4_1';
+% animal='blanco';
+% area='v4_1';
 multipleTimes=0;
 minusSpon=0;
 if multipleTimes==1
@@ -66,12 +66,14 @@ if multipleTimes==0
     for i=1:length(channels)
         epochTimes(i,1)={channels(i)};
     end
-    epochTimes(:,3)={[1024;1536;1936]};
+    epochTimes(:,3)={[0;529;529*2;529*3]};
 %     for i=1:size(epochTimes,1)
 %         epochTimes{i,3}(:)=[];
 %         epochTimes(i,3)={[1024;1536;1936]};
 %     end
 end
+
+cellEpochTimes={0 529 529*2 529*3};%{[0 40 300] 529 [529*2 529*2+40 529*2+300] 529*3}
 if strcmp(area,'v1_2')
     sampleContrasts=[20 30 40];
 else
@@ -90,21 +92,23 @@ for h=1:length(channels)
                 for q=3:size(listing,1)
                     fileName=listing(q,1).name;
                     ind=find(fileName=='.');
-                    chFolder=fileName(1:ind(1)-1);
-                    if strcmp(chStr,chFolder)
-                        matExists=1;
+                    if~isempty(ind)
+                        chFolder=fileName(1:ind(1)-1);
+                        if strcmp(chStr,chFolder)
+                            matExists=1;
+                        end
                     end
                 end
             end
             if matExists==1
                 for row=1:size(epochTimes,1)
                     if epochTimes{row,1}==channels(h)
-                        cellEpochTimes=epochTimes(row,3);
+%                         cellEpochTimes=epochTimes(row,3);
                     end
                 end
                 valsText=sprintf('load %s\\%s.mat matarray',matFolder,chStr);
                 eval(valsText);
-                bj_SE_crf(channels(h),sessionNums(i),cellEpochTimes,minusSpon,matarray,animal,area)
+                bj_SE_crf(channels(h),sessionNums(i),cellEpochTimes,minusSpon,matarray,animal,area,sampleContrast)
             end
         end
     end
