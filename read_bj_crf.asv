@@ -1,4 +1,4 @@
-function []=read_bj_crf(CRFmat,chNum,psychoname,testContrast,sampleContrast,animal,area)
+function []=read_bj_crf(CRFmat,chNum,psychoname,testContrast,sampleContrast,animal,area,startEndTime)
 %Modified from read_blanco_V1_crf
 %Written by Xing 06/03/13
 %
@@ -23,6 +23,7 @@ function []=read_bj_crf(CRFmat,chNum,psychoname,testContrast,sampleContrast,anim
 %time, 2,3 CRF with Psycho.
 
 writeCoefs=1;
+plotFig=1;
 excludeSessions=[26 50 306 312 316 322:328 342];
 % loadText=['load ',folder,'\allChROC',appendText,'.mat allChROC'];
 % eval(loadText)
@@ -46,19 +47,19 @@ appendText=['_',num2str(sampleContrast)];
 %     manual_cutoff=100;
 % end
 
-sessionSorted1=CRFmat(:,1);
+sessionSorted1=cell2mat(CRFmat(:,1));
 numsessions=length(CRFmat);
 chSSE=zeros(length(sessionSorted1),2);
 fighandle1=  figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
 set(fighandle1, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
 
-SSEMatFileName=[num2str(chNum),'_',appendText,'_SSE'];
+SSEMatFileName=[num2str(chNum),'_',appendText,startEndTime,'_SSE'];
 SSEMatFolder=fullfile('F:','PL','CRF','SSE_mat_files',animal);
 if ~exist(SSEMatFolder,'dir')
     mkdir(SSEMatFolder);
 end
 SSEMatPath=fullfile(SSEMatFolder,SSEMatFileName);
-slC50Matname=[num2str(chNum),'_',appendText,'_slC50'];
+slC50Matname=[num2str(chNum),'_',appendText,startEndTime,'_slC50'];
 slC50MatFolder=fullfile('F:','PL','CRF','slope_C50_mat',animal);
 if ~exist(slC50MatFolder,'dir')
     mkdir(slC50MatFolder);
@@ -94,91 +95,95 @@ if excludeSessHighSSE==1
     end
 end
 
-for period=3:6%spontan,sample,ISI,test
-    fighandle1=  figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
-    set(fighandle1, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
-    for i=1:numsessions
-        crfvals=CRFmat{i,period};%for channel of interest, for each session
-        subplot(ceil(numsessions/5),5,i);
-        fittingFunction='n_r';
-        options = optimset('Display','off','MaxFunEvals',10^6,'MaxIter',10^6,'TolFun',1.0E-6,'TolX',1.0E-6);
-        plot(testContrast,crfvals,'ok');
-        hold on
-        X0=[max(crfvals) 30 0.1 min(crfvals)];
-        if mean(crfvals(1:3))>mean(crfvals(12:14))%||chNum==13.2||chNum==24||chNum==42
-            X0=[max(crfvals) 30 -0.1 min(crfvals)];%negative slope
-        end
-        [X]=fminsearch(fittingFunction,X0,options,testContrast,crfvals);
-        
-        if calculateTangent==0
-            slopeNeuro(1,i)=X(3);
-        elseif calculateTangent==1
-            slopeNeuro(1,i)=X(2)^X(3)*30^(X(3)-1)/(30^X(3)+X(2)^X(3))^2;
-        end
-        c50(1,i)=X(2);
-        minRate(1,i)=X(4);
-        maxRate(1,i)=X(1);
-        %     [X,fval]=fminsearch('weib_sim_min_max',X0,options,testContrast,crfvals);
-        %     slopeNeuro(1,i)=X(2);
-        %     c50(1,i)=X(1).*(-log(0.5)).^(1/X(2));
-        %     yvals=max(crfvals)-(max(crfvals)-min(crfvals)).*exp(-((xvals./X(1)).^X(2)));
-        plot(testContrast,crfvals,'ok');
-        hold on
-        if plotDiffC50_30==1
-            diffc50(1,i)=abs(c50(1,i)-30);
-        end
-        line(c50(1,i),0:0.01:1,'Color','r');
-        yvals=1-X(4)-X(3).*exp(-(xvals./X(2)).^X(1));
-        fitted_yvals=1-X(4)-X(3).*exp(-(testContrast./X(2)).^X(1));
-        residuals = crfvals-fitted_yvals;
-        sseCRF=sum(residuals.^2);
-        chSSE(i,:)=[sessionSorted1{i} sseCRF];        
-        plot(xvals,yvals,'r');
-        line(sampleContrast,0:0.01:1);
-        ylim([0,max(crfvals)]);
-        % ylim([0 1]);
-        xlim([0 max(testContrast)]);
-        subplottitle=num2str(sessionSorted1{i});
-        title(subplottitle);
-        if i==1
-            crfname=[num2str(chNum),'_',appendText,'_CRF'];
-            ptext=sprintf('%s',crfname);
-            orient landscape
-            yLimVals=get(gca,'YLim');
-            text('Position',[-10 yLimVals(2)+0.2],'FontSize',9,'String',ptext);
-        end
-        ptext=sprintf('SSE: %.3f',sseCRF);
-        text('Position',[testContrast(end)/2 yLimVals(1)+0.05],'FontSize',9,'String',ptext);
-    end
-    if excludeSessHighSSE==0
-        saveText=['save ',SSEMatPath,' chSSE'];
-        eval(saveText);
-        crfImagename=[num2str(chNum),appendText];
-    elseif excludeSessHighSSE==1
-        if excludeOutliers==0
-            crfImagename=[num2str(chNum),appendText,'_goodSSE'];
-            saveText=['save ',slC50MatPathname,'.mat sessionSorted1 slopeNeuro c50'];
-            eval(saveText)
-        elseif excludeOutliers==1
-            crfImagename=[num2str(chNum),appendText,'_goodSSE_no_outliers_sl',num2str(slSigmaMultiple),'_C50',num2str(c50SigmaMultiple)];
-        end
-    end
-    crfPathname=fullfile('F:','PL','CRF','neurometric_ROC',animal,crfImagename);
-    crfFolder=fullfile('F:','PL','CRF','neurometric_ROC',animal);
-    if ~exist(crfFolder,'dir')
-        mkdir(crfFolder)
-    end
-    printtext=sprintf('print -dpng %s.png',crfPathname);
-    eval(printtext);
+if plotFig==1
 end
-
-appendROC(1:numsessions,1)=chNum;
-appendROC(1:numsessions,2)=sessionSorted1;
-appendROC(1:numsessions,3:length(testContrast)+2)=VALUES;
+fighandle1=  figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+set(fighandle1, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+for i=1:numsessions
+    crfvals=CRFmat{i,3};%for channel of interest, for each session
+    subplot(ceil(numsessions/5),5,i);
+    fittingFunction='n_r';
+    options = optimset('Display','off','MaxFunEvals',10^6,'MaxIter',10^6,'TolFun',1.0E-6,'TolX',1.0E-6);
+    plot(testContrast,crfvals,'ok');
+    hold on
+    X0=[max(crfvals) 30 0.5 min(crfvals)];
+    if mean(crfvals(1:3))>mean(crfvals(12:14))%||chNum==13.2||chNum==24||chNum==42
+        X0=[max(crfvals) 30 -0.1 min(crfvals)];%negative slope
+    end
+    [X]=fminsearch(fittingFunction,X0,options,testContrast,crfvals);
+    
+    if calculateTangent==0
+        slopeNeuro(1,i)=X(3);
+    elseif calculateTangent==1
+        slopeNeuro(1,i)=X(2)^X(3)*30^(X(3)-1)/(30^X(3)+X(2)^X(3))^2;
+    end
+    c50(1,i)=X(2);
+    minRate(1,i)=X(4);
+    maxRate(1,i)=X(1);
+    %     [X,fval]=fminsearch('weib_sim_min_max',X0,options,testContrast,crfvals);
+    %     slopeNeuro(1,i)=X(2);
+    %     c50(1,i)=X(1).*(-log(0.5)).^(1/X(2));
+    %     yvals=max(crfvals)-(max(crfvals)-min(crfvals)).*exp(-((xvals./X(1)).^X(2)));
+    plot(testContrast,crfvals,'ok');
+    hold on
+    if plotDiffC50_30==1
+        diffc50(1,i)=abs(c50(1,i)-30);
+    end
+    yvals=X(1)*(xvals.^X(3)./(xvals.^X(3)+X(2).^X(3)))+X(4);
+    fitted_yvals=X(1)*(testContrast.^X(3)./(testContrast.^X(3)+X(2).^X(3)))+X(4);
+    residuals = crfvals-fitted_yvals;
+    sseCRF=sum(residuals.^2);
+    chSSE(i,:)=[sessionSorted1(i) sseCRF];
+    plot(xvals,yvals,'r');
+    %         ylim([0,max(crfvals)]);
+    % ylim([0 1]);
+    xlim([0 max(testContrast)]);
+    subplottitle=num2str(sessionSorted1(i));
+    title(subplottitle);
+    [yLimCRF(i,1:2)]=get(gca,'YLim');
+end
+for i=1:numsessions
+    subplot(ceil(numsessions/5),5,i);
+    ylim([min(yLimCRF(:,1)) max(yLimCRF(:,2))]);
+    line(c50(1,i),0:max(yLimCRF(:,2))/100:max(yLimCRF(:,2)),'Color','r');
+    line(sampleContrast,0:max(yLimCRF(:,2))/100:max(yLimCRF(:,2)));
+    if i==1
+        crfname=[num2str(chNum),'_',appendText,'_CRF'];
+        ptext=sprintf('%s',crfname);
+        orient landscape
+        yLimVals=get(gca,'YLim');
+        text('Position',[-10 yLimVals(2)+0.2*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+    end
+    ptext=sprintf('SSE: %.3f',chSSE(i,2));
+    text('Position',[testContrast(end)/2 min(yLimCRF(:,1))+(max(yLimCRF(:,2))-min(yLimCRF(:,1)))/6],'FontSize',9,'String',ptext);
+end
+if excludeSessHighSSE==0
+    saveText=['save ',SSEMatPath,' chSSE'];
+    eval(saveText);
+    crfImagename=[num2str(chNum),appendText,startEndTime];
+elseif excludeSessHighSSE==1
+    if excludeOutliers==0
+        crfImagename=[num2str(chNum),appendText,startEndTime,'_goodSSE'];
+        saveText=['save ',slC50MatPathname,'.mat sessionSorted1 slopeNeuro c50'];
+        eval(saveText)
+    elseif excludeOutliers==1
+        crfImagename=[num2str(chNum),appendText,startEndTime,'_goodSSE_no_outliers_sl',num2str(slSigmaMultiple),'_C50',num2str(c50SigmaMultiple)];
+    end
+end
+crfPathname=fullfile('F:','PL','CRF','neurometric_CRF',animal,crfImagename);
+crfFolder=fullfile('F:','PL','CRF','neurometric_CRF',animal);
+if ~exist(crfFolder,'dir')
+    mkdir(crfFolder)
+end
+printtext=sprintf('print -dpng %s.png',crfPathname);
+eval(printtext);
+appendCRF(1:numsessions,1)=chNum;
+appendCRF(1:numsessions,2)=sessionSorted1;
+% appendCRF(1:numsessions,3:length(testContrast)+2)=VALUES;
 if plotDiffC50_30==1
-    appendCRF=[appendROC slopeNeuro' c50' diffc50' minRate maxRate];
+    appendCRF=[appendCRF,slopeNeuro',c50',diffc50',minRate',maxRate'];
 else
-    appendCRF=[appendROC slopeNeuro' c50' minRate maxRate];
+    appendCRF=[appendCRF slopeNeuro' c50' minRate' maxRate'];
 end
 % allChROC=[allChROC;appendROC];
 % if excludeSessHighSSE==0
@@ -218,7 +223,7 @@ end
 VALUESsorted=[];
 numsessions=length(session2);
 for i=1:numsessions
-        VALUESsorted(i,:)=VALUES(index(i),:);
+    VALUESsorted(i,:)=VALUES(index(i),:);
 end
 VALUES=VALUESsorted;
 
@@ -254,7 +259,7 @@ for i=1:numsessions
         ptext=sprintf('%s',psychoname);
         orient landscape
         yLimVals=get(gca,'YLim');
-        text('Position',[-10 yLimVals(2)+0.2],'FontSize',9,'String',ptext);
+        text('Position',[-10 yLimVals(2)+0.2*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
     end
 end
 % printtext=sprintf('print -dpng %s',psychoname);
@@ -310,7 +315,7 @@ if example_ch_54==1
     plot(matchPsycho,slopeNeuro,'sb');
     title('neurometric slope vs psychometric slope')
 else
-%     plot(sessionSorted1,slopeNeuro,'ok');
+    %     plot(sessionSorted1,slopeNeuro,'ok');
     plot(1:length(sessionSorted1),slopeNeuro,'ok');
     title('neurometric slope vs time')
     if plotDiffC50_30==1
@@ -325,7 +330,7 @@ else
         plot(1:length(sessionSorted1),c50,'ok');
         title('c50 vs time')
     end
-%     plot(sessionSorted1,c50,'ok');    
+    %     plot(sessionSorted1,c50,'ok');
     if plotDiffC50_30==1
         subplot(2,2,2);
     else
@@ -334,7 +339,9 @@ else
     matchPsycho=zeros(1,length(slopeNeuro));%find slopePsycho for sessions where data from slopeNeuro is available
     for i=1:length(slopeNeuro)
         ind=find(sessionSorted1(i)==sessionSorted2);
-        matchPsycho(i)=slopePsycho(ind(1));%if 2 cells present for 1 channel, simply duplicates value of slopePsycho for that session
+        if ~isempty(ind)
+            matchPsycho(i)=slopePsycho(ind(1));%if 2 cells present for 1 channel, simply duplicates value of slopePsycho for that session
+        end
     end
     plot(matchPsycho,slopeNeuro,'ok');
     title('neurometric slope vs psychometric slope')
@@ -346,73 +353,73 @@ end
 % sessionSorted2
 % session1
 % session2
-a=[sessionSorted1' slopeNeuro'];
+a=[sessionSorted1 slopeNeuro'];
 c50=real(c50);
-b=[sessionSorted1' c50'];
+b=[sessionSorted1 c50'];
 c=[slopeNeuro' matchPsycho'];
-[coefficients1 p1]=corrcoef(a); 
-[coefficients2 p2]=corrcoef(b); 
+[coefficients1 p1]=corrcoef(a);
+[coefficients2 p2]=corrcoef(b);
 [coefficients3 p3]=corrcoef(c);
 if plotDiffC50_30==1
     diffc50=real(diffc50);
-    d=[sessionSorted1' diffc50'];
+    d=[sessionSorted1 diffc50'];
     [coefficients4 p4]=corrcoef(d);
 end
-e=[sessionSorted1' minRate'];
-f=[sessionSorted1' maxRate'];
+e=[sessionSorted1 minRate'];
+f=[sessionSorted1 maxRate'];
 [coefficients5 p5]=corrcoef(e);
 [coefficients6 p6]=corrcoef(f);
 if length(coefficients1)>1
-if plotDiffC50_30==1
-    coefficients(1,1:6)=[coefficients1(2) coefficients2(2) coefficients3(2) coefficients4(2) coefficients5(2) coefficients6(2)];
-    coefficients(2,1:6)=[p1(2) p2(2) p3(2) p4(2) p5(2) p6(2)]
-    subplot(2,2,1);
-    ptext=sprintf('r= %f  p= %f',coefficients(1,1),coefficients(2,1));
-    yLimVals=get(gca,'YLim');
-    xLimVals=get(gca,'XLim');
-    text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
-    subplot(2,2,3);
-    ptext=sprintf('r= %f  p= %f',coefficients(1,2),coefficients(2,2));
-    yLimVals=get(gca,'YLim');
-    xLimVals=get(gca,'XLim');
-    text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
-    subplot(2,2,2);
-    ptext=sprintf('r= %f  p= %f',coefficients(1,3),coefficients(2,3));
-    yLimVals=get(gca,'YLim');
-    xLimVals=get(gca,'XLim');
-    text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);  
-    subplot(2,2,4);
-    ptext=sprintf('r= %f  p= %f',coefficients(1,4),coefficients(2,4));
-    yLimVals=get(gca,'YLim');
-    xLimVals=get(gca,'XLim');
-    text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);   
-else
-    coefficients(1,1:5)=[coefficients1(2) coefficients2(2) coefficients3(2) coefficients5(2) coefficients6(2)];
-    coefficients(2,1:5)=[p1(2) p2(2) p3(2) p5(2) p6(2)]
-    subplot(1,3,1);
-    ptext=sprintf('r= %f  p= %f',coefficients(1,1),coefficients(2,1));
-    yLimVals=get(gca,'YLim');
-    xLimVals=get(gca,'XLim');
-    text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
-    subplot(1,3,2);
-    ptext=sprintf('r= %f  p= %f',coefficients(1,2),coefficients(2,2));
-    yLimVals=get(gca,'YLim');
-    xLimVals=get(gca,'XLim');
-    text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
-    subplot(1,3,3);
-    ptext=sprintf('r= %f  p= %f',coefficients(1,3),coefficients(2,3));
-    yLimVals=get(gca,'YLim');
-    xLimVals=get(gca,'XLim');
-    text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
-end
+    if plotDiffC50_30==1
+        coefficients(1,1:6)=[coefficients1(2) coefficients2(2) coefficients3(2) coefficients4(2) coefficients5(2) coefficients6(2)];
+        coefficients(2,1:6)=[p1(2) p2(2) p3(2) p4(2) p5(2) p6(2)]
+        subplot(2,2,1);
+        ptext=sprintf('r= %f  p= %f',coefficients(1,1),coefficients(2,1));
+        yLimVals=get(gca,'YLim');
+        xLimVals=get(gca,'XLim');
+        text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+        subplot(2,2,3);
+        ptext=sprintf('r= %f  p= %f',coefficients(1,2),coefficients(2,2));
+        yLimVals=get(gca,'YLim');
+        xLimVals=get(gca,'XLim');
+        text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+        subplot(2,2,2);
+        ptext=sprintf('r= %f  p= %f',coefficients(1,3),coefficients(2,3));
+        yLimVals=get(gca,'YLim');
+        xLimVals=get(gca,'XLim');
+        text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+        subplot(2,2,4);
+        ptext=sprintf('r= %f  p= %f',coefficients(1,4),coefficients(2,4));
+        yLimVals=get(gca,'YLim');
+        xLimVals=get(gca,'XLim');
+        text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+    else
+        coefficients(1,1:5)=[coefficients1(2) coefficients2(2) coefficients3(2) coefficients5(2) coefficients6(2)];
+        coefficients(2,1:5)=[p1(2) p2(2) p3(2) p5(2) p6(2)]
+        subplot(1,3,1);
+        ptext=sprintf('r= %f  p= %f',coefficients(1,1),coefficients(2,1));
+        yLimVals=get(gca,'YLim');
+        xLimVals=get(gca,'XLim');
+        text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+        subplot(1,3,2);
+        ptext=sprintf('r= %f  p= %f',coefficients(1,2),coefficients(2,2));
+        yLimVals=get(gca,'YLim');
+        xLimVals=get(gca,'XLim');
+        text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+        subplot(1,3,3);
+        ptext=sprintf('r= %f  p= %f',coefficients(1,3),coefficients(2,3));
+        yLimVals=get(gca,'YLim');
+        xLimVals=get(gca,'XLim');
+        text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+    end
     set(gcf,'PaperPositionMode','auto')
     if excludeSessHighSSE==0
-        crfCoefImagename=[num2str(chNum),appendText,'_crf_coefs'];
+        crfCoefImagename=[num2str(chNum),appendText,startEndTime,'_crf_coefs'];
     elseif excludeSessHighSSE==1
         if excludeOutliers==0
-            crfCoefImagename=[num2str(chNum),appendText,'_crf_coefs_goodSSE'];
+            crfCoefImagename=[num2str(chNum),appendText,startEndTime,'_crf_coefs_goodSSE'];
         elseif excludeOutliers==1
-            crfCoefImagename=[num2str(chNum),appendText,'_crf_coefs_goodSSE_no_outliers_sl',num2str(slSigmaMultiple),'_C50',num2str(c50SigmaMultiple)];
+            crfCoefImagename=[num2str(chNum),appendText,startEndTime,'_crf_coefs_goodSSE_no_outliers_sl',num2str(slSigmaMultiple),'_C50',num2str(c50SigmaMultiple)];
         end
     end
     crfCoefFolder=fullfile('F:','PL','CRF_coef_images',animal);
@@ -426,15 +433,19 @@ end
         %write correlation coefficients, session numbers, and slope values
         %to file:
         if excludeSessHighSSE==0
-            crfCoefMatname=[num2str(chNum),appendText,'_crf_coefs_',area];
+            crfCoefMatname=[num2str(chNum),appendText,startEndTime,'_crf_coefs_',area];
         elseif excludeSessHighSSE==1
             if excludeOutliers==0
-                crfCoefMatname=[num2str(chNum),appendText,'_crf_coefs_',area,'_goodSSE'];
+                crfCoefMatname=[num2str(chNum),appendText,startEndTime,'_crf_coefs_',area,'_goodSSE'];
             elseif excludeOutliers==1
-                crfCoefMatname=[num2str(chNum),appendText,'_crf_coefs_',area,'_goodSSE_no_outliers_sl',num2str(slSigmaMultiple),'_C50',num2str(c50SigmaMultiple)];
+                crfCoefMatname=[num2str(chNum),appendText,startEndTime,'_crf_coefs_',area,'_goodSSE_no_outliers_sl',num2str(slSigmaMultiple),'_C50',num2str(c50SigmaMultiple)];
             end
         end
-        crfCoefMatPathname=fullfile('F:','PL','CRF_coef_mat',animal,rocCoefMatname);
+        crfCoefMatPathname=fullfile('F:','PL','CRF_coef_mat',animal,crfCoefMatname);
+        crfCoefMatFolder=fullfile('F:','PL','CRF_coef_mat',animal);
+        if ~exist(crfCoefMatFolder,'dir')
+            mkdir(crfCoefMatFolder)
+        end
         saveText=['save ',crfCoefMatPathname,'.mat coefficients sessionSorted1 slopeNeuro sessionSorted2 slopePsycho matchPsycho c50 diffc50 minRate maxRate'];
         eval(saveText)
     end
