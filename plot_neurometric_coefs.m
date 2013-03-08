@@ -9,7 +9,7 @@ for excludeCount=1:length(excludeSessions)
     sessionSorted2=psychoAll(~ind,1);
 end
 if plotDiffC50_30==1
-    subplot(2,2,1);
+    subplot(2,3,1);
 else
     subplot(1,3,1);
 end
@@ -20,10 +20,10 @@ if example_ch_54==1
     plot(xvals,brob(1)+brob(2)*xvals,'k','LineWidth',4);hold on
     title('neurometric slope vs time')
     if plotDiffC50_30==1
-        subplot(1,3,3);
+        subplot(2,3,4);
         plot(xvals,c50,'sb');
         title('c50 vs time')
-        subplot(2,2,4);
+        subplot(2,2,5);
         plot(xvals,diffc50,'sb');
         title('abs(c50-30) vs time')
     else
@@ -48,10 +48,10 @@ else
     plot(1:length(sessionSorted1),slopeNeuro,'ok');
     title('neurometric slope vs time')
     if plotDiffC50_30==1
-        subplot(2,2,3);
+        subplot(2,3,4);
         plot(1:length(c50),c50,'ok');
         title('c50 vs time')
-        subplot(2,2,4);
+        subplot(2,3,5);
         plot(1:length(sessionSorted1),diffc50,'ok');
         title('abs(c50-30) vs time')
     else
@@ -61,7 +61,7 @@ else
     end
     %     plot(sessionSorted1,c50,'ok');
     if plotDiffC50_30==1
-        subplot(2,2,2);
+        subplot(2,3,2);
     else
         subplot(1,3,3);
     end
@@ -74,6 +74,14 @@ else
     end
     plot(matchPsycho,slopeNeuro,'ok');
     title('neurometric slope vs psychometric slope')
+    if plotDiffC50_30==1    
+        subplot(2,3,3);
+        plot(1:length(sessionSorted1),minRate,'ok');
+        title('minimum firing rate vs time')
+        subplot(2,3,6);
+        plot(1:length(sessionSorted1),maxRate,'ok');
+        title('maximum firing rate vs time')
+    end
 end
 % slopeNeuro
 % slopePsycho
@@ -102,23 +110,33 @@ if length(coefficients1)>1
     if plotDiffC50_30==1
         coefficients(1,1:6)=[coefficients1(2) coefficients2(2) coefficients3(2) coefficients4(2) coefficients5(2) coefficients6(2)];
         coefficients(2,1:6)=[p1(2) p2(2) p3(2) p4(2) p5(2) p6(2)]
-        subplot(2,2,1);
+        subplot(2,3,1);
         ptext=sprintf('r= %f  p= %f',coefficients(1,1),coefficients(2,1));
         yLimVals=get(gca,'YLim');
         xLimVals=get(gca,'XLim');
         text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
-        subplot(2,2,3);
+        subplot(2,3,4);
         ptext=sprintf('r= %f  p= %f',coefficients(1,2),coefficients(2,2));
         yLimVals=get(gca,'YLim');
         xLimVals=get(gca,'XLim');
         text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
-        subplot(2,2,2);
+        subplot(2,3,2);
         ptext=sprintf('r= %f  p= %f',coefficients(1,3),coefficients(2,3));
         yLimVals=get(gca,'YLim');
         xLimVals=get(gca,'XLim');
         text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
-        subplot(2,2,4);
+        subplot(2,3,5);
         ptext=sprintf('r= %f  p= %f',coefficients(1,4),coefficients(2,4));
+        yLimVals=get(gca,'YLim');
+        xLimVals=get(gca,'XLim');
+        text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+        subplot(2,3,3);
+        ptext=sprintf('r= %f  p= %f',coefficients(1,5),coefficients(2,5));
+        yLimVals=get(gca,'YLim');
+        xLimVals=get(gca,'XLim');
+        text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+        subplot(2,3,6);
+        ptext=sprintf('r= %f  p= %f',coefficients(1,6),coefficients(2,6));
         yLimVals=get(gca,'YLim');
         xLimVals=get(gca,'XLim');
         text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
@@ -140,6 +158,11 @@ if length(coefficients1)>1
         yLimVals=get(gca,'YLim');
         xLimVals=get(gca,'XLim');
         text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+        subplot(1,3,4);
+        ptext=sprintf('r= %f  p= %f',coefficients(1,4),coefficients(2,4));
+        yLimVals=get(gca,'YLim');
+        xLimVals=get(gca,'XLim');
+        text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
     end
     set(gcf,'PaperPositionMode','auto')
     if isempty(chNum)
@@ -149,7 +172,7 @@ if length(coefficients1)>1
     end
     subFolderName=[analysisTypeText,'_coef_images'];
     if excludeSessHighSSE==0
-            crfCoefImagename=[chText,appendText,startEndTime,'_',analysisTypeText,'_coefs'];
+            crfCoefImagename=[chText,appendText,startEndTime,'_',analysisTypeText,'_coefs_',area];
     elseif excludeSessHighSSE==1
         if excludeOutliers==0
             crfCoefImagename=[chText,appendText,startEndTime,'_,analysisTypeText,_coefs_goodSSE'];
