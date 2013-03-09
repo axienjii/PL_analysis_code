@@ -1,0 +1,16 @@
+function check_ncs_channels_cleaned(animal,area,session)
+channels = main_channels(animal,area);
+missin=[];present=0;
+for i=1:length(channels)
+    if strcmp(animal,'blanco')
+    NCSfilename=['C:\pl_spk_artifactRemoved\blanco\MehdiCheetahData\',session,'\SPK_NCS_artifactRemoved\spk_CSC',channels(i),'_artifactRemoved.ncs'];
+    for j=1:size(rocValsMat,1)
+        if rocValsMat{j,2}==ses(i)
+            present=1;
+        end
+    end
+    if present==0
+        missin=[missin ses(i)];
+    end
+    present=0;
+end
