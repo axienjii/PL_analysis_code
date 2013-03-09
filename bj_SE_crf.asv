@@ -30,34 +30,49 @@ if min(numTrials)>=minTrials
         for subPeriod=1:length(periods)-1
             startTime=periods(subPeriod);
             endTime=periods(subPeriod+1);
-            for cond=1:14
+            for cond=1:size(matarray,1)
+                actList=[];
                 for n=1:numTrials(cond)
                     temp=find(matarray{cond,epoch}{n}<=endTime);
                     temp=find(matarray{cond,epoch}{n}(temp)>startTime);
                     actList{epoch}(n)=length(temp)*1000/(endTime-startTime);
                 end
-                ave_act{epoch}(subPeriod,cond)=mean(actList{epoch}(:));
-    if round(ch)~=ch
-        CRFmatName=['CRF_Ch',num2str(round(ch)),'_',num2str(10*(ch-round(ch))),'_',num2str(sampleContrast),'.mat'];
-    else
-        CRFmatName=['CRF_Ch',num2str(ch),'_',num2str(sampleContrast),'.mat'];
-    end
-    CRFmatFolder=fullfile('F:','PL','CRF',animal,area);
-    if ~exist(CRFmatFolder,'dir')
-        mkdir(CRFmatFolder);
-    end
-    CRFmatPath=fullfile('F:','PL','CRF',animal,area,CRFmatName);
-    CRFmatTemp=[{session} {test_epochs} ave_act];
-    if ~exist(CRFmatPath,'file')
-        CRFmat=CRFmatTemp;
-    elseif exist(CRFmatPath,'file')
-        loadText=['load ',CRFmatPath,' CRFmat'];
-        eval(loadText);
-        CRFmat=[CRFmat;CRFmatTemp];
-    end
-    saveText=['save ',CRFmatPath,' CRFmat'];
-    eval(saveText);        
+                if epoch==2
+                    epoch2{cond,subPeriod}=actList;%store activity levels from each subperiod for ROC calculation
+                elseif epoch==4
+                    epoch4{cond,subPeriod}=actList;%store activity levels from each subperiod for ROC calculation
+                end
+                ave_act(cond)=mean(actList{epoch}(:));
             end
+            startEndTime=['_',num2str(periods(subPeriod)),'_to_',num2str(periods(subPeriod+1))];
+            if round(ch)~=ch
+                CRFmatName=['CRF_Ch',num2str(round(ch)),'_',num2str(10*(ch-round(ch))),'_',num2str(sampleContrast),startEndTime,'.mat'];
+            else
+                CRFmatName=['CRF_Ch',num2str(ch),'_',num2str(sampleContrast),startEndTime,'.mat'];
+            end
+            CRFmatFolder=fullfile('F:','PL','CRF',animal,area);
+            if ~exist(CRFmatFolder,'dir')
+                mkdir(CRFmatFolder);
+            end
+            CRFmatPath=fullfile('F:','PL','CRF',animal,area,CRFmatName);
+            CRFmatTemp=[{session} {test_epochs} {ave_act}];
+            if ~exist(CRFmatPath,'file')
+                CRFmat=CRFmatTemp;
+            elseif exist(CRFmatPath,'file')
+                loadText=['load ',CRFmatPath,' CRFmat'];
+                eval(loadText);
+                CRFmat=[CRFmat;CRFmatTemp];
+            end
+            saveText=['save ',CRFmatPath,' CRFmat'];
+            eval(saveText);
+        end
+    end
+    
+    for cond=1:size(matarray,1)
+        for subPeriod=1:length(periods)-1
+            %roc analysis:
+            [roc]=sglroc3(epoch4{cond,subPeriod}(1,:)',epoch2{cond,subPeriod}(1,:)');
+            rocvals=[rocvals roc];
         end
     end
 end

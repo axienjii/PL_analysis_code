@@ -30,13 +30,19 @@ if min(numTrials)>=minTrials
         for subPeriod=1:length(periods)-1
             startTime=periods(subPeriod);
             endTime=periods(subPeriod+1);
-            for cond=1:14
+            for cond=1:size(matarray,1)
+                actList=[];
                 for n=1:numTrials(cond)
                     temp=find(matarray{cond,epoch}{n}<=endTime);
                     temp=find(matarray{cond,epoch}{n}(temp)>startTime);
-                    actList{epoch}(n)=length(temp)*1000/(endTime-startTime);
+                    actList(n)=length(temp)*1000/(endTime-startTime);
                 end
-                ave_act(cond)=mean(actList{epoch}(:));
+                if epoch==2
+                    epoch2{cond,subPeriod}=actList;%store activity levels from each subperiod for ROC calculation
+                elseif epoch==4
+                    epoch4{cond,subPeriod}=actList;%store activity levels from each subperiod for ROC calculation
+                end
+                ave_act(cond)=mean(actList(:));
             end
             startEndTime=['_',num2str(periods(subPeriod)),'_to_',num2str(periods(subPeriod+1))];
             if round(ch)~=ch
@@ -60,6 +66,35 @@ if min(numTrials)>=minTrials
             saveText=['save ',CRFmatPath,' CRFmat'];
             eval(saveText);
         end
+    end
+    
+    for subPeriod=1:length(periods)-1
+        for cond=1:size(matarray,1)
+            %roc analysis:
+            [roc]=sglroc3(epoch4{cond,subPeriod}(1,:),epoch2{cond,subPeriod}(1,:));
+            rocvals(cond)=roc;
+        end
+        startEndTime=['_',num2str(periods(subPeriod)),'_to_',num2str(periods(subPeriod+1))];
+        if round(ch)~=ch
+            ROCmatName=['ROC_Ch',num2str(round(ch)),'_',num2str(10*(ch-round(ch))),'_',num2str(sampleContrast),startEndTime,'.mat'];
+        else
+            ROCmatName=['ROC_Ch',num2str(ch),'_',num2str(sampleContrast),startEndTime,'.mat'];
+        end
+        ROCmatFolder=fullfile('F:','PL','ROC',animal,area);
+        if ~exist(ROCmatFolder,'dir')
+            mkdir(ROCmatFolder);
+        end
+        ROCmatPath=fullfile('F:','PL','ROC',animal,area,ROCmatName);
+        ROCmatTemp=[{session} {test_epochs} {rocvals}];
+        if ~exist(ROCmatPath,'file')
+            ROCmat=ROCmatTemp;
+        elseif exist(ROCmatPath,'file')
+            loadText=['load ',ROCmatPath,' ROCmat'];
+            eval(loadText);
+            ROCmat=[ROCmat;ROCmatTemp];
+        end
+        saveText=['save ',ROCmatPath,' ROCmat'];
+        eval(saveText);
     end
 end
 

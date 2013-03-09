@@ -9,6 +9,11 @@ plotFig=1;
 colTexts='ymcrgbk';
 markerTexts='+x';
 markerSizes=[5 6];
+calculateTangent=1;
+plotDiffC50_30=1;
+writeCoefs=1;
+excludeSessHighSSE=0;
+excludeOutliers=0;
 for animalInd=1:2
     for areaInd=1:2
         animal=animals{animalInd};
@@ -40,6 +45,7 @@ for animalInd=1:2
         channels = main_channels(animal,area);
         for j=1:length(sampleContrasts)
             sampleContrast=sampleContrasts(j);
+            appendText=['_',num2str(sampleContrast)];
             testContrast=testContrasts(j,:);
             figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.8, 0.8]);
             for epoch=1:size(test_epochs,2)
@@ -53,7 +59,7 @@ for animalInd=1:2
                     startEndTime=['_',num2str(periods(subPeriod)),'_to_',num2str(periods(subPeriod+1))];
                     periodTitle=[epochTitle,' (',num2str(periods(subPeriod)),' to ',num2str(periods(subPeriod+1)),' ms)'];
                     clear allCRFvals
-                    [allCRFvals{1,1:length(sessions)}] = deal(zeros(1));
+                    [allCRFvalsTemp{1,1:length(sessions)}] = deal(zeros(1));
                     for i=1:length(channels)
                         startEndTime=['_',num2str(periods(subPeriod)),'_to_',num2str(periods(subPeriod+1))];
                         CRFmatName=['CRF_Ch',num2str(channels(i)),'_',num2str(sampleContrast),startEndTime,'.mat'];
@@ -61,11 +67,17 @@ for animalInd=1:2
                         loadText=['load ',CRFmatPath,' CRFmat'];
                         eval(loadText);
                         for rowInd=1:size(CRFmat,1)
-                            allCRFvals{rowInd}=allCRFvals{rowInd}+CRFmat{rowInd,3};
+                            allCRFvalsTemp{rowInd}=allCRFvalsTemp{rowInd}+CRFmat{rowInd,3};
                         end
                     end
+                    sessionSorted1=[];
                     for rowInd=1:size(CRFmat,1)
-                        allCRFvals{rowInd}=allCRFvals{rowInd}/length(channels);
+                        allCRFvalsTemp{rowInd}=allCRFvalsTemp{rowInd}/length(channels);
+                        sessionSorted1=[sessionSorted1 CRFmat{rowInd,1}];
+                    end
+                    allCRFvals=CRFmat;%simply copy the first two columns from the last CRFmat array that happened to be loaded, as the info in the first 2 columns are identical across files
+                    for rowInd=1:size(CRFmat,1)
+                        allCRFvals{rowInd,3}=allCRFvalsTemp{rowInd};
                     end
                     saveMatName=['mean_',animal,'_',area,'_CRF_across_chs',startEndTime];
                     saveMatFolder=fullfile('F:','PL','CRF',animal);
@@ -79,10 +91,10 @@ for animalInd=1:2
                     markerText=markerTexts(2);markerS=8;
                     for i=1:length(testContrast)
                         CRFperCond=[];
-                        for sessionInd=1:size(allCRFvals,2)
-                            CRFperCond=[CRFperCond allCRFvals{sessionInd}(i)];
+                        for sessionInd=1:size(allCRFvals,1)
+                            CRFperCond=[CRFperCond allCRFvals{sessionInd,3}(i)];
                         end
-                        plot(1:size(allCRFvals,2),CRFperCond,'Color',colmapText(i,:),'LineStyle','none','Marker',markerText,'MarkerFaceColor',colmapText(i,:),'MarkerEdgeColor',colmapText(i,:),'MarkerSize',markerS);hold on%'MarkerFaceColor',[1/i 1/i 1/i],
+                        plot(1:size(allCRFvals,1),CRFperCond,'Color',colmapText(i,:),'LineStyle','none','Marker',markerText,'MarkerFaceColor',colmapText(i,:),'MarkerEdgeColor',colmapText(i,:),'MarkerSize',markerS);hold on%'MarkerFaceColor',[1/i 1/i 1/i],
                         hold on
                         %                         [chiseb1linear(i,:) chiseb1(i,:) coefperfb1linear(i,:) coefperfb1(i,:) aRSb1linear(i,:) aRSb1(i,:)]=linearexpo_fitting(1:size(allCRFvals,2),CRFperCond',i,1);
                         %     yLimVals=get(gca,'ylim');
@@ -92,11 +104,18 @@ for animalInd=1:2
                     title(periodTitle);
                     xlabel('session');
                     ylabel('mean firing rate (spikes/s)');
-                    saveCoefImageName=[area,'_',animal,'_4epochs_mean_CRF_across_channels_vs_session_',num2str(sampleContrast)];
-                    saveCoefImageFolder=fullfile('F:','PL','CRF',animal);
-                    saveCoefImagePath=fullfile(saveCoefImageFolder,saveCoefImageName);
-                    printtext=sprintf('print -dpng %s.png',saveCoefImagePath);
+                    saveMeanCRFImageName=[area,'_',animal,'_4epochs_mean_CRF_across_channels_vs_session_',num2str(sampleContrast)];
+                    saveMeanCRFImageFolder=fullfile('F:','PL','CRF',animal);
+                    saveMeanCRFImagePath=fullfile(saveMeanCRFImageFolder,saveMeanCRFImageName);
+                    printtext=sprintf('print -dpng %s.png',saveMeanCRFImagePath);
                     eval(printtext);
+                    if strcmp(epochTitle,'test')
+                        [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimCRF]=plot_CRF_or_ROC_across_sessions(animal,area,'CRF',allCRFvals,'mean across channels',length(allCRFvals),sessionSorted1,sampleContrast,testContrast,calculateTangent,plotDiffC50_30,excludeSessHighSSE,excludeOutliers,[],startEndTime);
+                        %collate CRF parameter values across periods
+                        example_ch_54=0;
+                        figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.8, 0.8]);
+                        plot_neurometric_coefs(animal,area,[],appendText,startEndTime,slopeNeuro,c50,plotDiffC50_30,diffc50,minRate,maxRate,sessionSorted1,'CRF',example_ch_54,0,0,writeCoefs)
+                    end
                     %                 saveCoefImagePath
                     %                     ylim([0 100]);
                     %                     legend('hide');
