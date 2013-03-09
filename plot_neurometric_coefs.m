@@ -1,5 +1,13 @@
 function plot_neurometric_coefs(animal,area,chNum,appendText,startEndTime,slopeNeuro,c50,plotDiffC50_30,diffc50,minRate,maxRate,sessionSorted1,analysisTypeText,example_ch_54,excludeSessHighSSE,excludeOutliers,writeCoefs)
-
+% Handles plotting of correlation coefficients
+if plotDiffC50_30==1
+    fig=figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.8, 0.8]);
+    set(fig,'PaperUnits','centimeters','PaperType','A4','PaperOrientation', 'portrait', 'PaperPosition', [0.63452 0.63452 21 28.41]);
+else
+    fighandle2=figure('Color',[1,1,1],'Units','Normalized','Position',[0.14, 0.46, 0.8, 0.4]);
+    set(fighandle2, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+    orient landscape
+end
 excludeSessions=[26 50 306 312 316 322:328 342];
 loadText=['load F:\PL\psycho_data\',animal,'\',area,'_psycho_all_sessions.mat psychoAll'];
 eval(loadText)
@@ -15,6 +23,7 @@ else
 end
 if example_ch_54==1
     xvals=0:20;
+    %plot slope vals against ordinal, not actual, session numbers:
     plot(xvals,slopeNeuro,'sb','MarkerFaceColor','b');hold on
     brob = robustfit(xvals,slopeNeuro);
     plot(xvals,brob(1)+brob(2)*xvals,'k','LineWidth',4);hold on
@@ -172,43 +181,43 @@ if length(coefficients1)>1
     end
     subFolderName=[analysisTypeText,'_coef_images'];
     if excludeSessHighSSE==0
-            crfCoefImagename=[chText,appendText,startEndTime,'_',analysisTypeText,'_coefs_',area];
+            coefImagename=[chText,appendText,startEndTime,'_',analysisTypeText,'_coefs_',area];
     elseif excludeSessHighSSE==1
         if excludeOutliers==0
-            crfCoefImagename=[chText,appendText,startEndTime,'_,analysisTypeText,_coefs_goodSSE'];
+            coefImagename=[chText,appendText,startEndTime,'_',analysisTypeText,'_coefs_',area,'goodSSE'];
         elseif excludeOutliers==1
-            crfCoefImagename=[chText,appendText,startEndTime,'_,analysisTypeText,_coefs_goodSSE_no_outliers_sl',num2str(slSigmaMultiple),'_C50',num2str(c50SigmaMultiple)];
+            coefImagename=[chText,appendText,startEndTime,'_',analysisTypeText,'_coefs_',area,'goodSSE_no_outliers_sl',num2str(slSigmaMultiple),'_C50',num2str(c50SigmaMultiple)];
         end
     end
-    crfCoefFolder=fullfile('F:','PL',analysisTypeText,animal,subFolderName);
-    if ~exist(crfCoefFolder,'dir')
-        mkdir(crfCoefFolder)
+    coefFolder=fullfile('F:','PL',analysisTypeText,animal,subFolderName);
+    if ~exist(coefFolder,'dir')
+        mkdir(coefFolder)
     end
-    crfCoefPathname=fullfile(crfCoefFolder,crfCoefImagename);
-    printtext=sprintf('print -dpng %s.png',crfCoefPathname);
+    coefPathname=fullfile(coefFolder,coefImagename);
+    printtext=sprintf('print -dpng %s.png',coefPathname);
     eval(printtext);
     if writeCoefs==1
         %write correlation coefficients, session numbers, and slope values
         %to file:
         if excludeSessHighSSE==0
-            crfCoefMatname=[chText,appendText,startEndTime,'_',analysisTypeText,'_coefs_',area];
+            coefMatname=[chText,appendText,startEndTime,'_',analysisTypeText,'_coefs_',area];
         elseif excludeSessHighSSE==1
             if excludeOutliers==0
-                crfCoefMatname=[chText,appendText,startEndTime,'_',analysisTypeText,'_coefs_',area,'_goodSSE'];
+                coefMatname=[chText,appendText,startEndTime,'_',analysisTypeText,'_coefs_',area,'_goodSSE'];
             elseif excludeOutliers==1
-                crfCoefMatname=[chText,appendText,startEndTime,'_',analysisTypeText,'_coefs_',area,'_goodSSE_no_outliers_sl',num2str(slSigmaMultiple),'_C50',num2str(c50SigmaMultiple)];
+                coefMatname=[chText,appendText,startEndTime,'_',analysisTypeText,'_coefs_',area,'_goodSSE_no_outliers_sl',num2str(slSigmaMultiple),'_C50',num2str(c50SigmaMultiple)];
             end
         end
         subFolderName=[analysisTypeText,'_coef_mat'];
-        crfCoefMatFolder=fullfile('F:','PL',analysisTypeText,animal,subFolderName);
-        crfCoefMatPathname=fullfile(crfCoefMatFolder,crfCoefMatname);
-        if ~exist(crfCoefMatFolder,'dir')
-            mkdir(crfCoefMatFolder)
+        coefMatFolder=fullfile('F:','PL',analysisTypeText,animal,subFolderName);
+        coefMatPathname=fullfile(coefMatFolder,coefMatname);
+        if ~exist(coefMatFolder,'dir')
+            mkdir(coefMatFolder)
         end
     if plotDiffC50_30==1
-        saveText=['save ',crfCoefMatPathname,'.mat coefficients sessionSorted1 slopeNeuro sessionSorted2 slopePsycho matchPsycho c50 diffc50 minRate maxRate'];
+        saveText=['save ',coefMatPathname,'.mat coefficients sessionSorted1 slopeNeuro sessionSorted2 slopePsycho matchPsycho c50 diffc50 minRate maxRate'];
     else
-        saveText=['save ',crfCoefMatPathname,'.mat coefficients sessionSorted1 slopeNeuro sessionSorted2 slopePsycho matchPsycho c50 minRate maxRate'];
+        saveText=['save ',coefMatPathname,'.mat coefficients sessionSorted1 slopeNeuro sessionSorted2 slopePsycho matchPsycho c50 minRate maxRate'];
     end
     eval(saveText)
     end
