@@ -1,4 +1,4 @@
-function[rocvals]=bj_SE_V1_2_roc4(animal,channel,session,verbose)
+function[rocvals]=bj_SE_V1_2_roc4_temp(animal,channel,session,verbose)
 %Modified 30/01/13 to process artifact-free, spontaneous-activity-matched data.
 %Compares spike activity between sample
 %and test presentations, for each condition, and calculates ROC value based
