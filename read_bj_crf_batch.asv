@@ -1,8 +1,8 @@
-function read_bj_crf_batch(animal,area)
+function read_bj_crf_or_roc_batch(animal,area,analysisType)
 
 %Written by Xing 06/03/13
 %to calculate and write correlation coefficients
-test_epochs={0 529 529*2 529*3};
+test_epochs={0 529 529*2 529*3};durSpon=150;
 channels=main_channels(animal,area);
 [sampleContrasts testContrasts]=area_metadata(area);
 psychoname=['psycho_constants_',area];
@@ -19,11 +19,16 @@ for i=1:length(channels)
             end
             for subPeriod=1:length(periods)-1
                 startEndTime=['_',num2str(periods(subPeriod)),'_to_',num2str(periods(subPeriod+1))];
-                CRFmatName=['CRF_Ch',num2str(channels(i)),'_',num2str(sampleContrast),startEndTime,'.mat'];
-                CRFmatPath=fullfile('F:','PL','CRF',animal,area,CRFmatName);
-                loadText=['load ',CRFmatPath,' CRFmat'];
+                matName=[analysisType,'_Ch',num2str(channels(i)),'_',num2str(sampleContrast),startEndTime,'.mat'];
+                matPath=fullfile('F:','PL',analysisType,animal,area,matName);
+                loadText=['load ',matPath,' ',analysisType,'mat'];
                 eval(loadText);
-                read_bj_crf(CRFmat,channels(i),psychoPathname,testContrast,sampleContrast,animal,area,startEndTime)
+                if strcmp(analysisType,'CRF')
+                    dataArray=CRFmat;
+                elseif strcmp(analysisType,'ROC')
+                    dataArray=CRFmat;
+                end
+                read_bj_crf(dataArray,channels(i),psychoPathname,testContrast,sampleContrast,animal,area,startEndTime,analysis)
             end
         end
     end

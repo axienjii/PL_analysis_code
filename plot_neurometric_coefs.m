@@ -1,4 +1,4 @@
-function plot_neurometric_coefs(animal,area,chNum,appendText,startEndTime,slopeNeuro,c50,plotDiffC50_30,diffc50,minRate,maxRate,sessionSorted1,analysisTypeText,example_ch_54,excludeSessHighSSE,excludeOutliers,writeCoefs)
+function plot_neurometric_coefs(animal,area,chNum,appendText,startEndTime,slopeNeuro,c50,plotDiffC50_30,diffc50,minRate,maxRate,sessionSorted1,analysisTypeText,example_ch_54,excludeSessHighSSE,excludeOutliers,writeCoefs,slSigmaMultiple,c50SigmaMultiple)
 % Handles plotting of correlation coefficients
 if plotDiffC50_30==1
     fig=figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.8, 0.8]);
@@ -86,10 +86,18 @@ else
     if plotDiffC50_30==1    
         subplot(2,3,3);
         plot(1:length(sessionSorted1),minRate,'ok');
-        title('minimum firing rate vs time')
+        if strcmp(analysisTypeText,'ROC')
+            title('minimum ROC value vs time')
+        else
+            title('minimum firing rate vs time')
+        end
         subplot(2,3,6);
         plot(1:length(sessionSorted1),maxRate,'ok');
-        title('maximum firing rate vs time')
+        if strcmp(analysisTypeText,'ROC')
+            title('maximum ROC value vs time')
+        else
+            title('maximum firing rate vs time')
+        end
     end
 end
 % slopeNeuro

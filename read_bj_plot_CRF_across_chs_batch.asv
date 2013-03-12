@@ -1,4 +1,4 @@
-function read_bj_plot_CRF_across_chs_batch
+function read_bj_plot_CRF_across_chs_batch(analysisType)
 %Written on 07/03/13.
 
 test_epochs={0 529 529*2 529*3};durSpon=150;
@@ -64,8 +64,9 @@ for animalInd=1:2
                     end
                     for i=1:length(channels)
                         chNum=channels(i);
-                        coefsFileName=[num2str(chNum),'_',num2str(sampleContrast),startEndTime,'_crf_coefs_',area];%,'_goodSSE_no_outliers_sl3_C503','.mat'];
-                        coefsPathName=fullfile('F:','PL','CRF',animal,'CRF_coef_mat',coefsFileName);
+                        coefsFileName=[num2str(chNum),'_',num2str(sampleContrast),startEndTime,'_',analysisType,'_coefs_',area];%,'_goodSSE_no_outliers_sl3_C503','.mat'];
+                        subFolder=[analysisType,'_coef_mat'];
+                        coefsPathName=fullfile('F:','PL',analysisType,animal,subFolder,coefsFileName);
                         loadText=['load ',coefsPathName];
                         eval(loadText);
                         if find(coefficients(2,:)<0.05)
@@ -105,8 +106,9 @@ for animalInd=1:2
                     end
                 end
             end
-            saveMatName=['all_',animal,'_',area,'_CRF_coefs'];
-            saveMatFolder=fullfile('F:','PL','CRF',animal,'CRF_coef_mat');
+            saveMatName=['all_',animal,'_',area,'_',subFolder,'_coefs'];
+            subFolder=[analysisType,'_coef_mat'];
+            saveMatFolder=fullfile('F:','PL',subFolder,animal,subFolder);
             saveMatPath=fullfile(saveMatFolder,saveMatName);
             saveText=['save ',saveMatPath,'.mat allChCoefs'];
             eval(saveText)
@@ -114,7 +116,7 @@ for animalInd=1:2
                 figText=sprintf('figure(%s)',figureHandles{k});
                 eval(figText)
                 saveCoefImageName=['all_',animal,'_',area,'_CRF_coefs',startEndTime,saveImageAppendText{k}];
-                saveCoefImageFolder=fullfile('F:','PL','CRF',animal,'CRF_coef_images');
+                saveCoefImageFolder=fullfile('F:','PL',subFolder,animal,'CRF_coef_images');
                 saveCoefImagePath=fullfile(saveCoefImageFolder,saveCoefImageName);
                 printtext=sprintf('print -dpng %s.png',saveCoefImagePath);
                 set(gcf, 'PaperOrientation', 'landscape');

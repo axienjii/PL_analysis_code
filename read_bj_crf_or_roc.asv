@@ -1,4 +1,4 @@
-function []=read_bj_crf(CRFmat,chNum,psychoname,testContrast,sampleContrast,animal,area,startEndTime,analysisType)
+function []=read_bj_crf_or_roc(datamat,chNum,psychoname,testContrast,sampleContrast,animal,area,startEndTime,analysisType)
 %Modified from read_blanco_V1_crf
 %Written by Xing 06/03/13
 %
@@ -24,13 +24,13 @@ function []=read_bj_crf(CRFmat,chNum,psychoname,testContrast,sampleContrast,anim
 
 writeCoefs=1;
 plotFig=1;
-plotPsychoFig=1;
+plotPsychoFig=0;
 excludeSessions=[26 50 306 312 316 322:328 342];
 % loadText=['load ',folder,'\allChROC',appendText,'.mat allChROC'];
 % eval(loadText)
-excludeSessHighSSE=0;%set to 1 to exclude sessions with poor Weibull fit
+excludeSessHighSSE=1;%set to 1 to exclude sessions with poor Weibull fit
 SSEcutoff=0.09;
-excludeOutliers=0;
+excludeOutliers=1;
 slSigmaMultiple=3;
 c50SigmaMultiple=3;
 calculateTangent=1;
@@ -38,28 +38,28 @@ plotDiffC50_30=1;
             
 appendText=['_',num2str(sampleContrast)];
 
-% manualCutoffMatText=['load F:\PL\ROC_mat_files\',animal,'\manual_cutoff.mat manualCutoff'];
-% eval(manualCutoffMatText);
-% ind=find(chNum==manualCutoff(:,1));
-% if ~isempty(ind)
-%     manual_cutoff=manualCutoff(ind,2);
-% else
-%     manual_cutoff=100;
-% end
+if strcmp(analysisType,'ROC')
+    manualCutoffMatText=['load F:\PL\ROC_mat_files\',animal,'\manual_cutoff.mat manualCutoff'];
+    eval(manualCutoffMatText);
+    ind=find(chNum==manualCutoff(:,1));
+    if ~isempty(ind)
+        manual_cutoff=manualCutoff(ind,2);
+    else
+        manual_cutoff=100;
+    end
+end
 
-sessionSorted1=cell2mat(CRFmat(:,1));
-numsessions=length(CRFmat);
+sessionSorted1=cell2mat(datamat(:,1))';
+numsessions=length(datamat);
 chSSE=zeros(length(sessionSorted1),2);
-fighandle1=  figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
-set(fighandle1, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
 
-SSEMatFileName=[num2str(chNum),'_',appendText,startEndTime,'_SSE'];
+SSEMatFileName=[num2str(chNum),appendText,startEndTime,'_SSE'];
 SSEMatFolder=fullfile('F:','PL',analysisType,animal,'SSE_mat_files');
 if ~exist(SSEMatFolder,'dir')
     mkdir(SSEMatFolder);
 end
 SSEMatPath=fullfile(SSEMatFolder,SSEMatFileName);
-slC50Matname=[num2str(chNum),'_',appendText,startEndTime,'_slC50'];
+slC50Matname=[num2str(chNum),appendText,startEndTime,'_slC50'];
 slC50MatFolder=fullfile('F:','PL',analysisType,animal,'slope_C50_mat');
 if ~exist(slC50MatFolder,'dir')
     mkdir(slC50MatFolder);
@@ -71,7 +71,7 @@ if excludeSessHighSSE==1
     SSEcutoff=mean(chSSE(:,2))+std(chSSE(:,2));
     ind=(chSSE(:,2)<SSEcutoff);
     sessionSorted1=sessionSorted1(ind);
-    VALUES=VALUES(ind,:);
+    datamat=datamat(ind,:);
     numsessions=length(sessionSorted1);
     if excludeOutliers==1   %within reduced pool of sessions with good SSE, further examine slope and C50 values for outliers
         loadText=['load ',slC50MatPathname,'.mat sessionSorted1 slopeNeuro c50'];
@@ -88,7 +88,7 @@ if excludeSessHighSSE==1
 %         end
         ind=sloutliers+c50outliers+c50outliersHighcut+c50outliersLowcut;%find sessions where slope and/or C50 values are outliers (union)
         sessionSorted1=sessionSorted1(~ind);%keep sessions that do not have outliers
-        VALUES=VALUES(~ind,:);
+        datamat=datamat(~ind,:);
         numsessions=length(sessionSorted1);
         slopeNeuro=slopeNeuro(~ind);       
         c50=c50(~ind);       
@@ -96,7 +96,7 @@ if excludeSessHighSSE==1
 end
 
 if plotFig==1
-    [slopeNeuro,c50,diffc50,minRate,maxRate]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,CRFmat,chNum,numsessions,sessionSorted1,sampleContrast,testContrast,calculateTangent,plotDiffC50_30,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime);
+    [slopeNeuro,c50,diffc50,minRate,maxRate]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,datamat,chNum,numsessions,sessionSorted1,sampleContrast,testContrast,calculateTangent,plotDiffC50_30,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,slC50MatPathname,slSigmaMultiple,c50SigmaMultiple);
 end
 
 % allChROC=[allChROC;appendROC];
@@ -112,7 +112,7 @@ if plotPsychoFig==1
 end
 
 example_ch_54=0;
-plot_neurometric_coefs(animal,area,chNum,appendText,startEndTime,slopeNeuro,c50,plotDiffC50_30,diffc50,minRate,maxRate,sessionSorted1,analysisType,example_ch_54,excludeSessHighSSE,excludeOutliers,writeCoefs)
+plot_neurometric_coefs(animal,area,chNum,appendText,startEndTime,slopeNeuro,c50,plotDiffC50_30,diffc50,minRate,maxRate,sessionSorted1,analysisType,example_ch_54,excludeSessHighSSE,excludeOutliers,writeCoefs,slSigmaMultiple,c50SigmaMultiple)
 
 % pause
 close all

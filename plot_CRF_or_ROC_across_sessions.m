@@ -1,9 +1,9 @@
-function [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,dataArray,chNum,numsessions,sessionSorted1,sampleContrast,testContrast,calculateTangent,plotDiffC50_30,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime)
+function [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,dataArray,chNum,numsessions,sessionSorted1,sampleContrast,testContrast,calculateTangent,plotDiffC50_30,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,slC50MatPathname,slSigmaMultiple,c50SigmaMultiple)
 if ischar(chNum)
     titleText=chNum;
     chNum=0;
 else 
-    titleText=num2str(chNum)'
+    titleText=num2str(chNum);
 end
 appendText=['_',num2str(sampleContrast)];
 fighandle1=  figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
@@ -49,7 +49,8 @@ for i=1:numsessions
         elseif sum(datavals(1:3))>sum(datavals(end-2:end))
             X0=[-2 30 0.2 0.1];
         end
-        X=fminsearch(@fit_weibull,X0,[],testContrast,datavals,[],'least_square',[1 1 0 0],[20 100 0 0],[1 1 0 0],[-20 0 0 0]);
+        options = optimset('Display','off','MaxFunEvals',10^6,'MaxIter',10^6,'TolFun',1.0E-6,'TolX',1.0E-6);
+        X=fminsearch(@fit_weibull,X0,options,testContrast,datavals,[],'least_square',[1 1 0 0],[20 100 0 0],[1 1 0 0],[-20 0 0 0]);
         if calculateTangent==0
             slopeNeuro(1,i)=X(1);
         elseif calculateTangent==1
@@ -69,7 +70,7 @@ for i=1:numsessions
     end
     residuals=datavals-fitted_yvals;
     sseCRF=sum(residuals.^2);
-    chSSE(i,:)=[i sseCRF];
+    chSSE(i,1:2)=[i sseCRF];
     plot(xvals,yvals,'r');
     %         ylim([0,max(datavals)]);
     % ylim([0 1]);

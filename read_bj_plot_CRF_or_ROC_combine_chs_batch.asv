@@ -1,4 +1,4 @@
-function read_bj_plot_CRF_or_ROC_combine_chs_batch
+function read_bj_plot_CRF_or_ROC_combine_chs_batch(analysisType)
 %Written on 07/03/13. Calculates mean CRF values across channels.
 
 test_epochs={0 529 529*2 529*3};durSpon=150;
@@ -12,8 +12,17 @@ markerSizes=[5 6];
 calculateTangent=1;
 plotDiffC50_30=1;
 writeCoefs=1;
-excludeSessHighSSE=0;
-excludeOutliers=0;
+if strcmp(analysisType,'ROC')
+    excludeSessHighSSE=1;
+    excludeOutliers=1;
+    slSigmaMultiple=3;
+    c50SigmaMultiple=3;
+else
+    excludeSessHighSSE=0;
+    excludeOutliers=0;
+    slSigmaMultiple=0;
+    c50SigmaMultiple=0;
+end
 for animalInd=1:2
     for areaInd=1:2
         animal=animals{animalInd};
@@ -73,7 +82,7 @@ for animalInd=1:2
                             elseif strcmp(analysisType,'ROC')
                                 dataArray=ROCmat;
                             end
-                            for rowInd=1:size(CRFmat,1)
+                            for rowInd=1:size(dataArray,1)
                                 allValsTemp{rowInd}=allValsTemp{rowInd}+dataArray{rowInd,3};
                             end
                         end
@@ -86,11 +95,19 @@ for animalInd=1:2
                         for rowInd=1:size(dataArray,1)
                             allDataVals{rowInd,3}=allValsTemp{rowInd};
                         end
+                        if strcmp(analysisType,'ROC')
+                            allROCvals=allDataVals;
+                        else
+                            allCRFvals=allDataVals;
+                        end
                         saveMatName=['mean_',animal,'_',area,'_',analysisType,'_across_chs',startEndTime];
                         saveMatFolder=fullfile('F:','PL',analysisType,animal);
                         saveMatPath=fullfile(saveMatFolder,saveMatName);
                         saveText=['save ',saveMatPath,'.mat all',analysisType,'vals'];
                         eval(saveText)
+                        slC50Matname=['mean_',animal,'_',area,'_',analysisType,'_across_chs',appendText,startEndTime,'_slC50'];
+                        slC50MatFolder=fullfile('F:','PL',analysisType,animal,'slope_C50_mat');
+                        slC50MatPathname=fullfile(slC50MatFolder,slC50Matname);
                         %proportion of trials monkey reported that test was higher contrast,
                         colmapText=colormap(jet(size(testContrast,2)));
                         colmapText=[colmapText(1,:);132/255 22/255 216/255;202/255 65/255 223/255;colmapText(3:7,:);157/255 212/255 61/255;colmapText(10:12,:);178/255 111/255 12/255;colmapText(end,:)];
@@ -110,14 +127,18 @@ for animalInd=1:2
                         end
                         title(periodTitle);
                         xlabel('session');
+                        if strcmp(analysisType,'ROC')
+                        ylabel('ROC value');
+                        else
                         ylabel('mean firing rate (spikes/s)');
+                        end
                         saveMeanImageName=[area,'_',animal,'_4epochs_mean_',analysisType,'_across_channels_vs_session_',num2str(sampleContrast)];
                         saveMeanImageFolder=fullfile('F:','PL',analysisType,animal);
                         saveMeanImagePath=fullfile(saveMeanImageFolder,saveMeanImageName);
                         printtext=sprintf('print -dpng %s.png',saveMeanImagePath);
                         eval(printtext);
                         if strcmp(epochTitle,'test')
-                            [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLim]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,allDataVals,'mean across channels',length(allDataVals),sessionSorted1,sampleContrast,testContrast,calculateTangent,plotDiffC50_30,excludeSessHighSSE,excludeOutliers,[],startEndTime);
+                            [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLim]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,allDataVals,'mean across channels',length(allDataVals),sessionSorted1,sampleContrast,testContrast,calculateTangent,plotDiffC50_30,excludeSessHighSSE,excludeOutliers,[],startEndTime,slC50MatPathname,slSigmaMultiple,c50SigmaMultiple);
                             %collate CRF parameter values across periods
                             example_ch_54=0;
                             figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.8, 0.8]);
