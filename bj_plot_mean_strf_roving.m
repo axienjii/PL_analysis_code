@@ -1,0 +1,398 @@
+function bj_plot_mean_strf_roving(animal,area)
+%Written by Xing 10/02/12
+%Batch file for calculating spike activity during spontaneous and stimulus
+%presentation periods. Used for V1 roving sessions. The first time
+%this function is run, have to copy Cortex strf072s data files from blu-ray
+%discs as the files not previously stored on computer hard drive, for each session.
+%Once this is done manually, can change folder name to specifiy location on hard
+%drive. Data written to .mat file in folder F:\blanco\v4_1_strf_analysis,
+%consists of arrays for each channel, listing activity from each session
+%down rows. For each row, first column states session number. The following
+%72 columns contain values of activity during spontaneous period for each condition,
+%the next 72 contain values of activity during stim presentation period,
+%the next 72 for SD during spontan, the next 72 during stim, the next 72
+%contain SE for spontan, and the last 72 are SE during stim.
+%Each 72 values in sets of 12, corresponding to orientations. First 12 are
+%SF 1, next 12 are SF 2, then 3. First 36 are phase 0.5, last 36 are pahse
+%1.5.
+
+%Calls Alwin's function, STRF_script
+%BaseRates lists average spontaneous rates for each stimulus condition
+%BaseM is mean of BaseRates
+%BaseS is SD of BaseRates
+%BaseSE is SE of BaseRates
+%N is number of trials per condition
+%MRate is mean spike rate per condition, during spontaneous and
+%during stimulus-evoked periods
+%SRate is SD of spike rate per condition, during spontaneous and
+%during stimulus-evoked periods
+%SERate is SE of spike rate per condition, during spontaneous and
+%during stimulus-evoked periods
+
+% exceedCond=[];
+% twoSD=[];
+% for m=1:length(RC.MRate(:,:,1,2))
+%     if RC.MRate(1,m,1,2)>=RC.MRate(1,m,1,1)+2.58*RC.SRate(1,m,1,1)%find the first bin of 20 consecutive bins where smoothed sample-evoked activity is at least mean(spontan1) plus 2.58*SD of spontan1
+%         exceedCond=[exceedCond m];
+%     end
+%     twoSD=[twoSD 2.58*RC.SRate(1,m,1,1)];
+% end
+
+session = main_raw_sessions(animal,area);
+% cd F:\blanco\v1_2_strf_files
+% for j=1:length(sessionNums)
+% %     mkdir(num2str(sessionNums(j)));
+% end
+noSTRFFile=[405.1 405.2 406 414 416 418 420 433 434 433 441 443 451 456 459];
+meanAcrossSessions=1;
+printPlot=1;
+drawPlots=1;
+
+%V1
+channels = main_channels(animal,area);
+subfolder=[area,'_strf_analysis'];
+subfolderFiles=[area,'_strf_files'];
+folder=fullfile('F:','PL','STRF',animal);
+subfolderPath=fullfile(folder,subfolder);
+if ~exist(subfolderPath,'dir')
+    mkdir(subfolderPath)
+end
+extNum=1;%SF=[1 3 7]
+
+write_array=0;
+if write_array==1
+    for runSession=1:length(session)
+        if sum(session(runSession)==noSTRFFile)==0
+            extNum=get_strf_ext_number(session(runSession));
+            sprintf(num2str(session(runSession)))
+            sessionString=num2str(session(runSession));
+            NEVpath=nev_finder(animal,area,session(runSession));
+            for h=1:length(channels)
+                for strfSet=1:length(extNum)
+                    if extNum(strfSet)~=0
+                        if strncmp(area,'v1',2)
+                            sfText='103070';
+                        elseif strncmp(area,'v4',2)
+                            if strfSet==1
+                                sfText='122505';
+                            elseif strfSet==2
+                                sfText='102040';
+                            end
+                        end
+                        ch=channels(h);
+                        CTXname=['strf072s.',num2str(extNum(strfSet))];
+                        CTXpath = fullfile(folder,subfolderFiles,sessionString,CTXname);
+                        nseName=['SpikeCh_',num2str(ch),'_.nse'];
+                        NSEpath=fullfile('I:','pl_spnorm_nse',animal,num2str(session(runSession)),nseName);
+                        try
+                            RC=STRF_script_git2(CTXpath,NEVpath,NSEpath);
+                            chStr=[num2str(ch),'_',sfText,'_strf','.mat'];
+                            matFileText=fullfile(folder,subfolder,chStr);
+                            if length(RC.MRate(1,:))==144&&length(RC.SRate(1,:))==144&&length(RC.SERate(1,:))==144
+                                if exist(matFileText,'file')
+                                    matExists=1;
+                                    matArrayText=['load ',matFileText];
+                                    eval(matArrayText);
+                                    rowNum=find(strfArray(:,1)==session(runSession));
+                                    if ~isempty(rowNum)
+                                        strfArray(rowNum,1)=session(runSession);
+                                        strfArray(rowNum,2+432*(strfSet-1):145+432*(strfSet-1))=RC.MRate(1,:);%72 columns containing spontan rate, 72 containing stim-evoked rate
+                            strfArray(rowNum,146+432*(strfSet-1):289+432*(strfSet-1))=RC.SRate(1,:);%72 columns containing SD of spontan rate, 72 containing SD of stim-evoked rate
+                            strfArray(rowNum,290+432*(strfSet-1):433+432*(strfSet-1))=RC.SERate(1,:);%72 columns containing SE of spontan rate, 72 containing SE of stim-evoked rate
+                        else
+                                        appendArray=[session(runSession) RC.MRate(1,:) RC.SRate(1,:) RC.SERate(1,:)];%72 columns containing spontan rate, 72 containing stim-evoked rate%72 columns containing SD of spontan rate, 72 containing SD of stim-evoked rate%72 columns containing SE of spontan rate, 72 containing SE of stim-evoked rate
+                                        strfArray=[strfArray;appendArray];
+                                    end
+                                else
+                                    strfArray=[];
+                                    appendArray=[session(runSession) RC.MRate(1,:) RC.SRate(1,:) RC.SERate(1,:)];%72 columns containing spontan rate, 72 containing stim-evoked rate%72 columns containing SD of spontan rate, 72 containing SD of stim-evoked rate%72 columns containing SE of spontan rate, 72 containing SE of stim-evoked rate
+                                    strfArray=[strfArray;appendArray];
+                                end
+                            end
+                            matArrayText=['save ',matFileText,' strfArray'];
+                            eval(matArrayText);
+                        catch ME
+                            disp(ME)
+                            load F:\PL\STRF\missingSessions.mat missingSessions
+                            missingSessions=[missingSessions;{animal} {ch} {session(runSession)} {ME}];
+                            save F:\PL\STRF\missingSessions.mat missingSessions
+                        end                        
+                    end
+                end
+            end
+        end
+    end
+end
+
+plotGraphs=0;
+allV1sess=1;
+if plotGraphs==1
+    orientations=[0,15,30,45,60,75,90,105,120,135,150,165];
+    numOri=length(orientations);
+    drawSE=[0 1 -1];
+    lineStyleSE=['-' ':' ':'];
+    for i=1:length(channels)
+        lineColor=['r' 'g' 'b'];
+        if strncmp(area,'v1',2)
+            numSets=1;
+            sfTexts={'103070'};
+        elseif strncmp(area,'v4',2)
+            numSets=2;            
+            if strcmp(animal,'blanco')
+            sfTexts=[{'122505'} {'102040'}];
+            elseif strcmp(animal,'jack')
+            end
+        end
+        for whichSet=1:numSets%figure for lower SFs, then for higher SFs
+            meanStrfArray=[];
+            sponRate=[];
+            stimRate=[];%stim-evoked rate
+            sponSD=[];%SD of spontan rate
+            stimSD=[];%SD of stim-evoked rate
+            sponSE=[];%SE of spontan rate
+            stimSE=[];%SE of stim-evoked rate
+            stimRateSessions=[];
+            sfText=sfTexts{whichSet};
+            if strncmp(area,'v1',2)
+                chStr=[num2str(channels(i)),'_strf','.mat'];
+            elseif strncmp(area,'v4',2)
+                chStr=[num2str(channels(i)),'_strf','.mat'];
+            end
+            matFileText=fullfile(folder,subfolder,chStr);
+            if exist(matFileText,'file')
+                matArrayText=['load ',matFileText,' strfArray'];
+                eval(matArrayText);
+                strfArrayNR=strfArray;%non-roving data
+                if allV1sess==1&&strcmp(area,'v1_2')
+                    v1SubFolder='v1_1_strf_analysis';
+                    matFileText=fullfile(folder,v1SubFolder,chStr);
+                    if exist(matFileText,'file')
+                        matArrayText=['load ',matFileText,' strfArray'];
+                        eval(matArrayText);
+                        strfArray=[strfArrayNR;strfArray];%combine non-roving and roving data
+                    end
+                end
+                if whichSet==1
+                stimRateSessions=strfArray(:,2:433);%stim-evoked rate
+                else
+                stimRateSessions=strfArray(:,434:end);%stim-evoked rate
+                end
+                figure;
+                for plotNum=1:6
+                    subplot(2,3,plotNum);
+                    for row=1:size(stimRateSessions,1)
+                        plot(1:12,stimRateSessions(row,(plotNum-1)*12+1:plotNum*12)');hold on
+                    end
+                end
+                strfname=[num2str(channels(i)),'_',sfText,'_',area,'_not_averaged'];%[0.125 0.25 0.5 1 2 4] first 3 are set 1, last 3 are set 2
+                if allV1sess==1
+                    strfname=[num2str(channels(i)),'_',sfText,'_v1_1_and_v1_2_not_averaged'];%[0.125 0.25 0.5 1 2 4] first 3 are set 1, last 3 are set 2
+                end
+                strfPath=fullfile(subfolderPath,strfname);
+                printtext=sprintf('print -dpng %s',strfPath);
+                eval(printtext);
+                for rowNum=1:size(strfArray,1)
+                    if strfArray(rowNum,1)~=0
+                        if find(strfArray(1:end)~=0)
+                            sponRate=stimRateSessions(rowNum,1:72);%spontan rate
+                            stimRate=stimRateSessions(rowNum,73:144);%stim-evoked rate
+                            sponSD=stimRateSessions(rowNum,145:216);%SD of spontan rate
+                            stimSD=stimRateSessions(rowNum,217:288);%SD of stim-evoked rate
+                            sponSE=stimRateSessions(rowNum,289:360);%SE of spontan rate
+                            stimSE=stimRateSessions(rowNum,361:432);%SE of stim-evoked rate
+                            meanStrfArray=[meanStrfArray;channels(i) sponRate stimRate sponSD stimSD sponSE stimSE];
+                        end
+                    end
+                end         
+                meanArray(i,1:size(meanStrfArray,2))=mean(meanStrfArray);
+                sponRate=meanArray(i,1:72);%spontan rate
+                stimRate=meanArray(i,73:144);%stim-evoked rate
+                sponSE=zeros(1,72);%SE of spontan rate
+                stimSE=zeros(1,72);%SE of stim-evoked rate
+                maxRate=max([sponRate stimRate]);
+                if meanAcrossSessions==1
+                    for combination=1:6
+                        [Tuning_Amplitude(combination),Width(combination),Perc_Var_acc(combination), Prefered_Ori(combination), Bandwidth(combination), Baseline_FR(combination), pFit(combination)]=bj_Wrapped_Gaus_strf(stimRate(1+(combination-1)*12:12+(combination-1)*12),stimSE(1+(combination-1)*6:12+(combination-1)*6),combination);
+                    end
+                    subplot(2,3,1);
+                    if allV1sess==1&&strcmp(area,'v1_2')
+                        ptext=[animal,'_v1_1_and_v1_2_strf_analysis\',chStr];
+                    else
+                        ptext=[animal,'_',area,'_strf_analysis\',chStr];
+                    end
+                    yLimVals=get(gca,'YLim');
+                    xLimVals=get(gca,'XLim');
+                    text('Position',[xLimVals(1)-(xLimVals(2)-xLimVals(1))/2 yLimVals(2)+0.15*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
+                    meanstrfname=[num2str(channels(i)),'_',sfText,'_',area,'_fitted'];%[0.125 0.25 0.5 1 2 4] first 3 are set 1, last 3 are set 2
+                    if allV1sess==1&&strcmp(area,'v1_2')
+                        meanstrfname=[num2str(channels(i)),'_',sfText,'_v1_1_and_v1_2_fitted'];%[0.125 0.25 0.5 1 2 4] first 3 are set 1, last 3 are set 2
+                    end
+                    meanstrfPath=fullfile(subfolderPath,meanstrfname);
+                    printtext=sprintf('print -dpng %s',meanstrfPath);
+                    eval(printtext);
+                    saveTuningText=['save ',meanstrfPath,'.mat Tuning_Amplitude Width Perc_Var_acc Prefered_Ori Bandwidth Baseline_FR pFit'];
+                    eval(saveTuningText)
+                    if drawPlots==1
+                        figName=[chStr,'_responses',num2str(session)];
+                        figure('Name',figName,'Color',[1,1,1],'Units', 'Normalized', 'Position',[0.3,0.4-0.05*rowNum/size(strfArray,1), 0.6, 0.4]);%plot stim-evoked activity to each cond
+                        subplot(2,2,2);%stim-evoked rates, phase angle of 0.5 pi
+                        for j=1:3%plot 3 SF conditions
+                            for k=1:3%plot SE and main graph
+                                %                             lineSty=['''',lineStyleSE(k),''''];
+                                plot(orientations,stimRate((j-1)*numOri+1:j*numOri)+drawSE(k)*stimSE((j-1)*numOri+1:j*numOri),'Color',lineColor(j),'LineStyle',lineStyleSE(k));hold on
+                            end
+                        end
+                        title('stimulus-evoked activity:      0.5 pi phase angle                                    ');
+                        ylabel('activity (spikes/s)');
+                        xlabel([]);
+                        if maxRate>0
+                            ylim([0 maxRate]);
+                        end
+                        subplot(2,2,4);%stim-evoked rates, phase angle of 1.5 pi
+                        for j=1:3
+                            for k=1:3
+                                plot(orientations,stimRate((j+2)*numOri+1:(j+3)*numOri)+drawSE(k)*stimSE((j+2)*numOri+1:(j+3)*numOri),'Color',lineColor(j),'LineStyle',lineStyleSE(k));hold on
+                            end
+                        end
+                        title('1.5 pi phase angle');
+                        xlabel('orientation (degrees)');
+                        ylabel('activity (spikes/s)');
+                        set(gca,'xtickMode', 'auto')
+                        if maxRate>0
+                            ylim([0 maxRate]);
+                        end
+                        
+                        subplot(2,2,1);%spontan rates, phase angle of 0.5 pi
+                        for j=1:3
+                            for k=1:3
+                                plot(orientations,sponRate((j-1)*numOri+1:j*numOri)+drawSE(k)*sponSE((j-1)*numOri+1:j*numOri),'Color',lineColor(j),'LineStyle',lineStyleSE(k));hold on
+                            end
+                        end
+                        title('spontaneous activity:      0.5 pi phase angle                                     ');
+                        ylabel('activity (spikes/s)');
+                        xlabel([]);
+                        if maxRate>0
+                            ylim([0 maxRate]);
+                        end
+                        subplot(2,2,3);%spontan rates, phase angle of 1.5 pi
+                        for j=1:3
+                            for k=1:3
+                                plot(orientations,sponRate((j+2)*numOri+1:(j+3)*numOri)+drawSE(k)*sponSE((j+2)*numOri+1:(j+3)*numOri),'Color',lineColor(j),'LineStyle',lineStyleSE(k));hold on
+                            end
+                        end
+                        title('1.5 pi phase angle');
+                        xlabel('orientation (degrees)');
+                        ylabel('activity (spikes/s)');
+                        set(gca,'xtickMode', 'auto')
+                        if maxRate>0
+                            ylim([0 maxRate]);
+                        end
+                        if printPlot==1
+                            meanstrfname=[num2str(channels(i)),'_',sfText,'_',area,'_not_fitted'];%[0.125 0.25 0.5 1 2 4] first 3 are set 1, last 3 are set 2
+                            if allV1sess==1
+                                meanstrfname=[num2str(channels(i)),'_',sfText,'_v1_1_and_v1_2_not_fitted'];%[0.125 0.25 0.5 1 2 4] first 3 are set 1, last 3 are set 2
+                            end
+                            meanstrfnamePath=fullfile(subfolderPath,meanstrfname);
+                            printtext=sprintf('print -dpng %s',meanstrfnamePath);
+                            eval(printtext);
+                        end
+                    end
+                end
+            end
+        end
+        close all
+    end
+end
+
+if strncmp(area,'v1',2)
+    sfText='103070';
+end
+for i=1:length(channels)
+    if strncmp(area,'v1',2)
+        numSets=1;
+        sfTexts={'103070'};
+    else strncmp(area,'v4',2)
+        numSets=2;
+        sfTexts=[{'122505'} {'102040'}];
+    end
+    Tuning_AmplitudeTemp=[];WidthTemp=[];Perc_Var_accTemp=[];Prefered_OriTemp=[];BandwidthTemp=[];Baseline_FRTemp=[];pFitTemp=[];
+    for whichSet=1:numSets
+        if allV1sess==1&&strcmp(area,'v1_2')
+            meanstrfname=[num2str(channels(i)),'_',sfTexts{whichSet},'_v1_1_and_v1_2_fitted'];
+        else 
+            meanstrfname=[num2str(channels(i)),'_',sfTexts{whichSet},'_',area,'_fitted'];
+        end
+        meanstrfnamePath=fullfile(subfolderPath,meanstrfname);
+        loadTuningText=['load ',meanstrfnamePath,'.mat Tuning_Amplitude Width Perc_Var_acc Prefered_Ori Bandwidth Baseline_FR pFit'];
+        eval(loadTuningText)
+        Tuning_AmplitudeTemp=[Tuning_AmplitudeTemp Tuning_Amplitude];
+        WidthTemp=[WidthTemp Width];
+        Perc_Var_accTemp=[Perc_Var_accTemp Perc_Var_acc];
+        Prefered_OriTemp=[Prefered_OriTemp Prefered_Ori];
+        BandwidthTemp=[BandwidthTemp Bandwidth];
+        Baseline_FRTemp=[Baseline_FRTemp Baseline_FR];
+        pFitTemp=[pFitTemp pFit];
+    end
+    Tuning_Amplitude=Tuning_AmplitudeTemp;
+    Width=WidthTemp;
+    Perc_Var_acc=Perc_Var_accTemp;
+    Prefered_Ori=Prefered_OriTemp;
+    Bandwidth=BandwidthTemp;
+    Baseline_FR=Baseline_FRTemp;
+    pFit=pFitTemp;
+    goodFitInd=Perc_Var_acc>0;
+    Prefered_Ori_goodfit=Prefered_Ori(goodFitInd);%exclude instances where fit is poor
+    perc_var_goodfit=Perc_Var_acc(goodFitInd);
+    zeroOR180=round(Prefered_Ori_goodfit)==0;
+    if sum(zeroOR180)>0%if some fits yield a preferred orientation of 0/360, decide whether to use '0' or '180' during averaging process
+        if sum(Prefered_Ori_goodfit(~zeroOR180))>0
+                temp=find(Prefered_Ori_goodfit<90);
+                temp2=find(Prefered_Ori_goodfit>90);
+            if isempty(temp)
+                Prefered_Ori_goodfit(zeroOR180)=180;%the non-0/180 values are all at the high end of the range, have to convert zero values to 180. (values are 0 by default)                
+            end
+            if ~isempty(temp)&&~isempty(temp2)
+                Prefered_Ori_goodfit(temp2)=Prefered_Ori_goodfit(temp2)-180;%situations where there exist non-0/180 values towards BOTH extremes of the range, thus a simple averaging won't work- need to convert the values that are near 180 degrees to negative numbers                
+            end
+        end
+    end
+    bestOri=0;
+    for count=1:length(Prefered_Ori_goodfit)
+        bestOri=bestOri+Prefered_Ori_goodfit(count)*perc_var_goodfit(count);%the size of the contribution of each fit is proportionate to how good it it
+    end
+    meanOri=round(bestOri/sum(perc_var_goodfit));
+    if meanOri<0
+        meanOri=180+meanOri;
+    end
+    allChOri(i,1:2)=[channels(i) meanOri];
+end
+allChOri
+if allV1sess==1&&strcmp(area,'v1_2')
+    allPrefOriMat='v1_1_and_v1_2_allChOri.mat';
+else
+    allPrefOriMat=[area,'_allChOri.mat'];
+end
+allPrefOriPath=fullfile(folder,allPrefOriMat);
+saveText=['save ',allPrefOriPath,' allChOri'];
+eval(saveText)
+
+% meanArray=meanArray(find(meanArray(:,1)~=0),:);%remove empty rows
+% meanArrayText2=['save F:\blanco\v1_strf_analysis\',area,'_mean_strf.mat meanArray'];
+% if allV1sess==1
+%     meanArrayText2=['save F:\blanco\v1_all_strf_analysis\',area,'_mean_strf.mat meanArray'];
+% end
+% eval(meanArrayText2);
+% prefOri=zeros(size(meanArray,1),2);
+% for row=1:size(meanArray,1)
+%     [temp ind]=max(meanArray(row,74:145));%stim-evoked rate
+%     if mod(ind,12)==0
+%         prefOri(row,1:2)=[meanArray(row,1) orientations(end)];
+%     else
+%         prefOri(row,1:2)=[meanArray(row,1) orientations(mod(ind,12))];%channel number followed by preferred orientation
+%     end
+% end
+% meanArrayText3=['save F:\blanco\v1_strf_analysis\',area,'_prefOri.mat prefOri'];%preferred orientations for all channels
+% if allV1sess==1
+%     meanArrayText3=['save F:\blanco\v1_all_strf_analysis\',area,'_prefOri.mat prefOri'];
+% end
+% eval(meanArrayText3);
