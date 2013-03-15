@@ -12,7 +12,7 @@ end
 
 % This list needs to be extended for other pcs
 if ispc
-        root_ncs_folder = fullfile('N:', animal);
+        root_ncs_folder = fullfile('I:', animal);
 %         root_ncs_folder = fullfile('I:', animal, 'MehdiCheetahData');
 %     if strncmp(getComputerName(),'ALEX44',6)
 %         if strcmpi(animal,'blanco')

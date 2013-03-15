@@ -15,13 +15,13 @@ function jack_psycho_batch_V1
 %set accordingly:
 % monkeys=[{'blanco'} {'jack'}];
 % areas=[{'v4_1'} {'v4_2'} {'v1'}];
-roving=0;
+roving=1;
 readData=1;
 % for monkeyCount=1:2
 %     for areaCount=1:3
 %         monkey=monkeys{monkeyCount};
 %         area=areas{areaCount};
-        monkey='jack';area='v1_2';animal=monkey;
+        monkey='blanco';area='v1_2';animal=monkey;
         %no need to adjust:
         sampleContrast=30;
         appendText=[];
@@ -143,12 +143,18 @@ readData=1;
                         file_of_int='225234912.1';
                         %                 file_of_int='2223412f.1';
                     end
+                    if find(sessionNums(i)==splitSessions)
+                        splitSess=1;
+                    end
                     roving=1;
                     analysisFolderAppend='_4';
                 elseif sessionNums(i)>421&&sessionNums(i)<453
                     file_of_int='2223412f.1';
                     roving=1;
                     analysisFolderAppend='_5';
+                    if find(sessionNums(i)==splitSessions)
+                        splitSess=1;
+                    end
                 elseif sessionNums(i)>452&&sessionNums(i)<460
                     file_of_int='225234912.1';
                     roving=1;
@@ -184,7 +190,11 @@ readData=1;
                             cdText=['cd ','V:\thielelab\Groups\ThieleGroup\monkey_data\Jack\_jackgrid\j_',area,'_events_files\',num2str(sessionNums(i))];
                             eval(cdText);
                         elseif strcmp(monkey,'blanco')
-                            cdText=['cd ','F:\blanco\',area,'_events_files\',num2str(sessionNums(i))];
+                            if splitSess==1
+                                cdText=['cd ','F:\blanco\',area,'_events_files\',num2str(sessionNums(i)),'_1'];
+                            else
+                                cdText=['cd ','F:\blanco\',area,'_events_files\',num2str(sessionNums(i))];
+                            end
                             eval(cdText);
                         end
                         %             [vals]=blanco_2target_psycho_EV_v4_mex(file_of_int,sampleContrast,testContrast,sessionNums(i),folder);
@@ -196,7 +206,7 @@ readData=1;
                             vals=[vals;vals2];
                         end
                         savevals{sampleNum}=analyseVals2(vals,testContrast,conditions,sampleContrast,monkey,area,analysisFolderAppend,sessionNums(i),roving);
-                        splitSess=0;
+%                         splitSess=0;
                     end
                     valsFileName=['vals_',num2str(sessionNums(i)),'.mat'];
                     valsFolder=fullfile('F:','PL','vals_perf',animal,valsFileName); %#ok<NASGU>

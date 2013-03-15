@@ -40,7 +40,7 @@ if ispc
             sessions = [360 361 362 363 364];%have to restore and play back 362 from tape
             
         case ['blanco','v1_2']
-            sessions = [388:401 403:422 431:434 435 436:443 450:459]; %no flankers: 388 to 422. flankers: 431:452 no flankers: 453 to 459
+            sessions = [388:401 403:422 431:434 435 436:443 451:459]; %no flankers: 388 to 422. flankers: 431:452 no flankers: 453 to 459
             
         case ['jack','v4']
             % All present and correct

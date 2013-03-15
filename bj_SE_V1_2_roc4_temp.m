@@ -74,6 +74,9 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
         nsePath=fullfile('I:','pl_spnorm_nse',animal,num2str(session),nseName);
         [SE_TimeStamps,missing]=open_nse_file(nsePath);
     end
+    if session==451&&channel==46
+        missing=1;
+    end
     if missing==0
         for k=1:length(sampleContrasts)
             sampleContrast=sampleContrasts(k);
@@ -86,10 +89,6 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
             lengthBinsOver53=0;lengthBinsOver100=0;
             minBins=zeros(1,5)+56;%arbitrarily large number
             mean_act=zeros(numconds,5);
-            if session==451
-                a=find(vals(:,:)>=SE_TimeStamps(1));
-                vals=vals(a(1):end,:);
-            end
             all_spontan=[];all_sample=[];all_fix2=[];all_test=[];all_fix3=[];
             cond_arr=[];
             numTrialsCond=zeros(1,numconds);
@@ -114,6 +113,10 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                         valsPath=fullfile('F:','PL','vals_perf',animal,valsFileName);
                         load(valsPath);
                     end
+                    if ~exist('vals','var')
+                        channel
+                        session
+                    end
                     if length(sampleContrasts)==3
                         if sampleContrast==30
                             vals=vals{1};
@@ -123,6 +126,10 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                             vals=vals{3};
                         end
                     end
+%                     if session==451
+%                         a=find(vals(:,:)>=SE_TimeStamps(1));
+%                         vals=vals(a(1):end,:);
+%                     end
                     for i=1:size(vals,1)
                         not_artifact_trial=isempty(find(vals(i,1)==removeTrialsTimestamps(:,1), 1))&&isempty(find(vals(i,21)==removeTrialsTimestamps(:,2), 1));
                         if not_artifact_trial
