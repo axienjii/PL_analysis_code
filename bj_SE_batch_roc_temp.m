@@ -33,7 +33,7 @@ if nargin<7
 end
 
 % for iter = icopy:ncopies:(length(channels)*length(sessions))    
-for iter = icopy:(length(channels)*length(sessions)) 
+parfor iter = icopy:(length(channels)*length(sessions)) 
     if iter<istart
         continue;
     end    
@@ -94,14 +94,21 @@ for iter = icopy:(length(channels)*length(sessions))
     end
     for i=1:length(sampleContrasts)
         printFileName=['F:\PL\PSTHs\',animal,'\',num2str(channel),'\png\',num2str(channel),'_',num2str(session),'_',num2str(sampleContrasts(i)),'.png'];
-        if~exist(printFileName,'file')
+%         if ~exist(printFileName,'file')
             figFileName=['F:\PL\PSTHs\',animal,'\',num2str(channel),'\fig\',num2str(channel),'_',num2str(session),'_',num2str(sampleContrasts(i)),'.fig'];
+            try
             uiopen(figFileName,1)
             for j=1:2
                 printFileName=['F:\PL\PSTHs\',animal,'\',num2str(channel),'\',formats{j},'\',num2str(channel),'_',num2str(session),'_',num2str(sampleContrasts(i)),'.',formats{j}];
                 print(sprintf('-d%s',formats{j}),'-r300',printFileName)
             end
-        end
+            catch ME               
+                disp(ME)
+                load F:\PL\PSTHs\missingFigSessions.mat missingSessions
+                missingSessions=[missingSessions;{animal} {channel} {session} {ME}];
+                save F:\PL\STRF\missingSessions.mat missingSessions
+            end
+%         end
         close all
     end
 end

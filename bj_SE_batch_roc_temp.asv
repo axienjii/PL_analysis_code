@@ -15,12 +15,12 @@ function bj_SE_batch_roc_temp(animal,area,channels,sessions,icopy,ncopies,istart
 % animal='jack';
 % area='v1_2';
 verbose=0;
-rewriteSessions=0;
+rewriteSessions=1;
 if nargin<3 || isempty(channels)
     channels = main_channels(animal,area);
 end
 if nargin<4 || isempty(sessions)
-    sessions = main_raw_sessions(animal,area);
+    sessions = main_raw_sessions_final(animal,area);
 end
 if nargin<5
     icopy = 1;
@@ -93,11 +93,22 @@ for iter = icopy:(length(channels)*length(sessions))
         sampleContrasts=30;
     end
     for i=1:length(sampleContrasts)
-        figFileName=['F:\PL\PSTHs\',animal,'\',num2str(channel),'\fig\',num2str(channel),'_',num2str(session),'_',num2str(sampleContrasts(i)),'.fig'];
-        uiopen(figFileName,1)
-        for j=1:2
-            printFileName=['F:\PL\PSTHs\',animal,'\',num2str(channel),'\',formats{j},'\',num2str(channel),'_',num2str(session),'_',num2str(sampleContrasts(i)),'.',formats{j}];
-            print(sprintf('-d%s',formats{j}),'-r150',printFileName)
-        end
+        printFileName=['F:\PL\PSTHs\',animal,'\',num2str(channel),'\png\',num2str(channel),'_',num2str(session),'_',num2str(sampleContrasts(i)),'.png'];
+%         if ~exist(printFileName,'file')
+            figFileName=['F:\PL\PSTHs\',animal,'\',num2str(channel),'\fig\',num2str(channel),'_',num2str(session),'_',num2str(sampleContrasts(i)),'.fig'];
+            try
+            uiopen(figFileName,1)
+            for j=1:2
+                printFileName=['F:\PL\PSTHs\',animal,'\',num2str(channel),'\',formats{j},'\',num2str(channel),'_',num2str(session),'_',num2str(sampleContrasts(i)),'.',formats{j}];
+                print(sprintf('-d%s',formats{j}),'-r300',printFileName)
+            end
+            catch(ME)                
+                            disp(ME)
+                            load F:\PL\PSTH\missingFigSessions.mat missingSessions
+                            missingSessions=[missingSessions;{animal} {ch} {session(runSession)} {ME}];
+                            save F:\PL\STRF\missingSessions.mat missingSessions
+            end
+%         end
+        close all
     end
 end
