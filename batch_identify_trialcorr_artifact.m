@@ -49,7 +49,7 @@ parfor iter = icopy:ncopies:length(sessions)
     fclose all;
 end
 
-initialThreshDrawing=1;
+initialThreshDrawing=0;
 if initialThreshDrawing==1
     plotFigs=1;
     allNumRemoveTrials=sessions';
