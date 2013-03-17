@@ -1,4 +1,4 @@
-function sessions = main_raw_sessions_final(animal, area, expt_type)
+function sessions = main_raw_sessions_final(animal, area, expt_type, horz)
 % A good set of raw sessions to analyse
 % For all of these,
 % sample = 30;
@@ -21,11 +21,17 @@ if ispc
             % sessions which actually exist.
             %                 sessions = intersect(sessions,unique(floor(sessions_available(animal,area))));
             % sessions is really
-            sessions = [307 308 , 311 , 313 314 , 317 318 , 320 321 , 329:342];
+            sessions = [307 308 , 311 , 313 314 , 317 318 , 320 321 , 329:341];
+            if horz==1
+                sessions = [307 308 , 311 , 313 314 , 317 318 , 320 321 , 329:342];
+            end
             %                 sessions = 329:341;
             %                 conditions = [10 15 20 25 27 28 29 31 32 33 35 40 50 60];
         case ['blanco','v4_1']
-            sessions = [307 308 , 311 , 313 314 , 317 318 , 320 321 , 329:342];
+            sessions = [307 308 , 311 , 313 314 , 317 318 , 320 321 , 329:341];
+            if horz==1
+                sessions = [307 308 , 311 , 313 314 , 317 318 , 320 321 , 329:342];
+            end
             
         case ['blanco','v1']
             % NB: session 355 is in two parts; 355_1 and 355_2
@@ -44,12 +50,18 @@ if ispc
             
         case ['jack','v4']
             % All present and correct
-            sessions = [24 25 27:50];
+            sessions = [24 25 27:49];
+            if horz==1
+                sessions = [24 25 27:50];
+            end
             %                 conditions = [10 15 20 25 27 28 29 31 32 33 35 40 50 60];
             
         case ['jack','v4_1']
             % All present and correct
-            sessions = [24 25 27:50];
+            sessions = [24 25 27:49];
+            if horz==1
+                sessions = [24 25 27:50];
+            end
             
         case ['jack','v1']
             % All present and correct
