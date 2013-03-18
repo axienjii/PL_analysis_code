@@ -28,6 +28,7 @@ for i=1:length(matTexts)
     loadText=['load ',matPath,' ',matTexts{i}];
     eval(loadText);
 end
+allDist=trans_allDist;
 
 sessionNums=main_raw_sessions_final(animal,area,[],0);
 channels=[grandTrialsList{:,1}];
@@ -63,8 +64,11 @@ for i=1:size(newCItable,1)
             printFlag=1;
             set(gcf,'Color',[1,1,1],'Units', 'Normalized', 'Position',[0.05,0.05, 0.9, 0.9]);
             ptext=sprintf('w: comparing sessions within a cell         b: across cells');
-            text('Position',[-15 -5],'FontSize',9,'String',ptext);
-            printtext=sprintf('print -dpng 95_CI_barplots1');
+            text('Position',[-15 -2],'FontSize',9,'String',ptext);
+            imageName=['95_CI_barplots1_',area];
+            imageFolder=fullfile('F:','PL','xcorr',animal,subfolder);
+            imagePath=fullfile(imageFolder,imageName);
+            printtext=['print -dpng ',imagePath];
             set(gcf,'PaperPositionMode','auto')
             eval(printtext);
             figure('Color',[1,1,1],'Units', 'Normalized', 'Position',[0.05,0.05, 0.9, 0.9]);
@@ -95,15 +99,15 @@ for i=1:size(newCItable,1)
             if i==1||i==floor(size(newCItable,1)/2)+1
                 title(sessionNums(j));
                 if j==1
-                    ptext=sprintf('proportion of correlation coefs within CI     %s',folder);
-                    text('Position',[-2 3.5],'FontSize',9,'String',ptext);
+                    ptext=sprintf('proportion of correlation coefs within CI     %s',matPath);
+                    text('Position',[-2 2.5],'FontSize',9,'String',ptext);
                 end
             end
         end
     end
 end
 ptext=sprintf('w: comparing sessions within a cell         b: across cells');
-text('Position',[-15 -5],'FontSize',9,'String',ptext);
+text('Position',[-15 -2],'FontSize',9,'String',ptext);
 imageName=['95_CI_barplots2_',area];
 imageFolder=fullfile('F:','PL','xcorr',animal,subfolder);
 imagePath=fullfile(imageFolder,imageName);
@@ -161,7 +165,7 @@ for i=1:size(newCItable,1)
             if i==1||i==floor(size(newCItable,1)/2)+1
                 title(sessionNums(j));
                 if j==1
-                    ptext=sprintf('proportion of correlation coefs within CI     %s',folder);
+                    ptext=sprintf('proportion of correlation coefs within CI     %s',matPath);
                     text('Position',[-2 3.5],'FontSize',9,'String',ptext);
                 end
             end
@@ -190,9 +194,9 @@ for stdCount=1:length(numStds)
                         meanBootC=mean(allDist{rowCount,3});
                         stdC=std(allDist{rowCount,3});
                         all_sessions=grandTrialsList{i,3};
-                        sessions=all_sessions(all_sessions~=allDist{rowCount,2});
                         all_sessions(all_sessions==3551)=355;all_sessions(all_sessions==3552)=355.5;
-                        sessions(sessions==3551)=355;sessions(sessions==3552)=355.5;
+                        orderedSessions=1:length(all_sessions);
+                        sessions=orderedSessions(all_sessions~=allDist{rowCount,2});
                         withinCount=0;
                         for k=1:length(allDist{rowCount,4})
                             if allDist{rowCount,4}(k)<=meanBootC+numStds(stdCount)*stdC&&allDist{rowCount,4}(k)>=meanBootC-numStds(stdCount)*stdC%check whether value of coef falls within 2 SDs
@@ -202,9 +206,9 @@ for stdCount=1:length(numStds)
                                 plot(sessions(k),yCount,'x','Color',[0.7 0.7 0.7]);hold on
                             end
                         end
-                        text('Position',[all_sessions(end)+1+0.03*(all_sessions(end)+2-all_sessions(1)) yCount],'FontSize',8,'String',num2str(withinCount),'Color','k');
+                        text('Position',[length(all_sessions)+1+0.03*(length(all_sessions)+2) yCount],'FontSize',8,'String',num2str(withinCount),'Color','k');
                         yCount=yCount+1;
-                        ySessions=[ySessions allDist{rowCount,2}];
+                        ySessions=[ySessions orderedSessions(find(all_sessions==allDist{rowCount,2}))];
                     end
                 end
             end
@@ -213,17 +217,17 @@ for stdCount=1:length(numStds)
             set(gca,'YTickLabel',ySessions);
             set(gca,'YLim',[0 yCount]);
             set(gca,'YDir','reverse')
-            set(gca,'XTick',all_sessions);
-            set(gca,'XTickLabel',all_sessions);
-            set(gca,'XLim',[all_sessions(1)-1 all_sessions(end)+1]);
+            set(gca,'XTick',1:length(all_sessions));
+            set(gca,'XTickLabel',1:length(all_sessions));
+            set(gca,'XLim',[0 length(all_sessions)+1]);
             ptext=sprintf('%s            # of trials per bootstrapped CI: %d',num2str(grandTrialsList{i,1}),length(allDist{i,3}));
-            text('Position',[all_sessions(1)-1 -(yCount-1)/20],'FontSize',9,'String',ptext);
+            text('Position',[-1 -(yCount-1)/20],'FontSize',9,'String',ptext);
             ptext2=sprintf('outside %d%% CI',percent(stdCount));
             ptext3=sprintf('within   %d%% CI',percent(stdCount));
-            text('Position',[all_sessions(1)+(all_sessions(end)-all_sessions(1))/2 -(yCount-1)/40],'FontSize',9,'String',ptext2,'Color','k');
-            text('Position',[all_sessions(1)+(all_sessions(end)-all_sessions(1))/2 -(yCount-1)/15],'FontSize',9,'String',ptext3,'Color','r');
+            text('Position',[length(all_sessions)/2 -(yCount-1)/40],'FontSize',9,'String',ptext2,'Color','k');
+            text('Position',[length(all_sessions)/2 -(yCount-1)/15],'FontSize',9,'String',ptext3,'Color','r');
             tallyText=sprintf('tally (%d)',length(all_sessions)-1);
-            text('Position',[all_sessions(end)+1+0.02*(all_sessions(end)+2-all_sessions(1)) 0],'FontSize',8,'String',tallyText,'Color','k');
+            text('Position',[length(all_sessions)+1+0.02*(length(all_sessions)+2) 0],'FontSize',8,'String',tallyText,'Color','k');
             channel=num2str(grandTrialsList{i,1});
             imageName=[num2str(channel),'_',num2str(percent(stdCount)),'_',area,'_CI_table'];
             imageFolder=fullfile('F:','PL','xcorr',animal,subfolder);

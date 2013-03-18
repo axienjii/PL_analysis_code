@@ -1,4 +1,4 @@
-function read_bj_SE_xcorr5skew(animal,area)
+function read_bj_SE_xcorr5skew(animal,area,sessionNums)
 %Written by Xing 16/09/10, slightly modified on 20/09/10 to accept 2nd
 %input arg. Further modified on 18/10/10 to calculate best fit line to data
 %points with polyfit and write slope to 7th column in allDist.mat array,
@@ -54,7 +54,9 @@ loadText=['load ',matDistPath,' trans_allDist'];
 eval(loadText);
 allDist=trans_allDist;
 
-sessionNums=main_raw_sessions_final(animal,area,[],0);
+if nargin<3 || isempty(sessionNums)
+    sessionNums = main_raw_sessions_final(animal,area,[],0);
+end
 numSessions=length(sessionNums);
 CItable=zeros(size(grandTrialsList,1),length(sessionNums),4)-1;
 numStds=[1.96];
@@ -100,10 +102,10 @@ for i=1:size(allDist,1)
             line([0 numSessions],[meanBootC+numStds(k)*stdC meanBootC+numStds(k)*stdC],'LineStyle','--','Color','k');hold on
             line([0 numSessions],[meanBootC-numStds(k)*stdC meanBootC-numStds(k)*stdC],'LineStyle','--','Color','k');hold on
         end
-        plot(1:1:numSessions-1,allDist{i,4},'kx','MarkerSize',12);hold on
+        plot(1:1:length(allDist{i,4}),allDist{i,4},'kx','MarkerSize',12);hold on
         plot(0,meanBootC,'k*');hold on
-        constants=polyfit(sessions,allDist{i,4},1);%fit best straight line to data points (least squares method)
-        fitLine=constants(1)*all_sessions+constants(2);
+        constants=polyfit(1:1:length(allDist{i,4}),allDist{i,4},1);%fit best straight line to data points (least squares method)
+        fitLine=constants(1)*[1:1:length(allDist{i,4})]+constants(2);
 %         plot(0:1:numSessions-1,fitLine,'k:');hold on
         set(gca,'XLim',[0 numSessions]);
         set(gca,'XTick',0:5:numSessions);

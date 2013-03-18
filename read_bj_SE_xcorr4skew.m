@@ -1,4 +1,4 @@
-function read_bj_SE_xcorr4skew(animal,area)
+function read_bj_SE_xcorr4skew(animal,area,channels,sessionNums)
 %Written by Xing 16/09/10
 %Set the minimum number of trials in this function with ‘mintrials,’ for
 %data from a particular session to be included.
@@ -57,8 +57,12 @@ function read_bj_SE_xcorr4skew(animal,area)
 minusSpontan=0;
 sigma=8;
 %combine PSTH activity values across channels and sessions:
-sessionNums=main_raw_sessions_final(animal,area,[],0);
-channels=main_channels(animal,area);
+if nargin<3 || isempty(channels)
+    channels = main_channels(animal,area);
+end
+if nargin<4 || isempty(sessionNums)
+    sessionNums = main_raw_sessions_final(animal,area,[],0);
+end
 [sampleContrasts allTestContrasts]=area_metadata(area);
 highestTestCond=size(allTestContrasts,2);
 if minusSpontan==1

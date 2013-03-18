@@ -105,9 +105,9 @@ for row=1:size(allSlopes,1)
     set(gca,'YTick',[ceil(min(allSlopes{row,2})*1000)/1000 floor(max(allSlopes{row,2})*1000)/1000]);
     set(gca,'YTickLabel',[ceil(min(allSlopes{row,2})*1000)/1000 floor(max(allSlopes{row,2})*1000)/1000]);
     ptext1=[' R=',num2str(coefficients1(1,2))];
-    text('Position',[0 max(allSlopes{row,2})-0.1*(max(allSlopes{row,2})-min(allSlopes{row,2}))],'FontSize',7,'String',ptext1);
+    text('Position',[0 size(allSlopes,1)-0.1*size(allSlopes,1)],'FontSize',7,'String',ptext1);
     ptext2=[' p=',num2str(p1(1,2))];
-    text('Position',[0 max(allSlopes{row,2})-0.2*(max(allSlopes{row,2})-min(allSlopes{row,2}))],'FontSize',7,'String',ptext2);
+    text('Position',[0 size(allSlopes,1)-0.2*size(allSlopes,1)],'FontSize',7,'String',ptext2);
     if row==1
         ptext=sprintf('%s    %s',matPath,area);
         orient landscape
