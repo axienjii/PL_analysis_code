@@ -2,8 +2,8 @@ function vals=analyseVals2(vals,testContrast,conditions,sampleContrast,monkey,ar
 
 writeWeibullPsycho=0;%remember to set correct directory!
 savePsychoCurves=1;
-writeMeanPerf=0;
-writeNumTrials=0;
+writeMeanPerf=1;
+writeNumTrials=1;
 numconds=length(testContrast);
 %     perf_bins=zeros(numconds,length(bins));%max num of trials per condition manually set to 300- adjust as needed
 perf=zeros(numconds,4);
@@ -219,33 +219,48 @@ round(durations)
 %         set(gca,'FontSize',[6],'YLim',[0,1.01],'XLim',[0,testContrast(end)+10],'YTickMode','manual');%'YTick',[0.1]
 %     end
 
-currdir=cd
-if strcmp(monkey,'jack')
-    cdText=['cd F:\jack\j_',area,'_roc_analysis',analysisFolderAppend];
-elseif strcmp(monkey,'blanco')
-    cdText=['cd F:\blanco\',area,'_roc_analysis',analysisFolderAppend];
-end
-eval(cdText)
 if writeMeanPerf==1
-    loadText=['load allMeanPerf_',num2str(sampleContrast),'.mat allMeanPerf'];
-    eval(loadText)
+    matPath=['F:\PL\psycho_data\',monkey,'\allMeanPerf_',area,'_',num2str(sampleContrast),'.mat'];
+    if ~exist(matPath,'file')
+        allMeanPerf=[];
+    else
+        loadText=['load ',matPath,' allMeanPerf'];
+        eval(loadText)
+    end
     if ~isempty(allMeanPerf)
         sessionInd=find(allMeanPerf(:,1)==session);
         if ~isempty(sessionInd)
-            allMeanPerf(sessionInd,:)=[session mean_perf_bins(1) prop_corr(1,:) PSE(1) allX(1,1) allX(1,3) allX(1,4) all_ave_RT(1) all_std_RT(1) mean_RT_conds(:,1)' mean_RT_conds(:,2)' durations(:,1)' durations(:,2)' all_ave_RTerror(1) all_std_RTerror(1) mean_RTerror_conds(:,1)' mean_RTerror_conds(:,2)' meanRTce stdRTce mean_perf_bins(2) prop_corr(2,:) PSE(2) allX(2,1) allX(2,3) allX(2,4) all_ave_RT(2) all_std_RT(2) mean_perf_bins(3) prop_corr(3,:) PSE(3) allX(3,1) allX(3,3) allX(3,4) all_ave_RT(3) all_std_RT(3)];
+            if sessSegments==1
+                allMeanPerf(sessionInd,:)=[session mean_perf_bins(1) prop_corr(1,:) PSE(1) allX(1,1) allX(1,3) allX(1,4) all_ave_RT(1) all_std_RT(1) mean_RT_conds(:,1)' mean_RT_conds(:,2)' durations(:,1)' durations(:,2)' all_ave_RTerror(1) all_std_RTerror(1) mean_RTerror_conds(:,1)' mean_RTerror_conds(:,2)' meanRTce stdRTce ];
+            elseif sessSegments==3
+                allMeanPerf(sessionInd,:)=[session mean_perf_bins(1) prop_corr(1,:) PSE(1) allX(1,1) allX(1,3) allX(1,4) all_ave_RT(1) all_std_RT(1) mean_RT_conds(:,1)' mean_RT_conds(:,2)' durations(:,1)' durations(:,2)' all_ave_RTerror(1) all_std_RTerror(1) mean_RTerror_conds(:,1)' mean_RTerror_conds(:,2)' meanRTce stdRTce mean_perf_bins(2) prop_corr(2,:) PSE(2) allX(2,1) allX(2,3) allX(2,4) all_ave_RT(2) all_std_RT(2) mean_perf_bins(3) prop_corr(3,:) PSE(3) allX(3,1) allX(3,3) allX(3,4) all_ave_RT(3) all_std_RT(3)];
+            end
         else
-            allMeanPerf=[allMeanPerf;session mean_perf_bins(1) prop_corr(1,:) PSE(1) allX(1,1) allX(1,3) allX(1,4) all_ave_RT(1) all_std_RT(1) mean_RT_conds(:,1)' mean_RT_conds(:,2)' durations(:,1)' durations(:,2)' all_ave_RTerror(1) all_std_RTerror(1) mean_RTerror_conds(:,1)' mean_RTerror_conds(:,2)' meanRTce stdRTce mean_perf_bins(2) prop_corr(2,:) PSE(2) allX(2,1) allX(2,3) allX(2,4) all_ave_RT(2) all_std_RT(2) mean_perf_bins(3) prop_corr(3,:) PSE(3) allX(3,1) allX(3,3) allX(3,4) all_ave_RT(3) all_std_RT(3)];
+            if sessSegments==1
+                allMeanPerf=[allMeanPerf;session mean_perf_bins(1) prop_corr(1,:) PSE(1) allX(1,1) allX(1,3) allX(1,4) all_ave_RT(1) all_std_RT(1) mean_RT_conds(:,1)' mean_RT_conds(:,2)' durations(:,1)' durations(:,2)' all_ave_RTerror(1) all_std_RTerror(1) mean_RTerror_conds(:,1)' mean_RTerror_conds(:,2)' meanRTce stdRTce];
+            elseif sessSegments==3
+                allMeanPerf=[allMeanPerf;session mean_perf_bins(1) prop_corr(1,:) PSE(1) allX(1,1) allX(1,3) allX(1,4) all_ave_RT(1) all_std_RT(1) mean_RT_conds(:,1)' mean_RT_conds(:,2)' durations(:,1)' durations(:,2)' all_ave_RTerror(1) all_std_RTerror(1) mean_RTerror_conds(:,1)' mean_RTerror_conds(:,2)' meanRTce stdRTce mean_perf_bins(2) prop_corr(2,:) PSE(2) allX(2,1) allX(2,3) allX(2,4) all_ave_RT(2) all_std_RT(2) mean_perf_bins(3) prop_corr(3,:) PSE(3) allX(3,1) allX(3,3) allX(3,4) all_ave_RT(3) all_std_RT(3)];
+            end
         end
     else
         allMeanPerf=[];
-        allMeanPerf=[allMeanPerf;session mean_perf_bins(1) prop_corr(1,:) PSE(1) allX(1,1) allX(1,3) allX(1,4) all_ave_RT(1) all_std_RT(1) mean_RT_conds(:,1)' mean_RT_conds(:,2)' durations(:,1)' durations(:,2)' all_ave_RTerror(1) all_std_RTerror(1) mean_RTerror_conds(:,1)' mean_RTerror_conds(:,2)' meanRTce stdRTce mean_perf_bins(2) prop_corr(2,:) PSE(2) allX(2,1) allX(2,3) allX(2,4) all_ave_RT(2) all_std_RT(2) mean_perf_bins(3) prop_corr(3,:) PSE(3) allX(3,1) allX(3,3) allX(3,4) all_ave_RT(3) all_std_RT(3)];
+        if sessSegments==1
+            allMeanPerf=[allMeanPerf;session mean_perf_bins(1) prop_corr(1,:) PSE(1) allX(1,1) allX(1,3) allX(1,4) all_ave_RT(1) all_std_RT(1) mean_RT_conds(:,1)' mean_RT_conds(:,2)' durations(:,1)' durations(:,2)' all_ave_RTerror(1) all_std_RTerror(1) mean_RTerror_conds(:,1)' mean_RTerror_conds(:,2)' meanRTce stdRTce];
+        elseif sessSegments==3
+            allMeanPerf=[allMeanPerf;session mean_perf_bins(1) prop_corr(1,:) PSE(1) allX(1,1) allX(1,3) allX(1,4) all_ave_RT(1) all_std_RT(1) mean_RT_conds(:,1)' mean_RT_conds(:,2)' durations(:,1)' durations(:,2)' all_ave_RTerror(1) all_std_RTerror(1) mean_RTerror_conds(:,1)' mean_RTerror_conds(:,2)' meanRTce stdRTce mean_perf_bins(2) prop_corr(2,:) PSE(2) allX(2,1) allX(2,3) allX(2,4) all_ave_RT(2) all_std_RT(2) mean_perf_bins(3) prop_corr(3,:) PSE(3) allX(3,1) allX(3,3) allX(3,4) all_ave_RT(3) all_std_RT(3)];
+        end
     end
-    saveText=['save allMeanPerf_',num2str(sampleContrast),'.mat allMeanPerf'];
+    saveText=['save F:\PL\psycho_data\',monkey,'\allMeanPerf_',area,'_',num2str(sampleContrast),'.mat allMeanPerf'];
     eval(saveText)
 end
 if writeNumTrials==1
-    loadText=['load allNumTrials_',num2str(sampleContrast),'.mat perfAll'];
-    eval(loadText)
+    matPath=['F:\PL\psycho_data\',monkey,'\allNumTrials_',area,'_',num2str(sampleContrast),'.mat'];
+    if ~exist(matPath,'file')
+        perfAll=[];
+    else
+        loadText=['load F:\PL\psycho_data\',monkey,'\allNumTrials_',area,'_',num2str(sampleContrast),'.mat perfAll'];
+        eval(loadText)
+    end
     if ~isempty(perfAll)
         sessionInd=find(perfAll(:,1)==session);
         if ~isempty(sessionInd)
@@ -257,9 +272,6 @@ if writeNumTrials==1
         perfAll=[];
         perfAll=[perfAll;session perf(:,1)' sum(perf(:,1))];
     end
-    saveText=['save allNumTrials_',num2str(sampleContrast),'.mat perfAll'];
+    saveText=['save F:\PL\psycho_data\',monkey,'\allNumTrials_',area,'_',num2str(sampleContrast),'.mat perfAll'];
     eval(saveText)
 end
-chdirtext=sprintf('cd ''%s''',currdir);
-eval(chdirtext);
-cd

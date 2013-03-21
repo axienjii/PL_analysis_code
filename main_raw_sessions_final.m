@@ -80,6 +80,12 @@ if ispc
             
         case ['jack','v1_2']
             sessions = 78:120; % 
+            
+        case ['jack','v1_3']
+            sessions = []; % BU/PL task
+            
+        case ['jack','v1_4']
+            sessions = 140:182; % control task with stimuli at Blanco's V1 location
     end
 else
     switch expt_type
