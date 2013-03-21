@@ -57,7 +57,7 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
     elseif length(sampleContrasts)==14
         sampleContrasts=30;
         roving=0;
-        allConditions=[1:12];
+        allConditions=1:14;
     end    
     
     nseName=['SpikeCh_',num2str(channel),'_.nse'];
@@ -73,9 +73,6 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
     else
         nsePath=fullfile('I:','pl_spnorm_nse',animal,num2str(session),nseName);
         [SE_TimeStamps,missing]=open_nse_file(nsePath);
-    end
-    if session==451&&channel==46
-        missing=1;
     end
     if missing==0
         for k=1:length(sampleContrasts)
