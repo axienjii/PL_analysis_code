@@ -1,5 +1,8 @@
 function bj_plot_mean_strf_roving(animal,area)
 %Written by Xing 10/02/12
+%After running this function, call bj_coltuning_plotvectors to plot vectors
+%of orientation preferences in a figure, across subjects and recording
+%locations.
 %Batch file for calculating spike activity during spontaneous and stimulus
 %presentation periods. Used for V1 roving sessions. The first time
 %this function is run, have to copy Cortex strf072s data files from blu-ray
@@ -86,7 +89,8 @@ if write_array==1
                         NSEpath=fullfile('I:','pl_spnorm_nse',animal,num2str(session(runSession)),nseName);
                         try
                             RC=STRF_script_git2(CTXpath,NEVpath,NSEpath);
-                            chStr=[num2str(ch),'_',sfText,'_strf','.mat'];
+%                             chStr=[num2str(ch),'_',sfText,'_strf','.mat'];
+                            chStr=[num2str(ch),'_strf','.mat'];
                             matFileText=fullfile(folder,subfolder,chStr);
                             if length(RC.MRate(1,:))==144&&length(RC.SRate(1,:))==144&&length(RC.SERate(1,:))==144
                                 if exist(matFileText,'file')
@@ -94,12 +98,12 @@ if write_array==1
                                     matArrayText=['load ',matFileText];
                                     eval(matArrayText);
                                     rowNum=find(strfArray(:,1)==session(runSession));
-                                    if ~isempty(rowNum)
+                                    if ~isempty(rowNum)%if 3 SFs tested in total, writes these results to mat array. if 6 SFs tested, writes double the number of columns to mat array
                                         strfArray(rowNum,1)=session(runSession);
                                         strfArray(rowNum,2+432*(strfSet-1):145+432*(strfSet-1))=RC.MRate(1,:);%72 columns containing spontan rate, 72 containing stim-evoked rate
-                            strfArray(rowNum,146+432*(strfSet-1):289+432*(strfSet-1))=RC.SRate(1,:);%72 columns containing SD of spontan rate, 72 containing SD of stim-evoked rate
-                            strfArray(rowNum,290+432*(strfSet-1):433+432*(strfSet-1))=RC.SERate(1,:);%72 columns containing SE of spontan rate, 72 containing SE of stim-evoked rate
-                        else
+                                        strfArray(rowNum,146+432*(strfSet-1):289+432*(strfSet-1))=RC.SRate(1,:);%72 columns containing SD of spontan rate, 72 containing SD of stim-evoked rate
+                                        strfArray(rowNum,290+432*(strfSet-1):433+432*(strfSet-1))=RC.SERate(1,:);%72 columns containing SE of spontan rate, 72 containing SE of stim-evoked rate
+                                    else
                                         appendArray=[session(runSession) RC.MRate(1,:) RC.SRate(1,:) RC.SERate(1,:)];%72 columns containing spontan rate, 72 containing stim-evoked rate%72 columns containing SD of spontan rate, 72 containing SD of stim-evoked rate%72 columns containing SE of spontan rate, 72 containing SE of stim-evoked rate
                                         strfArray=[strfArray;appendArray];
                                     end
@@ -125,7 +129,7 @@ if write_array==1
 end
 
 plotGraphs=0;
-allV1sess=1;
+allV1sess=0;
 if plotGraphs==1
     orientations=[0,15,30,45,60,75,90,105,120,135,150,165];
     numOri=length(orientations);
@@ -134,15 +138,15 @@ if plotGraphs==1
     for i=1:length(channels)
         lineColor=['r' 'g' 'b'];
         if strncmp(area,'v1',2)
-            numSets=1;
             sfTexts={'103070'};
-        elseif strncmp(area,'v4',2)
-            numSets=2;            
+        elseif strncmp(area,'v4',2)    
             if strcmp(animal,'blanco')
-            sfTexts=[{'122505'} {'102040'}];
+                sfTexts=[{'122505'} {'102040'}];
             elseif strcmp(animal,'jack')
+                sfTexts={'122505'};
             end
         end
+        numSets=length(sfTexts);
         for whichSet=1:numSets%figure for lower SFs, then for higher SFs
             meanStrfArray=[];
             sponRate=[];
@@ -233,7 +237,7 @@ if plotGraphs==1
                     saveTuningText=['save ',meanstrfPath,'.mat Tuning_Amplitude Width Perc_Var_acc Prefered_Ori Bandwidth Baseline_FR pFit'];
                     eval(saveTuningText)
                     if drawPlots==1
-                        figName=[chStr,'_responses',num2str(session)];
+                        figName=[chStr,'_responses_',area];
                         figure('Name',figName,'Color',[1,1,1],'Units', 'Normalized', 'Position',[0.3,0.4-0.05*rowNum/size(strfArray,1), 0.6, 0.4]);%plot stim-evoked activity to each cond
                         subplot(2,2,2);%stim-evoked rates, phase angle of 0.5 pi
                         for j=1:3%plot 3 SF conditions
@@ -309,12 +313,15 @@ if strncmp(area,'v1',2)
 end
 for i=1:length(channels)
     if strncmp(area,'v1',2)
-        numSets=1;
         sfTexts={'103070'};
-    else strncmp(area,'v4',2)
-        numSets=2;
-        sfTexts=[{'122505'} {'102040'}];
+    elseif strncmp(area,'v4',2)
+        if strcmp(animal,'blanco')
+            sfTexts=[{'122505'} {'102040'}];
+        elseif strcmp(animal,'jack')
+            sfTexts={'122505'};
+        end
     end
+    numSets=length(sfTexts);
     Tuning_AmplitudeTemp=[];WidthTemp=[];Perc_Var_accTemp=[];Prefered_OriTemp=[];BandwidthTemp=[];Baseline_FRTemp=[];pFitTemp=[];
     for whichSet=1:numSets
         if allV1sess==1&&strcmp(area,'v1_2')
