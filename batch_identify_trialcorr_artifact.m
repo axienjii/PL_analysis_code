@@ -17,41 +17,44 @@ end
 
 verbose = 10;
 
-parfor iter = icopy:ncopies:length(sessions)
-    
-    if iter<istart
-        continue;
-    end
-    
-    session = sessions(iter);
-    
-    if verbose; fprintf('%d(%d): %d/%d Processing session %.1f\n',...
-            icopy, ncopies, iter, length(sessions), session);
-    end
-    
-    close all;
-    
-    try
-        output_artifact_trial_list = trial_corr_artifact_finder(animal, session);%csv files containing list of trials (identified by timestamp for 'NLX_TRIAL_START' encode) with movement artifacts, for each session
-        if exist(output_artifact_trial_list, 'file'); continue; end
-        identify_trial_corr_artifact(animal, area, session, channels, max(0,verbose-1))
-    catch ME
-        animal
-        session        
+generateInitialList=0;
+if generateInitialList==1
+    parfor iter = icopy:ncopies:length(sessions)
         
-        disp(ME);
-        for i=1:length(ME.stack);
-            last_error_made = ME.stack(i);
-            fprintf('In ==> %s at %d.\n', last_error_made.file, last_error_made.line);
+        if iter<istart
+            continue;
         end
+        
+        session = sessions(iter);
+        
+        if verbose; fprintf('%d(%d): %d/%d Processing session %.1f\n',...
+                icopy, ncopies, iter, length(sessions), session);
+        end
+        
+        close all;
+        
+        try
+            output_artifact_trial_list = trial_corr_artifact_finder(animal, session);%csv files containing list of trials (identified by timestamp for 'NLX_TRIAL_START' encode) with movement artifacts, for each session
+            if exist(output_artifact_trial_list, 'file'); continue; end
+            identify_trial_corr_artifact(animal, area, session, channels, max(0,verbose-1))
+        catch ME
+            animal
+            session
+            
+            disp(ME);
+            for i=1:length(ME.stack);
+                last_error_made = ME.stack(i);
+                fprintf('In ==> %s at %d.\n', last_error_made.file, last_error_made.line);
+            end
+        end
+        
+        fclose all;
     end
-    
-    fclose all;
 end
 
 initialThreshDrawing=0;
 if initialThreshDrawing==1
-    plotFigs=1;
+    plotFigs=0;
     allNumRemoveTrials=sessions';
     allRemoveTrialsStats=[];
     histoFig=figure;
@@ -62,7 +65,7 @@ if initialThreshDrawing==1
             xlimTail=[0.4 1];
         elseif strncmp(area,'v1',2)
             cutoffs=0.54:0.01:0.59;
-            cutoffs=0.6:0.01:0.65;
+            cutoffs=0.79:0.01:0.85;
             xlimTail=[0.4 1];
         end
     elseif strcmp(animal,'jack')
@@ -90,12 +93,12 @@ if initialThreshDrawing==1
                 title(num2str(sessions(i)));
                 %     ylim([-100 500]);
                 %     xlim([0.4 0.7]);
-                %     grandMean=mean(rlist(:,1));
-                %     grandstd=std(rlist(:,1));
-                %     cutoff=grandMean+grandstd;
                 ylimVals=get(gca,'YLim');
                 line([cutoff cutoff],[0 ylimVals(2)],'Color','r');
             end
+%             grandMean=mean(rlist(:,1));
+%             grandstd=std(rlist(:,1));
+%             cutoff=grandMean+grandstd;
             tooHighInd=(rlist(:,1)>cutoff);
             removeTrialsTimestamps=[unique(rlist(tooHighInd,4)) unique(rlist(tooHighInd,5))];
             output_fname = trial_corr_artifact_finder(animal,sessions(i));%csv files containing list of trials (identified by timestamp for 'NLX_TRIAL_START' encode) with movement artifacts, for each session
@@ -103,30 +106,30 @@ if initialThreshDrawing==1
             eval(saveText)
             numRemoveTrials(i)=size(removeTrialsTimestamps,1);
             
-            %     testCutoffs=grandMean+2*grandstd:0.001:1;
-            %     numTrialspercutoff=zeros(length(testCutoffs),1);
-            %     for j=1:length(testCutoffs)
-            %         testCutoff=testCutoffs(j);
-            %         tooHighInd=(rlist(:,1)>testCutoff);
-            %         removeTrialsTimestamps=[unique(rlist(tooHighInd,4)) unique(rlist(tooHighInd,5))];
-            %         numTrialspercutoff(j,1)=sum(tooHighInd);
-            %     end
+%                 testCutoffs=grandMean+2*grandstd:0.001:1;
+%                 numTrialspercutoff=zeros(length(testCutoffs),1);
+%                 for k=1:length(testCutoffs)
+%                     testCutoff=testCutoffs(k);
+%                     tooHighInd=(rlist(:,1)>testCutoff);
+%                     removeTrialsTimestamps=[unique(rlist(tooHighInd,4)) unique(rlist(tooHighInd,5))];
+%                     numTrialspercutoff(k,1)=sum(tooHighInd);
+%                 end
             %     figure(cutoffFig);
             %     subplot(ceil(length(sessions)/5),5,i);
             %     plot(testCutoffs,numTrialspercutoff);
             %     title(num2str(sessions(i)));
         end
         
-        for i=1:length(sessions)
-            subplot(ceil(length(sessions)/5),5,i);
-            xlim([0 1]);
-            %         ylim([-100 2500]);
-        end
-        for i=1:length(sessions)
-            subplot(ceil(length(sessions)/5),5,i);
-            xlim(xlimTail);
-            ylim([-100 500]);
-        end
+%         for i=1:length(sessions)
+%             subplot(ceil(length(sessions)/5),5,i);
+%             xlim([0 1]);
+%             %         ylim([-100 2500]);
+%         end
+%         for i=1:length(sessions)
+%             subplot(ceil(length(sessions)/5),5,i);
+%             xlim(xlimTail);
+%             ylim([-100 500]);
+%         end
         allNumRemoveTrials=[allNumRemoveTrials numRemoveTrials'];
     end
     totalNumTrials=zeros(length(sessions),1);
