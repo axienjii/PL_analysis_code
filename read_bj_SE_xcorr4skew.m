@@ -70,45 +70,59 @@ if minusSpontan==1
 elseif minusSpontan==0
     subfolder=['PSTH45_images_sm',num2str(sigma*2),'ms_wspontan_',area];%folder for stimulus-evoked responses without any subtraction of spontaneous activity levels
 end
-actSessions=[];
-for i=1:length(channels)
-    for j=1:length(sessionNums)
-        for sampleContrastInd=1:length(sampleContrasts)%combine across sample contrasts (if >1) because highest test contrast is always the same (60% in V4, 90% in V1)
-            sampleContrast=sampleContrasts(sampleContrastInd);
-            matPSTHName=[num2str(channels(i)),'_',num2str(sessionNums(j)),'_',num2str(sampleContrast),'_',area,'_PSTHact.mat'];
-            matPSTHPath=fullfile('F:','PL','xcorr',animal,subfolder,matPSTHName);
-            if exist(matPSTHPath,'file')
-                loadText=['load ',matPSTHPath,' PSTHact'];
-                eval(loadText);
-                actSessions=[actSessions;channels(i) sessionNums(j) PSTHact];
+matActName=['actTrialsList_',area,'.mat'];
+matActPath=fullfile('F:','PL','xcorr',animal,subfolder,matActName);
+if ~exist(matActPath,'file')
+    actSessions=[];
+    for i=1:length(channels)
+        for j=1:length(sessionNums)
+            for sampleContrastInd=1:length(sampleContrasts)%combine across sample contrasts (if >1) because highest test contrast is always the same (60% in V4, 90% in V1)
+                sampleContrast=sampleContrasts(sampleContrastInd);
+                matPSTHName=[num2str(channels(i)),'_',num2str(sessionNums(j)),'_',num2str(sampleContrast),'_',area,'_PSTHact.mat'];
+                matPSTHPath=fullfile('F:','PL','xcorr',animal,subfolder,matPSTHName);
+                if exist(matPSTHPath,'file')
+                    loadText=['load ',matPSTHPath,' PSTHact'];
+                    eval(loadText);
+                    actSessions=[actSessions;channels(i) sessionNums(j) PSTHact];
+                end
             end
         end
     end
+    saveText=['save ',matActPath,' actSessions'];
+    eval(saveText);
+else
+    loadText=['load ',matActPath,' actSessions'];
+    eval(loadText);
 end
 
 %simply read all .mat array files to tabulate number of good trials for
 %each session and cell:
-for h=1:length(channels)
-    numTrialsPSess=[];%number of trials per session (for condition 14)
-    goodSessList=[];
-    for j=1:length(sessionNums)
-        matarrayTemp4=[];
-        for sampleContrastInd=1:length(sampleContrasts)%combine data across sample contrasts
-            matName=[num2str(channels(h)),'_',num2str(sessionNums(j)),'_',num2str(sampleContrasts(sampleContrastInd))];
-            matPath=fullfile('F:','PL','spikeData',animal,matName);
-            loadText=['load ',matPath,' matarray'];
-            eval(loadText);
-            matarrayTemp4=[matarrayTemp4;matarray{highestTestCond,4}];
-        end
-        numTrialsPSess=[numTrialsPSess size(matarrayTemp4,1)];
-        goodSessList=[goodSessList sessionNums(j)];
-    end
-    grandTrialsList(h,1:3)=[channels(h) {numTrialsPSess} {goodSessList}];%ch # in first column, list of num of trials per session for cond 14 for good sessions in column 2, list of good, corresponding session #s in column 3
-end
-matGrandName=['grandTrialsList_',area];
+matGrandName=['grandTrialsList_',area,'.mat'];
 matGrandPath=fullfile('F:','PL','xcorr',animal,subfolder,matGrandName);
-saveText=['save ',matGrandPath,' grandTrialsList'];
-eval(saveText);
+if ~exist(matGrandPath,'file')
+    for h=1:length(channels)
+        numTrialsPSess=[];%number of trials per session (for condition 14)
+        goodSessList=[];
+        for j=1:length(sessionNums)
+            matarrayTemp4=[];
+            for sampleContrastInd=1:length(sampleContrasts)%combine data across sample contrasts
+                matName=[num2str(channels(h)),'_',num2str(sessionNums(j)),'_',num2str(sampleContrasts(sampleContrastInd))];
+                matPath=fullfile('F:','PL','spikeData',animal,matName);
+                loadText=['load ',matPath,' matarray'];
+                eval(loadText);
+                matarrayTemp4=[matarrayTemp4;matarray{highestTestCond,4}];
+            end
+            numTrialsPSess=[numTrialsPSess size(matarrayTemp4,1)];
+            goodSessList=[goodSessList sessionNums(j)];
+        end
+        grandTrialsList(h,1:3)=[channels(h) {numTrialsPSess} {goodSessList}];%ch # in first column, list of num of trials per session for cond 14 for good sessions in column 2, list of good, corresponding session #s in column 3
+    end
+    saveText=['save ',matGrandPath,' grandTrialsList'];
+    eval(saveText);
+else
+    loadText=['load ',matGrandPath,' grandTrialsList'];
+    eval(loadText);    
+end
 
 %generate bootstrapped data for each good session:
 numStds=[1 2 3];
@@ -118,7 +132,6 @@ epochTimes=[-512 0 512 1024 1536 1936];
 binwidth=1;%1 ms
 bins=epochTimes(4)+binwidth/2:binwidth:epochTimes(4)+512+400-binwidth/2;
 numSamp=100;
-goodSessCount=1;
 for goodSess=1:size(actSessions,1)
     ch=actSessions(goodSess,1);
     session=actSessions(goodSess,2);
@@ -136,217 +149,200 @@ for goodSess=1:size(actSessions,1)
     matarray{highestTestCond,5}=matarrayTemp5;
     numBootTrials=length(matarray{highestTestCond,4});
     if numBootTrials>=minTrials%if there are at least a certain number of trials per session
-        bootPSTHact=zeros(numSamp,length(bins));
-        for Nsamp=1:numSamp
-            trialsAvailable=min([length(matarray{highestTestCond,4}) length(matarray{highestTestCond,5})]);
-            bootTrialInd=unidrnd(trialsAvailable,1,numBootTrials);%generates random numbers (with replacement) for the discrete uniform distribution with maximum N, to analyse trials within cell, across sessions
-            for n=1:length(bootTrialInd)
-                epoch4act=find(matarray{highestTestCond,4}{bootTrialInd(n)}<=epochTimes(4)+512);%just examine spikes that occur within first 512 ms, disregard the fact that stimulus presentation typically lasted 512 ms
-                epoch4act=find(matarray{highestTestCond,4}{bootTrialInd(n)}(epoch4act)>epochTimes(4));
-                epoch5act=find(matarray{highestTestCond,5}{bootTrialInd(n)}<=epochTimes(5)+400);
-                epoch5act=find(matarray{highestTestCond,5}{bootTrialInd(n)}(epoch5act)>epochTimes(5));
-                trialAct=[matarray{highestTestCond,4}{bootTrialInd(n)}(epoch4act) matarray{highestTestCond,5}{bootTrialInd(n)}(epoch5act)];%concatenate time stamps from epochs 4 & 5
-                %             spikeTimes=find(trialAct<=epochTimes(1+1));%original code did not carefully exclude time stamps occuring after 1536 ms from epoch 4 array
-                %             spikeTimes=find(trialAct(spikeTimes)>epochTimes(1));%now this functions as a double-checker
-                %             [N X]=hist(trialAct(spikeTimes),bins);
-                [N X]=hist(trialAct,bins);
-                if size(N,2)==1
-                    N=N';
+        matChDistName=['trans_Dist_',area,'_',num2str(actSessions(goodSess,1)),'_',num2str(actSessions(goodSess,2)),'.mat'];
+        matChDistPath=fullfile('F:','PL','xcorr',animal,subfolder,matChDistName);
+        if ~exist(matChDistPath,'file')
+            bootPSTHact=zeros(numSamp,length(bins));
+            for Nsamp=1:numSamp
+                trialsAvailable=min([length(matarray{highestTestCond,4}) length(matarray{highestTestCond,5})]);
+                bootTrialInd=unidrnd(trialsAvailable,1,numBootTrials);%generates random numbers (with replacement) for the discrete uniform distribution with maximum N, to analyse trials within cell, across sessions
+                for n=1:length(bootTrialInd)
+                    epoch4act=find(matarray{highestTestCond,4}{bootTrialInd(n)}<=epochTimes(4)+512);%just examine spikes that occur within first 512 ms, disregard the fact that stimulus presentation typically lasted 512 ms
+                    epoch4act=find(matarray{highestTestCond,4}{bootTrialInd(n)}(epoch4act)>epochTimes(4));
+                    epoch5act=find(matarray{highestTestCond,5}{bootTrialInd(n)}<=epochTimes(5)+400);
+                    epoch5act=find(matarray{highestTestCond,5}{bootTrialInd(n)}(epoch5act)>epochTimes(5));
+                    trialAct=[matarray{highestTestCond,4}{bootTrialInd(n)}(epoch4act) matarray{highestTestCond,5}{bootTrialInd(n)}(epoch5act)];%concatenate time stamps from epochs 4 & 5
+                    %             spikeTimes=find(trialAct<=epochTimes(1+1));%original code did not carefully exclude time stamps occuring after 1536 ms from epoch 4 array
+                    %             spikeTimes=find(trialAct(spikeTimes)>epochTimes(1));%now this functions as a double-checker
+                    %             [N X]=hist(trialAct(spikeTimes),bins);
+                    [N X]=hist(trialAct,bins);
+                    if size(N,2)==1
+                        N=N';
+                    end
+                    bootPSTHact(Nsamp,1:length(N))=bootPSTHact(Nsamp,1:length(N))+N;%tally spikes across randomly-selected trials
                 end
-                bootPSTHact(Nsamp,1:length(N))=bootPSTHact(Nsamp,1:length(N))+N;%tally spikes across randomly-selected trials
+                bootPSTHact(Nsamp,:)=bootPSTHact(Nsamp,:)*1000/(binwidth*numBootTrials);%average activity per ms
+                bootPSTHact(Nsamp,:)=gaussfit(sigma,0,bootPSTHact(Nsamp,:));%smoothing done for each bootstrapped PSTH
             end
-            bootPSTHact(Nsamp,:)=bootPSTHact(Nsamp,:)*1000/(binwidth*numBootTrials);%average activity per ms
-            bootPSTHact(Nsamp,:)=gaussfit(sigma,0,bootPSTHact(Nsamp,:));%smoothing done for each bootstrapped PSTH
-        end
-        figure('Color',[1,1,1],'Units', 'Normalized', 'Position',[0.1, 0.3, 0.7, 0.4]);
-        maxY=max(max(bootPSTHact));
-        for Nsamp=1:numSamp
-            plot(bins,bootPSTHact(Nsamp,:),'Color','k');hold on
-        end
-        for i=1:size(actSessions,1)
-            if actSessions(i,1)==ch&&actSessions(i,2)==session
-                originalAct=actSessions(i,3:end);
+            figure('Color',[1,1,1],'Units', 'Normalized', 'Position',[0.9, 0.1, 0.7, 0.4]);
+            maxY=max(max(bootPSTHact));
+            for Nsamp=1:numSamp
+                plot(bins,bootPSTHact(Nsamp,:),'Color','k');hold on
             end
-        end
-        plot(bins,originalAct,'Color','r');hold on
-        line([1536 1536],[0 maxY],'LineStyle',':','Color','k');
-        set(gca,'XLim',[1024 1936]);
-        set(gca,'XTick',[1024 1536 1936]);
-        set(gca,'XTickLabel',[1024 1536 1936]);
-        set(gca,'YLim',[0 maxY]);
-        ptext=sprintf('%s  %s    # of trials per PSTH: %d      # of PSTHs: %d',num2str(ch),num2str(session),numBootTrials,numSamp);
-        text('Position',[1024 1.05*maxY],'FontSize',9,'String',ptext);
-        text('Position',[1700 0.95*maxY],'FontSize',9,'String','bootstrapped data','Color','k');
-        text('Position',[1700 0.91*maxY],'FontSize',9,'String','original data (full set of trials)','Color','r');
-        
-        imageName=['boot_',num2str(ch),'_',num2str(session),'_',area,'_PSTHs'];
-        imageFolder=fullfile('F:','PL','xcorr',animal,subfolder);
-        imagePath=fullfile(imageFolder,imageName);
-        printtext=['print -dpng ',imagePath];
-        set(gcf,'PaperPositionMode','auto')
-        eval(printtext);
-        
-        for i=1:size(bootPSTHact,1)-1
-            pair1=bootPSTHact(i,:)';
-            for j=i+1:size(bootPSTHact,1)
-                pair2=bootPSTHact(j,:)';
-                coef=corr(pair1,pair2);%returns the cross-correlation sequence
-                cDist=[cDist coef];%for each pairwise comparison,compile the value of c in an array
+            for i=1:size(actSessions,1)
+                if actSessions(i,1)==ch&&actSessions(i,2)==session
+                    originalAct=actSessions(i,3:end);
+                end
             end
-        end
-        bootDist={cDist};
-        for beforeAndAfter=1:2%before and after transformation
-            if beforeAndAfter==2
-                %transformedBootDist=max(cDist)-cDist;%do a reversal by subtracting each value from highest value,
-                transformedBootDist=1-cDist;%do a reversal by subtracting each value from 1,
-                transformedBootDist=sqrt(transformedBootDist);%then take squareroot of the data
-                transformedBootDist=1-transformedBootDist;
-                bootDist={transformedBootDist};
+            plot(bins,originalAct,'Color','r');hold on
+            line([1536 1536],[0 maxY],'LineStyle',':','Color','k');
+            set(gca,'XLim',[1024 1936]);
+            set(gca,'XTick',[1024 1536 1936]);
+            set(gca,'XTickLabel',[1024 1536 1936]);
+            set(gca,'YLim',[0 maxY]);
+            ptext=sprintf('%s  %s    # of trials per PSTH: %d      # of PSTHs: %d',num2str(ch),num2str(session),numBootTrials,numSamp);
+            text('Position',[1024 1.05*maxY],'FontSize',9,'String',ptext);
+            text('Position',[1700 0.95*maxY],'FontSize',9,'String','bootstrapped data','Color','k');
+            text('Position',[1700 0.91*maxY],'FontSize',9,'String','original data (full set of trials)','Color','r');
+            
+            imageName=['boot_',num2str(ch),'_',num2str(session),'_',area,'_PSTHs'];
+            imageFolder=fullfile('F:','PL','xcorr',animal,subfolder);
+            imagePath=fullfile(imageFolder,imageName);
+            printtext=['print -dpng ',imagePath];
+            set(gcf,'PaperPositionMode','auto')
+            eval(printtext);
+            
+            for i=1:size(bootPSTHact,1)-1
+                pair1=bootPSTHact(i,:)';
+                for j=i+1:size(bootPSTHact,1)
+                    pair2=bootPSTHact(j,:)';
+                    coef=corr(pair1,pair2);%returns the cross-correlation sequence
+                    cDist=[cDist coef];%for each pairwise comparison,compile the value of c in an array
+                end
             end
-            minX=min(bootDist{1});maxX=max(bootDist{1});
-            [plotDist X]=hist(bootDist{1},minX:(maxX-minX)/100:maxX);
-            plotDist=plotDist/numSamp;
-            minY=min(plotDist);maxY=max(plotDist);
-            figure('Color',[1,1,1],'Units', 'Normalized', 'Position',[0.1, 0.3, 0.7, 0.4]);
+            bootDist={cDist};
+            for beforeAndAfter=1:2%before and after transformation
+                if beforeAndAfter==2
+                    %transformedBootDist=max(cDist)-cDist;%do a reversal by subtracting each value from highest value,
+                    transformedBootDist=1-cDist;%do a reversal by subtracting each value from 1,
+                    transformedBootDist=sqrt(transformedBootDist);%then take squareroot of the data
+                    transformedBootDist=1-transformedBootDist;
+                    bootDist={transformedBootDist};
+                end
+                minX=min(bootDist{1});maxX=max(bootDist{1});
+                [plotDist X]=hist(bootDist{1},minX:(maxX-minX)/100:maxX);
+                plotDist=plotDist/numSamp;
+                minY=min(plotDist);maxY=max(plotDist);
+                figure('Color',[1,1,1],'Units', 'Normalized', 'Position',[0.9, 0.1, 0.7, 0.4]);
+                plot(minX:(maxX-minX)/100:maxX,plotDist,'Color','k');hold on
+                smoothPlotDist=gaussfit(sigma,0,plotDist);
+                plot(minX:(maxX-minX)/100:maxX,smoothPlotDist,'Color','r');hold on
+                text('Position',[minX 1.05*maxY],'FontSize',9,'String',ptext);
+                if beforeAndAfter==2
+                    text('Position',[(maxX-minX)*0.1+minX 0.95*maxY],'FontSize',9,'String','V binned transformed coef values','Color','k');
+                else
+                    text('Position',[(maxX-minX)*0.1+minX 0.95*maxY],'FontSize',9,'String','V binned non-transformed coef values','Color','k');
+                end
+                text('Position',[(maxX-minX)*0.1+minX 0.91*maxY],'FontSize',9,'String','- smoothed graph','Color','r');
+                text('Position',[(maxX-minX)*0.1+minX 0.87*maxY],'FontSize',9,'String',stdDevText,'Color','k');
+                meanX=mean(bootDist{1});
+                set(gca,'XLim',[minX maxX]);
+                set(gca,'XTick',[minX meanX maxX]);
+                set(gca,'XTickLabel',[minX meanX maxX]);
+                maxY=max(plotDist);
+                line([meanX meanX],[0 maxY],'LineStyle',':','Color','k');
+                stdC=std(bootDist{1});
+                for k=1:length(numStds)
+                    line([meanX+numStds(k)*stdC meanX+numStds(k)*stdC],[0 maxY],'LineStyle',':','Color','k');
+                    line([meanX-numStds(k)*stdC meanX-numStds(k)*stdC],[0 maxY],'LineStyle',':','Color','k');
+                end
+                set(gca,'YLim',[0 maxY]);
+                text('Position',[1024 1.05*maxY],'FontSize',9,'String',ptext);
+                ylabel('# of occurences');xlabel('transformed correlation coefficient value');
+                
+                imageName=['original_boot_',num2str(ch),'_',num2str(session),'_',area,'_PSTHc'];%before transformation
+                if beforeAndAfter==2
+                    imageName=['trans_boot_',num2str(ch),'_',num2str(session),'_',area,'_PSTHc'];%after transformation
+                end
+                imagePath=fullfile(imageFolder,imageName);
+                printtext=['print -dpng ',imagePath];
+                set(gcf,'PaperPositionMode','auto')
+                eval(printtext);
+            end
+            
+            %calculate corr coefs between this session's original full-data PSTH
+            %and those of other sessions:
+            figure('Color',[1,1,1],'Units', 'Normalized', 'Position',[0.9, 0.1, 0.7, 0.4]);
             plot(minX:(maxX-minX)/100:maxX,plotDist,'Color','k');hold on
             smoothPlotDist=gaussfit(sigma,0,plotDist);
-            plot(minX:(maxX-minX)/100:maxX,smoothPlotDist,'Color','r');hold on
-            text('Position',[minX 1.05*maxY],'FontSize',9,'String',ptext);
-            if beforeAndAfter==2
-                text('Position',[(maxX-minX)*0.1+minX 0.95*maxY],'FontSize',9,'String','V binned transformed coef values','Color','k');
-            else
-                text('Position',[(maxX-minX)*0.1+minX 0.95*maxY],'FontSize',9,'String','V binned non-transformed coef values','Color','k');
-            end
-            text('Position',[(maxX-minX)*0.1+minX 0.91*maxY],'FontSize',9,'String','- smoothed graph','Color','r');
-            text('Position',[(maxX-minX)*0.1+minX 0.87*maxY],'FontSize',9,'String',stdDevText,'Color','k');
+            plot(minX:(maxX-minX)/100:maxX,smoothPlotDist,'Color','k');hold on
             meanX=mean(bootDist{1});
             set(gca,'XLim',[minX maxX]);
             set(gca,'XTick',[minX meanX maxX]);
             set(gca,'XTickLabel',[minX meanX maxX]);
             maxY=max(plotDist);
             line([meanX meanX],[0 maxY],'LineStyle',':','Color','k');
-            stdC=std(bootDist{1});
+            stdC=std(transformedBootDist);
             for k=1:length(numStds)
                 line([meanX+numStds(k)*stdC meanX+numStds(k)*stdC],[0 maxY],'LineStyle',':','Color','k');
                 line([meanX-numStds(k)*stdC meanX-numStds(k)*stdC],[0 maxY],'LineStyle',':','Color','k');
             end
             set(gca,'YLim',[0 maxY]);
-            text('Position',[1024 1.05*maxY],'FontSize',9,'String',ptext);
             ylabel('# of occurences');xlabel('transformed correlation coefficient value');
+            wCellbSessAct=[];bCellbSessAct=[];bCellwSessAct=[];
+            for i=1:size(actSessions,1)%compile PSTH act for other sessions, from same cell
+                if actSessions(i,1)==ch&&actSessions(i,2)~=session
+                    wCellbSessAct=[wCellbSessAct;actSessions(i,3:end)];%within channels between sessions
+                end
+            end
+            for i=1:size(actSessions,1)%compile PSTH act from other cells
+                if actSessions(i,1)~=ch
+                    bCellbSessAct=[bCellbSessAct;actSessions(i,3:end)];%between channels between sessions
+                end
+            end
+            for i=1:size(actSessions,1)%compile PSTH act from other cells, but for same session
+                if actSessions(i,1)~=ch&&actSessions(i,2)==session
+                    bCellwSessAct=[bCellwSessAct;actSessions(i,3:end)];%between channels within sessions
+                end
+            end
+            wCbScDist=[];bCbScDist=[];bCwScDist=[];
+            pair1=originalAct';
+            for i=1:size(bCellbSessAct,1)%mark coef value for comparisons with other cells & sessions
+                pair2=bCellbSessAct(i,:)';
+                coef=corr(pair1,pair2);%returns the cross-correlation sequence
+                bCbScDist=[bCbScDist coef];%for each pairwise comparison,compile the value of c in an array
+            end
+            for i=1:size(bCellwSessAct,1)%mark coef value for comparisons with other cells for same session
+                pair2=bCellwSessAct(i,:)';
+                coef=corr(pair1,pair2);%returns the cross-correlation sequence
+                bCwScDist=[bCwScDist coef];%for each pairwise comparison,compile the value of c in an array
+            end
+            for i=1:size(wCellbSessAct,1)%mark coef value for comparisons with other sessions, from same cell
+                pair2=wCellbSessAct(i,:)';
+                coef=corr(pair1,pair2);%returns the cross-correlation sequence
+                wCbScDist=[wCbScDist coef];%for each pairwise comparison,compile the value of c in an array
+            end
             
-            imageName=['original_boot_',num2str(ch),'_',num2str(session),'_',area,'_PSTHc'];%before transformation
-            if beforeAndAfter==2
-                imageName=['trans_boot_',num2str(ch),'_',num2str(session),'_',area,'_PSTHc'];%after transformation
+            %         transformedBootDist=max(bCbScDist)-bCbScDist;%another attempt- do a reversal by subtracting each value from highest value,
+            %         bCbScDist=sqrt(transformedBootDist);%then square the data
+            %         transformedBootDist=max(bCwScDist)-bCwScDist;%another attempt- do a reversal by subtracting each value from highest value,
+            %         bCwScDist=sqrt(transformedBootDist);%then square the data
+            %         transformedBootDist=max(wCbScDist)-wCbScDist;%another attempt- do a reversal by subtracting each value from highest value,
+            %         wCbScDist=sqrt(transformedBootDist);%then square the data
+            transformedBootDist=1-bCbScDist;%do a reversal by subtracting each value from highest value,
+            bCbScDist=sqrt(transformedBootDist);%then square the data
+            bCbScDist=1-bCbScDist;
+            transformedBootDist=1-bCwScDist;%another attempt- do a reversal by subtracting each value from highest value,
+            bCwScDist=sqrt(transformedBootDist);%then square the data
+            bCwScDist=1-bCwScDist;
+            transformedBootDist=1-wCbScDist;%another attempt- do a reversal by subtracting each value from highest value,
+            wCbScDist=sqrt(transformedBootDist);%then square the data
+            wCbScDist=1-wCbScDist;
+            for i=1:length(bCbScDist)%mark coef value for comparisons with other cells & sessions
+                line([bCbScDist(i) bCbScDist(i)],[0 maxY],'LineStyle',':','Color','b');
             end
-            imagePath=fullfile(imageFolder,imageName);
-            printtext=['print -dpng ',imagePath];
-            set(gcf,'PaperPositionMode','auto')
-            eval(printtext);
-        end
-        
-        %calculate corr coefs between this session's original full-data PSTH
-        %and those of other sessions:
-        figure('Color',[1,1,1],'Units', 'Normalized', 'Position',[0.1, 0.3, 0.7, 0.4]);
-        plot(minX:(maxX-minX)/100:maxX,plotDist,'Color','k');hold on
-        smoothPlotDist=gaussfit(sigma,0,plotDist);
-        plot(minX:(maxX-minX)/100:maxX,smoothPlotDist,'Color','k');hold on
-        meanX=mean(bootDist{1});
-        set(gca,'XLim',[minX maxX]);
-        set(gca,'XTick',[minX meanX maxX]);
-        set(gca,'XTickLabel',[minX meanX maxX]);
-        maxY=max(plotDist);
-        line([meanX meanX],[0 maxY],'LineStyle',':','Color','k');
-        stdC=std(transformedBootDist);
-        for k=1:length(numStds)
-            line([meanX+numStds(k)*stdC meanX+numStds(k)*stdC],[0 maxY],'LineStyle',':','Color','k');
-            line([meanX-numStds(k)*stdC meanX-numStds(k)*stdC],[0 maxY],'LineStyle',':','Color','k');
-        end
-        set(gca,'YLim',[0 maxY]);
-        ylabel('# of occurences');xlabel('transformed correlation coefficient value');
-        wCellbSessAct=[];bCellbSessAct=[];bCellwSessAct=[];
-        for i=1:size(actSessions,1)%compile PSTH act for other sessions, from same cell
-            if actSessions(i,1)==ch&&actSessions(i,2)~=session
-                wCellbSessAct=[wCellbSessAct;actSessions(i,3:end)];%within channels between sessions
+            for i=1:length(bCwScDist)%mark coef value for comparisons with other cells for same session
+                line([bCwScDist(i) bCwScDist(i)],[0 maxY],'LineStyle',':','Color','c');
             end
-        end
-        for i=1:size(actSessions,1)%compile PSTH act from other cells
-            if actSessions(i,1)~=ch
-                bCellbSessAct=[bCellbSessAct;actSessions(i,3:end)];%between channels between sessions
+            for i=1:length(wCbScDist)%mark coef value for comparisons with other sessions, from same cell
+                line([wCbScDist(i) wCbScDist(i)],[0 maxY],'LineStyle',':','Color','r');
+                text('Position',[wCbScDist(i) 1.02*maxY],'FontSize',5,'String','|','Color','r');
             end
-        end
-        for i=1:size(actSessions,1)%compile PSTH act from other cells, but for same session
-            if actSessions(i,1)~=ch&&actSessions(i,2)==session
-                bCellwSessAct=[bCellwSessAct;actSessions(i,3:end)];%between channels within sessions
-            end
-        end
-        wCbScDist=[];bCbScDist=[];bCwScDist=[];
-        pair1=originalAct';
-        for i=1:size(bCellbSessAct,1)%mark coef value for comparisons with other cells & sessions
-            pair2=bCellbSessAct(i,:)';
-            coef=corr(pair1,pair2);%returns the cross-correlation sequence
-            bCbScDist=[bCbScDist coef];%for each pairwise comparison,compile the value of c in an array
-        end
-        for i=1:size(bCellwSessAct,1)%mark coef value for comparisons with other cells for same session
-            pair2=bCellwSessAct(i,:)';
-            coef=corr(pair1,pair2);%returns the cross-correlation sequence
-            bCwScDist=[bCwScDist coef];%for each pairwise comparison,compile the value of c in an array
-        end
-        for i=1:size(wCellbSessAct,1)%mark coef value for comparisons with other sessions, from same cell
-            pair2=wCellbSessAct(i,:)';
-            coef=corr(pair1,pair2);%returns the cross-correlation sequence
-            wCbScDist=[wCbScDist coef];%for each pairwise comparison,compile the value of c in an array
-        end
-        
-%         transformedBootDist=max(bCbScDist)-bCbScDist;%another attempt- do a reversal by subtracting each value from highest value,
-%         bCbScDist=sqrt(transformedBootDist);%then square the data        
-%         transformedBootDist=max(bCwScDist)-bCwScDist;%another attempt- do a reversal by subtracting each value from highest value,
-%         bCwScDist=sqrt(transformedBootDist);%then square the data
-%         transformedBootDist=max(wCbScDist)-wCbScDist;%another attempt- do a reversal by subtracting each value from highest value,
-%         wCbScDist=sqrt(transformedBootDist);%then square the data
-        transformedBootDist=1-bCbScDist;%do a reversal by subtracting each value from highest value,
-        bCbScDist=sqrt(transformedBootDist);%then square the data
-        bCbScDist=1-bCbScDist;        
-        transformedBootDist=1-bCwScDist;%another attempt- do a reversal by subtracting each value from highest value,
-        bCwScDist=sqrt(transformedBootDist);%then square the data
-        bCwScDist=1-bCwScDist;   
-        transformedBootDist=1-wCbScDist;%another attempt- do a reversal by subtracting each value from highest value,
-        wCbScDist=sqrt(transformedBootDist);%then square the data
-        wCbScDist=1-wCbScDist;   
-        for i=1:length(bCbScDist)%mark coef value for comparisons with other cells & sessions
-            line([bCbScDist(i) bCbScDist(i)],[0 maxY],'LineStyle',':','Color','b');
-        end
-        for i=1:length(bCwScDist)%mark coef value for comparisons with other cells for same session
-            line([bCwScDist(i) bCwScDist(i)],[0 maxY],'LineStyle',':','Color','c');
-        end
-        for i=1:length(wCbScDist)%mark coef value for comparisons with other sessions, from same cell
-            line([wCbScDist(i) wCbScDist(i)],[0 maxY],'LineStyle',':','Color','r');
-            text('Position',[wCbScDist(i) 1.02*maxY],'FontSize',5,'String','|','Color','r');
-        end
-        
-        minX2=min([min(wCbScDist) min(bCbScDist) min(bCwScDist)]);
-        maxX2=max([max(wCbScDist) max(bCbScDist) max(bCwScDist)]);
-        labelsX=sort([minX minX2 meanX maxX maxX2]);
-        set(gca,'XLim',[labelsX(1) labelsX(end)]);
-        set(gca,'XTick',labelsX);
-        set(gca,'XTickLabel',labelsX);
-        text('Position',[labelsX(1) 1.05*maxY],'FontSize',9,'String',ptext);
-        text('Position',[(labelsX(end)-labelsX(1))*0.1+labelsX(1) 0.95*maxY],'FontSize',9,'String','v binned transformed coef values','Color','k');
-        text('Position',[(labelsX(end)-labelsX(1))*0.1+labelsX(1) 0.91*maxY],'FontSize',9,'String','- smoothed graph','Color','k');
-        text('Position',[(labelsX(end)-labelsX(1))*0.1+labelsX(1) 0.87*maxY],'FontSize',9,'String',stdDevText,'Color','k');
-        text('Position',[(labelsX(end)-labelsX(1))*0.1+labelsX(1) 0.83*maxY],'FontSize',9,'String',': within cells between sessions','Color','r');
-        text('Position',[(labelsX(end)-labelsX(1))*0.1+labelsX(1) 0.79*maxY],'FontSize',9,'String',': between cells and sessions','Color','b');
-        text('Position',[(labelsX(end)-labelsX(1))*0.1+labelsX(1) 0.75*maxY],'FontSize',9,'String',': between cells within sessions','Color','c');
-
-        imageName=['trans_fullrange_',num2str(ch),'_',num2str(session),'_',area,'_PSTHc'];
-        imagePath=fullfile(imageFolder,imageName);
-        printtext=['print -dpng ',imagePath];
-        set(gcf,'PaperPositionMode','auto')
-        eval(printtext);
-        
-        if ~isempty(wCbScDist)&&min(wCbScDist)~=max(wCbScDist)
-            set(gca,'XLim',[min(wCbScDist) max(wCbScDist)]);
-            set(gca,'XLim',[min(wCbScDist) max(wCbScDist)]);
-            labelsX=sort([min(wCbScDist) meanX max(wCbScDist)]);
+            
+            minX2=min([min(wCbScDist) min(bCbScDist) min(bCwScDist)]);
+            maxX2=max([max(wCbScDist) max(bCbScDist) max(bCwScDist)]);
+            labelsX=sort([minX minX2 meanX maxX maxX2]);
+            set(gca,'XLim',[labelsX(1) labelsX(end)]);
             set(gca,'XTick',labelsX);
             set(gca,'XTickLabel',labelsX);
             text('Position',[labelsX(1) 1.05*maxY],'FontSize',9,'String',ptext);
@@ -355,31 +351,51 @@ for goodSess=1:size(actSessions,1)
             text('Position',[(labelsX(end)-labelsX(1))*0.1+labelsX(1) 0.87*maxY],'FontSize',9,'String',stdDevText,'Color','k');
             text('Position',[(labelsX(end)-labelsX(1))*0.1+labelsX(1) 0.83*maxY],'FontSize',9,'String',': within cells between sessions','Color','r');
             text('Position',[(labelsX(end)-labelsX(1))*0.1+labelsX(1) 0.79*maxY],'FontSize',9,'String',': between cells and sessions','Color','b');
-            text('Position',[(labelsX(end)-labelsX(1))*0.1+labelsX(1) 0.75*maxY],'FontSize',9,'String',': between cells within sessions','Color','c');        
+            text('Position',[(labelsX(end)-labelsX(1))*0.1+labelsX(1) 0.75*maxY],'FontSize',9,'String',': between cells within sessions','Color','c');
+            
+            imageName=['trans_fullrange_',num2str(ch),'_',num2str(session),'_',area,'_PSTHc'];
+            imagePath=fullfile(imageFolder,imageName);
+            printtext=['print -dpng ',imagePath];
+            set(gcf,'PaperPositionMode','auto')
+            eval(printtext);
+            
+            if ~isempty(wCbScDist)&&min(wCbScDist)~=max(wCbScDist)
+                set(gca,'XLim',[min(wCbScDist) max(wCbScDist)]);
+                set(gca,'XLim',[min(wCbScDist) max(wCbScDist)]);
+                labelsX=sort([min(wCbScDist) meanX max(wCbScDist)]);
+                set(gca,'XTick',labelsX);
+                set(gca,'XTickLabel',labelsX);
+                text('Position',[labelsX(1) 1.05*maxY],'FontSize',9,'String',ptext);
+                text('Position',[(labelsX(end)-labelsX(1))*0.1+labelsX(1) 0.95*maxY],'FontSize',9,'String','v binned transformed coef values','Color','k');
+                text('Position',[(labelsX(end)-labelsX(1))*0.1+labelsX(1) 0.91*maxY],'FontSize',9,'String','- smoothed graph','Color','k');
+                text('Position',[(labelsX(end)-labelsX(1))*0.1+labelsX(1) 0.87*maxY],'FontSize',9,'String',stdDevText,'Color','k');
+                text('Position',[(labelsX(end)-labelsX(1))*0.1+labelsX(1) 0.83*maxY],'FontSize',9,'String',': within cells between sessions','Color','r');
+                text('Position',[(labelsX(end)-labelsX(1))*0.1+labelsX(1) 0.79*maxY],'FontSize',9,'String',': between cells and sessions','Color','b');
+                text('Position',[(labelsX(end)-labelsX(1))*0.1+labelsX(1) 0.75*maxY],'FontSize',9,'String',': between cells within sessions','Color','c');
+            end
+            imageName=['trans_partrange_',num2str(ch),'_',num2str(session),area,'_PSTHc'];
+            imagePath=fullfile(imageFolder,imageName);
+            printtext=['print -dpng ',imagePath];
+            set(gcf,'PaperPositionMode','auto')
+            eval(printtext);
+            
+            matDistName=['trans_cDist_',num2str(ch),'_',num2str(session),'_',area];
+            matDistPath=fullfile('F:','PL','xcorr',animal,subfolder,matDistName);
+            saveText=['save ',matDistPath,' bootDist wCbScDist bCbScDist bCwScDist'];
+            eval(saveText);
+            
+            trans_Dist(1,3)=bootDist;
+            trans_Dist(1,4)={wCbScDist};
+            trans_Dist(1,5)={bCbScDist};
+            trans_Dist(1,6)={bCwScDist};
+            trans_Dist{1,1}=actSessions(goodSess,1);
+            trans_Dist{1,2}=actSessions(goodSess,2);
+            matChDistName=['trans_Dist_',area,'_',num2str(actSessions(goodSess,1)),'_',num2str(actSessions(goodSess,2)),'.mat'];
+            matChDistPath=fullfile('F:','PL','xcorr',animal,subfolder,matChDistName);
+            saveText=['save ',matChDistPath,' trans_Dist'];
+            eval(saveText);
+            close all
         end
-        imageName=['trans_partrange_',num2str(ch),'_',num2str(session),area,'_PSTHc'];
-        imagePath=fullfile(imageFolder,imageName);
-        printtext=['print -dpng ',imagePath];
-        set(gcf,'PaperPositionMode','auto')
-        eval(printtext);
-        
-        matDistName=['trans_cDist_',num2str(ch),'_',num2str(session),'_',area];
-        matDistPath=fullfile('F:','PL','xcorr',animal,subfolder,matDistName);
-        saveText=['save ',matDistPath,' bootDist wCbScDist bCbScDist bCwScDist'];
-        eval(saveText);
-        
-        trans_allDist(goodSessCount,3)=bootDist;
-        trans_allDist(goodSessCount,4)={wCbScDist};
-        trans_allDist(goodSessCount,5)={bCbScDist};
-        trans_allDist(goodSessCount,6)={bCwScDist};
-        trans_allDist{goodSessCount,1}=actSessions(goodSess,1);
-        trans_allDist{goodSessCount,2}=actSessions(goodSess,2);   
-        goodSessCount=goodSessCount+1;
-        close all
     end
 end
-matDistName=['trans_allDist_',area];
-matDistPath=fullfile('F:','PL','xcorr',animal,subfolder,matDistName);
-saveText=['save ',matDistPath,' trans_allDist'];
-eval(saveText);
 
