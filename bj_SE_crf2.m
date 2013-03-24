@@ -1,4 +1,4 @@
-function bj_SE_crf(ch,session,test_epochs,minusSpon,matarray,animal,area,sampleContrast)
+function bj_SE_crf2(ch,session,test_epochs,minusSpon,matarray,animal,area,sampleContrast)
 %Writes CRF values to mat file:
 %session number, time epochs, CRF in spikes/s for each condition durnig
 %spontaneous period, during sample, during ISI, and during test.
