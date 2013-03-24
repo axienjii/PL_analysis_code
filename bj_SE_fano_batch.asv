@@ -1,0 +1,33 @@
+function bj_SE_fano_batch(animal,area,channels,sessionNums)
+%Written by Xing 24/03/13
+%Modified from blanco_SE_read_epochs_batch_roc.
+%Batch file for running blanco_SE_xcorr (itself modified from use_time_periods).
+%To check that the identities of individual cells recorded at each
+%electrode remained consistent throughout the experiment, correlation
+%analysis used to provide a quantitative measure of recording stability. 
+
+if nargin<3 || isempty(channels)
+    channels = main_channels(animal,area);
+end
+if nargin<4 || isempty(sessionNums)
+    sessionNums = main_raw_sessions_final(animal,area,[],0);
+end
+[sampleContrasts allTestContrasts]=area_metadata(area);
+epoch=4;%calculate fano factor based on rresponse to test stimulus
+for i=1:length(channels)
+    for j=1:length(sessionNums)
+        for sampleContrastInd=1:length(sampleContrasts)
+            sampleContrast=sampleContrasts(sampleContrastInd);
+            testContrasts=allTestContrasts(sampleContrastInd,:);
+            try
+            bj_SE_fano(animal,area,channels(i),sessionNums(j),sampleContrast,testContrasts,epoch);%note that epochTimes(ind,2) is currently unused
+            catch ME
+                disp(ME)
+                load F:\PL\fano\missingSessions.mat missingSessions
+                missingSessions=[missingSessions;{animal} {channels(i)} {sessionNums(j)} {ME}];
+                save F:\PL\fano\missingSessions.mat missingSessions                
+            end
+        end
+    end
+end
+
