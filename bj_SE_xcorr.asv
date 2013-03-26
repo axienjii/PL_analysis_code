@@ -1,4 +1,4 @@
-function bj_SE_xcorr(animal,area,ch,session,sigma,sampleContrast,testContrasts)
+function bj_SE_xcorr(animal,area,ch,session,sigma)
 %Written by Xing 09/09/10
 %Modified from use_time_periods2, calculates PSTH values during test
 %presentation at highest contrast, writes activity levels to file, PSTHact. Activity
@@ -13,14 +13,20 @@ function bj_SE_xcorr(animal,area,ch,session,sigma,sampleContrast,testContrasts)
 %-PSTH45_images_sm10ms_mpontan: means that gaussfit has sigma of 5 ms
 %(smoothing over 10 ms), and spontaneous activity has been subtracted from
 %PSTHact. Smoothing of 10 ms, minus spontan.  
+[sampleContrasts allTestContrasts]=area_metadata(area);
 
 minusSpontan=0;
 epochTimes=[-512 0 512 1024 1536 1936]; 
+        for sampleContrastInd=1:length(sampleContrasts)
+            sampleContrast=sampleContrasts(sampleContrastInd);
+            testContrasts=allTestContrasts(sampleContrastInd,:);
 cond=length(testContrasts);%either 14 or 12- calculate cross-correlation values based on response elicited by highest contrast stimulus
 matName=[num2str(ch),'_',num2str(session),'_',num2str(sampleContrast)];
 matPath=fullfile('F:','PL','spikeData',animal,matName);
 loadText=['load ',matPath,' matarray'];
 eval(loadText);
+
+        end
 binwidth=1;%1 ms
 %calculate spontaneous activity:
 epoch=1;

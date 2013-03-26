@@ -1,4 +1,4 @@
-function bj_SE_xcorr(animal,area,ch,session,sigma,sampleContrast,testContrasts)
+function bj_SE_xcorr(animal,area,ch,session,sigma)
 %Written by Xing 09/09/10
 %Modified from use_time_periods2, calculates PSTH values during test
 %presentation at highest contrast, writes activity levels to file, PSTHact. Activity
@@ -13,14 +13,29 @@ function bj_SE_xcorr(animal,area,ch,session,sigma,sampleContrast,testContrasts)
 %-PSTH45_images_sm10ms_mpontan: means that gaussfit has sigma of 5 ms
 %(smoothing over 10 ms), and spontaneous activity has been subtracted from
 %PSTHact. Smoothing of 10 ms, minus spontan.  
-
+[sampleContrasts allTestContrasts]=area_metadata(area);
+highestTestCond=size(allTestContrasts,2);
+pause(5);
 minusSpontan=0;
-epochTimes=[-512 0 512 1024 1536 1936]; 
-cond=length(testContrasts);%either 14 or 12- calculate cross-correlation values based on response elicited by highest contrast stimulus
-matName=[num2str(ch),'_',num2str(session),'_',num2str(sampleContrast)];
-matPath=fullfile('F:','PL','spikeData',animal,matName);
-loadText=['load ',matPath,' matarray'];
-eval(loadText);
+epochTimes=[-512 0 512 1024 1536 1936];
+matarrayTemp1=[];
+matarrayTemp4=[];
+matarrayTemp5=[];
+for sampleContrastInd=1:length(sampleContrasts)
+    sampleContrast=sampleContrasts(sampleContrastInd);
+    testContrasts=allTestContrasts(sampleContrastInd,:);
+    cond=length(testContrasts);%either 14 or 12- calculate cross-correlation values based on response elicited by highest contrast stimulus
+    matName=[num2str(ch),'_',num2str(session),'_',num2str(sampleContrast)];
+    matPath=fullfile('F:','PL','spikeData',animal,matName);
+    loadText=['load ',matPath,' matarray'];
+    eval(loadText);
+    matarrayTemp1=[matarrayTemp1;matarray{highestTestCond,1}];
+    matarrayTemp4=[matarrayTemp4;matarray{highestTestCond,4}];
+    matarrayTemp5=[matarrayTemp5;matarray{highestTestCond,5}];
+end
+matarray{highestTestCond,1}=matarrayTemp1;
+matarray{highestTestCond,4}=matarrayTemp4;
+matarray{highestTestCond,5}=matarrayTemp5;
 binwidth=1;%1 ms
 %calculate spontaneous activity:
 epoch=1;
@@ -99,7 +114,11 @@ set(gca,'XTickLabel',[1024 1536 1936]);
 set(gca,'YLim',[0 maxY]);
 text('Position',[1024 1.05*maxY],'FontSize',9,'String',ptext);
 
+if strcmp(area,'v1_2')
+imageName=[num2str(ch),'_',num2str(session),'_',area];
+else
 imageName=[num2str(ch),'_',num2str(session),'_',num2str(sampleContrast),'_',area];
+end
 if minusSpontan==1
     subfolder=['PSTH45_images_sm',num2str(sigma*2),'ms_mspontan_',area];%folder for stimulus-evoked responses minus spontaneous activity levels
 elseif minusSpontan==0
@@ -114,7 +133,11 @@ printtext=['print -dpng ',imagePath];
 set(gcf,'PaperPositionMode','auto')
 eval(printtext);
 
-matPSTHName=[num2str(ch),'_',num2str(session),'_',num2str(sampleContrast),'_',area,'_PSTHact'];
+if strcmp(area,'v1_2')
+    matPSTHName=[num2str(ch),'_',num2str(session),'_',area,'_PSTHact'];
+else
+    matPSTHName=[num2str(ch),'_',num2str(session),'_',num2str(sampleContrast),'_',area,'_PSTHact'];
+end
 matPSTHPath=fullfile('F:','PL','xcorr',animal,subfolder,matPSTHName);
 saveText=['save ',matPSTHPath,' PSTHact'];
 eval(saveText);

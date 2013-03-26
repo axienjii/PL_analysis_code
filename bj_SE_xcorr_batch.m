@@ -13,21 +13,16 @@ if nargin<4 || isempty(sessionNums)
     sessionNums = main_raw_sessions_final(animal,area,[],0);
 end
 sigma=8;%in ms
-[sampleContrasts allTestContrasts]=area_metadata(area);
 for i=1:length(channels)
     for j=1:length(sessionNums)
-        for sampleContrastInd=1:length(sampleContrasts)
-            sampleContrast=sampleContrasts(sampleContrastInd);
-            testContrasts=allTestContrasts(sampleContrastInd,:);
-            try
-            bj_SE_xcorr(animal,area,channels(i),sessionNums(j),sigma,sampleContrast,testContrasts);%note that epochTimes(ind,2) is currently unused
+        try
+            bj_SE_xcorr(animal,area,channels(i),sessionNums(j),sigma);%note that epochTimes(ind,2) is currently unused
             %         all_onset2=[all_onset2 onset2];
-            catch ME
-                disp(ME)
-                load F:\PL\xcorr\missingSessions.mat missingSessions
-                missingSessions=[missingSessions;{animal} {channels(i)} {sessionNums(j)} {ME}];
-                save F:\PL\xcorr\missingSessions.mat missingSessions                
-            end
+        catch ME
+            disp(ME)
+            load F:\PL\xcorr\missingSessions.mat missingSessions
+            missingSessions=[missingSessions;{animal} {channels(i)} {sessionNums(j)} {ME}];
+            save F:\PL\xcorr\missingSessions.mat missingSessions
         end
     end
 end

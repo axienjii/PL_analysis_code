@@ -72,34 +72,35 @@ elseif minusSpontan==0
 end
 matActName=['actTrialsList_',area,'.mat'];
 matActPath=fullfile('F:','PL','xcorr',animal,subfolder,matActName);
-if ~exist(matActPath,'file')
+% if ~exist(matActPath,'file')
     actSessions=[];
     for i=1:length(channels)
         for j=1:length(sessionNums)
-            for sampleContrastInd=1:length(sampleContrasts)%combine across sample contrasts (if >1) because highest test contrast is always the same (60% in V4, 90% in V1)
-                sampleContrast=sampleContrasts(sampleContrastInd);
+            if strcmp(area,'v1_2')
+                matPSTHName=[num2str(channels(i)),'_',num2str(sessionNums(j)),'_',area,'_PSTHact.mat'];
+            else
                 matPSTHName=[num2str(channels(i)),'_',num2str(sessionNums(j)),'_',num2str(sampleContrast),'_',area,'_PSTHact.mat'];
-                matPSTHPath=fullfile('F:','PL','xcorr',animal,subfolder,matPSTHName);
-                if exist(matPSTHPath,'file')
-                    loadText=['load ',matPSTHPath,' PSTHact'];
-                    eval(loadText);
-                    actSessions=[actSessions;channels(i) sessionNums(j) PSTHact];
-                end
+            end
+            matPSTHPath=fullfile('F:','PL','xcorr',animal,subfolder,matPSTHName);
+            if exist(matPSTHPath,'file')
+                loadText=['load ',matPSTHPath,' PSTHact'];
+                eval(loadText);
+                actSessions=[actSessions;channels(i) sessionNums(j) PSTHact];
             end
         end
     end
     saveText=['save ',matActPath,' actSessions'];
     eval(saveText);
-else
-    loadText=['load ',matActPath,' actSessions'];
-    eval(loadText);
-end
+% else
+%     loadText=['load ',matActPath,' actSessions'];
+%     eval(loadText);
+% end
 
 %simply read all .mat array files to tabulate number of good trials for
 %each session and cell:
 matGrandName=['grandTrialsList_',area,'.mat'];
 matGrandPath=fullfile('F:','PL','xcorr',animal,subfolder,matGrandName);
-if ~exist(matGrandPath,'file')
+% if ~exist(matGrandPath,'file')
     for h=1:length(channels)
         numTrialsPSess=[];%number of trials per session (for condition 14)
         goodSessList=[];
@@ -119,10 +120,10 @@ if ~exist(matGrandPath,'file')
     end
     saveText=['save ',matGrandPath,' grandTrialsList'];
     eval(saveText);
-else
-    loadText=['load ',matGrandPath,' grandTrialsList'];
-    eval(loadText);    
-end
+% else
+%     loadText=['load ',matGrandPath,' grandTrialsList'];
+%     eval(loadText);    
+% end
 
 %generate bootstrapped data for each good session:
 numStds=[1 2 3];
@@ -399,3 +400,19 @@ for goodSess=1:size(actSessions,1)
     end
 end
 
+trans_allDist=[];
+for i=1:length(channels)
+    for j=1:length(sessionNums)
+        matChDistName=['trans_Dist_',area,'_',num2str(channels(i)),'_',num2str(sessionNums(j)),'.mat'];
+        matChDistPath=fullfile('F:','PL','xcorr',animal,subfolder,matChDistName);
+        if exist(matChDistPath,'file')
+            loadText=['load ',matChDistPath,' trans_Dist'];
+            eval(loadText);
+            trans_allDist=[trans_allDist;trans_Dist];
+        end
+    end
+end
+matDistName=['trans_allDist_',area,'.mat'];
+matDistPath=fullfile('F:','PL','xcorr',animal,subfolder,matDistName);
+saveText=['save ',matDistPath,' trans_allDist'];
+eval(saveText);

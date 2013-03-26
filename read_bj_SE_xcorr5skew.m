@@ -119,13 +119,13 @@ for i=1:size(allDist,1)
         colInd=find(sessionNums==allDist{i,2});
 
         %calculate proportion of within-cell-between-session comparisons that fall within CIs:
-        CItable(rowInd,colInd,1)=sum(allDist{i,4}(allDist{i,4}<=meanBootC+2*stdC)>=meanBootC-2*stdC)/length(allDist{i,4});
+        CItable(rowInd,colInd,1)=sum(allDist{i,4}(allDist{i,4}<=meanBootC+1.96*stdC)>=meanBootC-2*stdC)/length(allDist{i,4});
         %calculate proportion of between-cell-between-session comparisons that fall within CIs:
-        CItable(rowInd,colInd,2)=sum(allDist{i,5}(allDist{i,5}<=meanBootC+2*stdC)>=meanBootC-2*stdC)/length(allDist{i,5});
+        CItable(rowInd,colInd,2)=sum(allDist{i,5}(allDist{i,5}<=meanBootC+1.96*stdC)>=meanBootC-2*stdC)/length(allDist{i,5});
         %calculate proportion of within-cell-between-session comparisons that fall within CIs:
-        CItable(rowInd,colInd,3)=sum(allDist{i,4}(allDist{i,4}<=meanBootC+3*stdC)>=meanBootC-3*stdC)/length(allDist{i,4});
+        CItable(rowInd,colInd,3)=sum(allDist{i,4}(allDist{i,4}<=meanBootC+2.58*stdC)>=meanBootC-3*stdC)/length(allDist{i,4});
         %calculate proportion of between-cell-between-session comparisons that fall within CIs:
-        CItable(rowInd,colInd,4)=sum(allDist{i,5}(allDist{i,5}<=meanBootC+3*stdC)>=meanBootC-3*stdC)/length(allDist{i,5});
+        CItable(rowInd,colInd,4)=sum(allDist{i,5}(allDist{i,5}<=meanBootC+2.58*stdC)>=meanBootC-3*stdC)/length(allDist{i,5});
         proportionText1=sprintf('wCellbSess  %.3f     (proportion of coef values within 95%% CI)',CItable(rowInd,colInd,1));
         proportionText2=sprintf('bCellbSess  %.3f',CItable(rowInd,colInd,2));
         proportionText3=sprintf('wCellbSess  %.3f     (proportion of coef values within 99%% CI)',CItable(rowInd,colInd,3));

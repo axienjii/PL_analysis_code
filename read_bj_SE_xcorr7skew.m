@@ -1,4 +1,4 @@
-function read_bj_SE_xcorr7skew(animal,area)
+function read_bj_SE_xcorr7skew(roving)
 %Written by Xing 16/09/10, slightly modified on 20/09/10 to accept 2nd
 %input arg.
 %Modified from read_blanco_SE_xcorr6skew2.
@@ -17,11 +17,16 @@ for intervalInd=1:length(intervalSizes)
     set(gcf,'Color',[1,1,1],'Units', 'Normalized', 'Position',[0.05,0.05, 0.3, 0.3]);
     animalTexts=[{'subject B'} {'subject J'}];
     animals=[{'blanco'} {'jack'}];
-    areaTexts=[{'V4'} {'V1'}];
-    areas=[{'v4_1'} {'v1_1'}];
-    for animalInd=1:2
+    if roving==0
+        areaTexts=[{'V4'} {'V1'}];
+        areas=[{'v4_1'} {'v1_1'}];
+    elseif roving==1
+        areaTexts={'V1 roving data'};
+        areas={'v1_2'};
+    end
+    for animalInd=1:length(animals)
         animal=animals{animalInd};
-        for areaInd=1:2
+        for areaInd=1:length(areas)
             area=areas{areaInd};
             folder=fullfile('F:','PL','xcorr',animal);
             if minusSpontan==1
@@ -57,7 +62,7 @@ for intervalInd=1:length(intervalSizes)
             newCItable=newCItable(:,(ind),:);
             count=0;
             higherCount=0;
-            subplotInd=subplot(2,2,animalInd+2*(areaInd-1));
+            subplotInd=subplot(length(areas),2,animalInd+2*(areaInd-1));
             for i=1:size(newCItable,1)
                 channel=channels(i);
                 ptext=sprintf('w: comparing sessions within a cell         b: across cells');
@@ -78,7 +83,9 @@ for intervalInd=1:length(intervalSizes)
                     if newCItable(i,j,1)~=-1
                         proportions=[newCItable(i,j,1+(intervalInd-1)*2) newCItable(i,j,2+(intervalInd-1)*2)];
                         plot(proportions(2),proportions(1),'ko','MarkerSize',3);hold on
-                        count=count+1;
+                        if proportions(2)<proportions(1)||proportions(2)>proportions(1)%exclude cases when their values are equal, e.g. both are zero
+                            count=count+1;
+                        end
                         if proportions(2)<proportions(1)
                             higherCount=higherCount+1;
                         end
@@ -95,11 +102,14 @@ for intervalInd=1:length(intervalSizes)
             axis square
             if animalInd==1
                 ptext=areaTexts{areaInd};
-                text('Position',[-0.5 0.5],'FontSize',9,'String',ptext);
+                text('Position',[0 0.5],'FontSize',9,'String',ptext);
                 ylabel('proportion of R_a within CI');
             end
             if areaInd==1
                 title(animalTexts{animalInd});
+                if length(areas)==1
+                    xlabel('proportion of R_c within CI');
+                end
             else
                 xlabel('proportion of R_c within CI');
             end
@@ -108,71 +118,16 @@ for intervalInd=1:length(intervalSizes)
     end
     % ptext=sprintf('w: comparing sessions within a cell         b: across cells');
     % text('Position',[-15 -2],'FontSize',9,'String',ptext);
-    imageName=[num2str(intervalSizes(intervalInd)),'_CI_scatterplots_V4_V1'];
+    if roving==0
+        areaFileText='V4_1_V1_1';
+    elseif roving==1
+        areaFileText='V1_2';
+    end
+    imageName=[num2str(intervalSizes(intervalInd)),'_CI_scatterplots_',areaFileText];
     imageFolder=fullfile('F:','PL','xcorr');
     imagePath=fullfile(imageFolder,imageName);
     printtext=['print -dpng -r300 ',imagePath];
     set(gcf,'PaperPositionMode','auto')
     eval(printtext);
 end
-
-printFlag=0;
-figure('Color',[1,1,1],'Units', 'Normalized', 'Position',[0.05,0.05, 0.9, 0.9]);
-for i=1:size(newCItable,1)
-    channel=channels(i);
-    if i>floor(size(newCItable,1)/2)
-        rowIndex=i-floor(size(newCItable,1)/2);
-    else
-        rowIndex=i;
-    end
-    if i==floor(size(newCItable,1)/2)+1
-        if printFlag==0
-            printFlag=1;
-            set(gcf,'Color',[1,1,1],'Units', 'Normalized', 'Position',[0.05,0.05, 0.9, 0.9]);
-            ptext=sprintf('w: comparing sessions within a cell         b: across cells');
-            text('Position',[-15 -5],'FontSize',9,'String',ptext);
-            imageName=['99_CI_scatterplots1_',area];
-            imageFolder=fullfile('F:','PL','xcorr',animal,subfolder);
-            imagePath=fullfile(imageFolder,imageName);
-            printtext=['print -dpng ',imagePath];
-            set(gcf,'PaperPositionMode','auto')
-            eval(printtext);
-            figure('Color',[1,1,1],'Units', 'Normalized', 'Position',[0.05,0.05, 0.9, 0.9]);
-        end
-    end
-    for j=1:size(newCItable,2)
-        %         subplot(size(newCItable,1)-floor(size(newCItable,1)/2),size(newCItable,2),j+size(newCItable,2)*(rowIndex-1));
-        if newCItable(i,j,1)==-1
-            axis off
-        end
-        if j==1
-            if newCItable(i,j,1)==-1
-                text('Position',[-1 0.5],'FontSize',9,'String',num2str(channel));hold on
-            end
-            if newCItable(i,j,1)~=-1
-                text('Position',[-4 0.5],'FontSize',9,'String',num2str(channel));hold on
-            end
-        end
-        if newCItable(i,j,1)~=-1
-            proportions=[newCItable(i,j,3) newCItable(i,j,4)];
-            bar(proportions(2),proportions(2));
-            set(gca,'YLim',[0 1]);
-            set(gca,'YTick',[0 1]);
-            set(gca,'YTickLabel',[0 1]);
-            set(gca,'XTick',[0 1]);
-            set(gca,'XLim',[0 1]);
-            set(gca,'XTickLabel',[0 1]);
-            xlabel('R_c');
-            ylabel('R_a');
-        end
-    end
-end
-ptext=sprintf('w: comparing sessions within a cell         b: across cells');
-text('Position',[-15 -5],'FontSize',9,'String',ptext);
-imageName=['99_CI_barplots2_',area];
-imageFolder=fullfile('F:','PL','xcorr',animal,subfolder);
-imagePath=fullfile(imageFolder,imageName);
-printtext=['print -dpng ',imagePath];
-set(gcf,'PaperPositionMode','auto')
-eval(printtext);
-close all
+tallyHigherWithin

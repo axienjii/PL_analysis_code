@@ -78,7 +78,11 @@ if ~exist(matActPath,'file')
         for j=1:length(sessionNums)
             for sampleContrastInd=1:length(sampleContrasts)%combine across sample contrasts (if >1) because highest test contrast is always the same (60% in V4, 90% in V1)
                 sampleContrast=sampleContrasts(sampleContrastInd);
-                matPSTHName=[num2str(channels(i)),'_',num2str(sessionNums(j)),'_',num2str(sampleContrast),'_',area,'_PSTHact.mat'];
+                if strcmp(area,'v1_2')
+                    matPSTHName=[num2str(channels(i)),'_',num2str(sessionNums(j)),'_',area,'_PSTHact.mat'];
+                else
+                    matPSTHName=[num2str(channels(i)),'_',num2str(sessionNums(j)),'_',num2str(sampleContrast),'_',area,'_PSTHact.mat'];
+                end
                 matPSTHPath=fullfile('F:','PL','xcorr',animal,subfolder,matPSTHName);
                 if exist(matPSTHPath,'file')
                     loadText=['load ',matPSTHPath,' PSTHact'];
@@ -149,9 +153,9 @@ for goodSess=1:size(actSessions,1)
     matarray{highestTestCond,5}=matarrayTemp5;
     numBootTrials=length(matarray{highestTestCond,4});
     if numBootTrials>=minTrials%if there are at least a certain number of trials per session
-        matDistName=['trans_Dist_',area,'_',num2str(actSessions(goodSess,1)),'_',num2str(actSessions(goodSess,2))];
-        matDistPath=fullfile('F:','PL','xcorr',animal,subfolder,matDistName);
-        if ~exist(matDistPath,'file')
+        matChDistName=['trans_Dist_',area,'_',num2str(actSessions(goodSess,1)),'_',num2str(actSessions(goodSess,2)),'.mat'];
+        matChDistPath=fullfile('F:','PL','xcorr',animal,subfolder,matChDistName);
+%         if ~exist(matChDistPath,'file')
             bootPSTHact=zeros(numSamp,length(bins));
             for Nsamp=1:numSamp
                 trialsAvailable=min([length(matarray{highestTestCond,4}) length(matarray{highestTestCond,5})]);
@@ -174,7 +178,7 @@ for goodSess=1:size(actSessions,1)
                 bootPSTHact(Nsamp,:)=bootPSTHact(Nsamp,:)*1000/(binwidth*numBootTrials);%average activity per ms
                 bootPSTHact(Nsamp,:)=gaussfit(sigma,0,bootPSTHact(Nsamp,:));%smoothing done for each bootstrapped PSTH
             end
-            figure('Color',[1,1,1],'Units', 'Normalized', 'Position',[0.9, 0.9, 0.7, 0.4]);
+            figure('Color',[1,1,1],'Units', 'Normalized', 'Position',[0.9, 0.1, 0.7, 0.4]);
             maxY=max(max(bootPSTHact));
             for Nsamp=1:numSamp
                 plot(bins,bootPSTHact(Nsamp,:),'Color','k');hold on
@@ -200,7 +204,7 @@ for goodSess=1:size(actSessions,1)
             imagePath=fullfile(imageFolder,imageName);
             printtext=['print -dpng ',imagePath];
             set(gcf,'PaperPositionMode','auto')
-            eval(printtext);
+%             eval(printtext);
             
             for i=1:size(bootPSTHact,1)-1
                 pair1=bootPSTHact(i,:)';
@@ -223,7 +227,7 @@ for goodSess=1:size(actSessions,1)
                 [plotDist X]=hist(bootDist{1},minX:(maxX-minX)/100:maxX);
                 plotDist=plotDist/numSamp;
                 minY=min(plotDist);maxY=max(plotDist);
-                figure('Color',[1,1,1],'Units', 'Normalized', 'Position',[0.9, 0.9, 0.7, 0.4]);
+                figure('Color',[1,1,1],'Units', 'Normalized', 'Position',[0.9, 0.1, 0.7, 0.4]);
                 plot(minX:(maxX-minX)/100:maxX,plotDist,'Color','k');hold on
                 smoothPlotDist=gaussfit(sigma,0,plotDist);
                 plot(minX:(maxX-minX)/100:maxX,smoothPlotDist,'Color','r');hold on
@@ -257,7 +261,7 @@ for goodSess=1:size(actSessions,1)
                 imagePath=fullfile(imageFolder,imageName);
                 printtext=['print -dpng ',imagePath];
                 set(gcf,'PaperPositionMode','auto')
-                eval(printtext);
+%                 eval(printtext);
             end
             
             %calculate corr coefs between this session's original full-data PSTH
@@ -357,7 +361,7 @@ for goodSess=1:size(actSessions,1)
             imagePath=fullfile(imageFolder,imageName);
             printtext=['print -dpng ',imagePath];
             set(gcf,'PaperPositionMode','auto')
-            eval(printtext);
+%             eval(printtext);
             
             if ~isempty(wCbScDist)&&min(wCbScDist)~=max(wCbScDist)
                 set(gca,'XLim',[min(wCbScDist) max(wCbScDist)]);
@@ -377,12 +381,12 @@ for goodSess=1:size(actSessions,1)
             imagePath=fullfile(imageFolder,imageName);
             printtext=['print -dpng ',imagePath];
             set(gcf,'PaperPositionMode','auto')
-            eval(printtext);
+%             eval(printtext);
             
             matDistName=['trans_cDist_',num2str(ch),'_',num2str(session),'_',area];
             matDistPath=fullfile('F:','PL','xcorr',animal,subfolder,matDistName);
             saveText=['save ',matDistPath,' bootDist wCbScDist bCbScDist bCwScDist'];
-            eval(saveText);
+%             eval(saveText);
             
             trans_Dist(1,3)=bootDist;
             trans_Dist(1,4)={wCbScDist};
@@ -390,10 +394,28 @@ for goodSess=1:size(actSessions,1)
             trans_Dist(1,6)={bCwScDist};
             trans_Dist{1,1}=actSessions(goodSess,1);
             trans_Dist{1,2}=actSessions(goodSess,2);
-            saveText=['save ',matDistPath,' trans_Dist'];
-            eval(saveText);
+            matChDistName=['trans_Dist_',area,'_',num2str(actSessions(goodSess,1)),'_',num2str(actSessions(goodSess,2)),'.mat'];
+            matChDistPath=fullfile('F:','PL','xcorr',animal,subfolder,matChDistName);
+            saveText=['save ',matChDistPath,' trans_Dist'];
+%             eval(saveText);
             close all
-        end
+%         end
     end
 end
 
+trans_allDist=[];
+for i=1:length(channels)
+    for j=1:length(sessionNums)
+        matChDistName=['trans_Dist_',area,'_',num2str(channels(i)),'_',num2str(sessionNums(j)),'.mat'];
+        matChDistPath=fullfile('F:','PL','xcorr',animal,subfolder,matChDistName);
+        if exist(matChDistPath,'file')
+            loadText=['load ',matChDistPath,' trans_Dist'];
+            eval(loadText);
+            trans_allDist=[trans_allDist;trans_Dist];
+        end
+    end
+end
+matDistName=['trans_allDist_',area,'.mat'];
+matDistPath=fullfile('F:','PL','xcorr',animal,subfolder,matDistName);
+saveText=['save ',matDistPath,' trans_allDist'];
+eval(saveText);
