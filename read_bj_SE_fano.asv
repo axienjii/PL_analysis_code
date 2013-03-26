@@ -1,4 +1,4 @@
-function read_bj_SE_fano(animal,area,channels,sessionNums)
+function read_bj_SE_fano
 %Written by Xing 16/09/10
 %Set the minimum number of trials in this function with ‘mintrials,’ for
 %data from a particular session to be included.
@@ -56,59 +56,181 @@ function read_bj_SE_fano(animal,area,channels,sessionNums)
 
 minusSpontan=0;
 markerTexts='+x';
-%combine PSTH activity values across channels and sessions:
-if nargin<3 || isempty(channels)
-    channels = main_channels(animal,area);
-end
-if nargin<4 || isempty(sessionNums)
-    sessionNums = main_raw_sessions_final(animal,area,[],0);
-end
-[sampleContrasts allTestContrasts]=area_metadata(area);
+
+animalTexts=[{'subject B'} {'subject J'}];
+animals=[{'blanco'} {'jack'}];
+areaTexts=[{'V4'} {'V1'}];
+areas=[{'v4_1'} {'v1_1'}];
 epoch=4;
-if minusSpontan==1
-    subfolder=['fano',num2str(epoch),'_mspontan_',area];%folder for stimulus-evoked responses minus spontaneous activity levels
-elseif minusSpontan==0
-    subfolder=['fano',num2str(epoch),'_wspontan_',area];%folder for stimulus-evoked responses minus spontaneous activity levels
+for animalInd=1:2
+    animal=animals{animalInd};
+    for areaInd=1:2
+        area=areas{areaInd};
+        %combine PSTH activity values across channels and sessions:
+        if nargin<3 || isempty(channels)
+            channels = main_channels(animal,area);
+        end
+        if nargin<4 || isempty(sessionNums)
+            sessionNums = main_raw_sessions_final(animal,area,[],0);
+        end
+        [sampleContrasts allTestContrasts]=area_metadata(area);
+        if minusSpontan==1
+            subfolder=['fano',num2str(epoch),'_mspontan_',area];%folder for stimulus-evoked responses minus spontaneous activity levels
+        elseif minusSpontan==0
+            subfolder=['fano',num2str(epoch),'_wspontan_',area];%folder for stimulus-evoked responses minus spontaneous activity levels
+        end
+        allFanoSessions=[];
+        colmapText=colormap(jet(size(allTestContrasts,2)));
+        colmapText=[colmapText(1,:);132/255 22/255 216/255;202/255 65/255 223/255;colmapText(3:7,:);157/255 212/255 61/255;colmapText(10:12,:);178/255 111/255 12/255;colmapText(end,:)];
+        analyseSeparateChannels=0;
+        if analyseSeparateChannels==1
+            sigCoefs=[];
+            for sampleContrastInd=1:length(sampleContrasts)%combine across sample contrasts (if >1) because highest test contrast is always the same (60% in V4, 90% in V1)
+                sampleContrast=sampleContrasts(sampleContrastInd);
+                figure('Color',[1,1,1],'Units', 'Normalized', 'Position',[0.05,0.05, 0.9, 0.9]);
+                for i=1:length(channels)
+                    fanoSessions=[];
+                    for j=1:length(sessionNums)
+                        matFanoName=[num2str(channels(i)),'_',num2str(sessionNums(j)),'_',num2str(sampleContrast),'_',area,'_fano_vals.mat'];
+                        matFanoPath=fullfile('F:','PL','fano',animal,subfolder,matFanoName);
+                        if exist(matFanoPath,'file')
+                            loadText=['load ',matFanoPath,' fano_vals'];
+                            eval(loadText);
+                            fanoSessions=[fanoSessions;fano_vals];
+                            allFanoSessions=[allFanoSessions;channels(i) sessionNums(j) fano_vals];
+                        end
+                    end
+                    subplot(ceil(length(channels)/5),5,i);
+                    markerText=markerTexts(2);markerS=8;
+                    for cond=1:size(allTestContrasts,2)
+                        plot(1:size(fanoSessions,1),fanoSessions(:,cond),'Color',colmapText(cond,:),'LineStyle','none','Marker',markerText,'MarkerFaceColor',colmapText(cond,:),'MarkerEdgeColor',colmapText(cond,:),'MarkerSize',markerS);hold on%'MarkerFaceColor',[1/i 1/i 1/i],
+                        hold on
+                        a=[(1:size(fanoSessions,1))' fanoSessions(:,cond)];%check for change in slope with time- expect a +ve correlation, if any
+                        [coefficients1 p1]=corrcoef(a);
+                        allfanoCoefs(i,cond)={[coefficients1(1,2) p1(1,2)]};
+                        if p1(1,2)<0.05
+                            sigCoefs=[sigCoefs;channels(i) sampleContrast cond coefficients1(1,2) p1(1,2) fano_vals];
+                        end
+                    end
+                    if strcmp(animal,'blanco')&&strcmp(area,'v1_2')
+                        ylim([0 3]);
+                    end
+                    %         xlabel('session');
+                    %         ylabel('Fano factor');
+                    title(num2str(channels(i)));
+                end
+                saveMeanImageName=[area,'_',animal,'_epoch',num2str(epoch),'_between_channels_vs_session_',num2str(sampleContrast)];
+                saveMeanImageFolder=fullfile('F:','PL','fano',animal);
+                saveMeanImagePath=fullfile(saveMeanImageFolder,saveMeanImageName);
+                printtext=sprintf('print -dpng -r600 %s.png',saveMeanImagePath);
+                set(gcf,'PaperPositionMode','auto')
+                eval(printtext);
+                matGrandName=['fanoList_',area,'_',num2str(sampleContrast)];
+                matGrandPath=fullfile('F:','PL','fano',animal,subfolder,matGrandName);
+                saveText=['save ',matGrandPath,' allFanoSessions'];
+                eval(saveText);
+                matCoefName=['fanoCoefsList_',area,'_',num2str(sampleContrast)];
+                matCoefPath=fullfile('F:','PL','fano',animal,subfolder,matCoefName);
+                saveText=['save ',matCoefPath,' allfanoCoefs'];
+                eval(saveText);
+            end
+            
+            matSigCoefsName=['sigCoefs_',area];
+            matSigCoefsPath=fullfile('F:','PL','fano',animal,subfolder,matSigCoefsName);
+            saveText=['save ',matSigCoefsPath,' sigCoefs'];
+            eval(saveText);
+            close all
+        end
+        
+        analyseMeanChannels=0;
+        if analyseMeanChannels==1
+            %carry out correlation analysis on fano factors averaged across channels:
+            meanSigCoefs=[];
+            for sampleContrastInd=1:length(sampleContrasts)%combine across sample contrasts (if >1) because highest test contrast is always the same (60% in V4, 90% in V1)
+                sampleContrast=sampleContrasts(sampleContrastInd);
+                figure('Color',[1,1,1],'Units', 'Normalized', 'Position',[0.05,0.05, 0.9, 0.9]);
+                meanFanoSessions=[];
+                for j=1:length(sessionNums)
+                    fanoSessions=[];
+                    for i=1:length(channels)
+                        matFanoName=[num2str(channels(i)),'_',num2str(sessionNums(j)),'_',num2str(sampleContrast),'_',area,'_fano_vals.mat'];
+                        matFanoPath=fullfile('F:','PL','fano',animal,subfolder,matFanoName);
+                        if exist(matFanoPath,'file')
+                            loadText=['load ',matFanoPath,' fano_vals'];
+                            eval(loadText);
+                            fanoSessions=[fanoSessions;fano_vals];
+                        end
+                    end
+                    meanFanoSessions=[meanFanoSessions;sessionNums(j) mean(fanoSessions,1)];
+                end
+                markerText=markerTexts(2);markerS=8;
+                for cond=1:size(allTestContrasts,2)
+                    plot(1:size(meanFanoSessions,1),meanFanoSessions(:,cond+1),'Color',colmapText(cond,:),'LineStyle','none','Marker',markerText,'MarkerFaceColor',colmapText(cond,:),'MarkerEdgeColor',colmapText(cond,:),'MarkerSize',markerS);hold on%'MarkerFaceColor',[1/i 1/i 1/i],
+                    hold on
+                    a=[(1:size(meanFanoSessions,1))' meanFanoSessions(:,cond+1)];%check for change in slope with time- expect a +ve correlation, if any
+                    [coefficients1 p1]=corrcoef(a);
+                    allMeanfanoCoefs(cond)={[coefficients1(1,2) p1(1,2)]};
+                    if p1(1,2)<0.05
+                        meanSigCoefs=[meanSigCoefs;sampleContrast cond coefficients1(1,2) p1(1,2) fano_vals];
+                    end
+                end
+                if strcmp(animal,'blanco')&&strcmp(area,'v1_2')
+                    ylim([0 3]);
+                end
+                %         xlabel('session');
+                %         ylabel('Fano factor');
+                title(num2str(channels(i)));
+                saveallMeanImageName=[area,'_',animal,'_epoch',num2str(epoch),'_mean_channels_vs_session_',num2str(sampleContrast)];
+                saveallMeanImageFolder=fullfile('F:','PL','fano',animal);
+                saveallMeanImagePath=fullfile(saveallMeanImageFolder,saveallMeanImageName);
+                printtext=sprintf('print -dpng -r600 %s.png',saveallMeanImagePath);
+                set(gcf,'PaperPositionMode','auto')
+                eval(printtext);
+                matGrandName=['meanfanoList_',area,'_',num2str(sampleContrast)];
+                matGrandPath=fullfile('F:','PL','fano',animal,subfolder,matGrandName);
+                saveText=['save ',matGrandPath,' meanFanoSessions'];
+                eval(saveText);
+                matAllCoefName=['fanoList_',area,'_',num2str(sampleContrast)];
+                matAllCoefPath=fullfile('F:','PL','fano',animal,subfolder,matAllCoefName);
+                saveText=['save ',matAllCoefPath,' allMeanfanoCoefs'];
+                eval(saveText);
+            end
+            
+            matSigCoefsName=['meanSigCoefs_',area];
+            matSigCoefsPath=fullfile('F:','PL','fano',animal,subfolder,matSigCoefsName);
+            saveText=['save ',matSigCoefsPath,' meanSigCoefs'];
+            eval(saveText);
+            close all
+        end        
+    end
 end
-allFanoSessions=[];
-colmapText=colormap(jet(size(allTestContrasts,2)));
-colmapText=[colmapText(1,:);132/255 22/255 216/255;202/255 65/255 223/255;colmapText(3:7,:);157/255 212/255 61/255;colmapText(10:12,:);178/255 111/255 12/255;colmapText(end,:)];
-for sampleContrastInd=1:length(sampleContrasts)%combine across sample contrasts (if >1) because highest test contrast is always the same (60% in V4, 90% in V1)
-    sampleContrast=sampleContrasts(sampleContrastInd);
-    figure('Color',[1,1,1],'Units', 'Normalized', 'Position',[0.05,0.05, 0.9, 0.9]);
-    for i=1:length(channels)
-        fanoSessions=[];
-        for j=1:length(sessionNums)
-            matFanoName=[num2str(channels(i)),'_',num2str(sessionNums(j)),'_',num2str(sampleContrast),'_',area,'_fano_vals.mat'];
-            matFanoPath=fullfile('F:','PL','fano',animal,subfolder,matFanoName);
-            if exist(matFanoPath,'file')
-                loadText=['load ',matFanoPath,' fano_vals'];
-                eval(loadText);
-                fanoSessions=[fanoSessions;fano_vals];
-                allFanoSessions=[allFanoSessions;channels(i) sessionNums(j) fano_vals];
+
+figure('Color',[1,1,1],'Units', 'Normalized', 'Position',[0.9, 0.1, 0.7, 0.4]);
+aboveZero=zeros(2,2);
+for animalInd=1:2
+    animal=animals{animalInd};
+    for areaInd=1:2
+        area=areas{areaInd};
+        [sampleContrasts allTestContrasts]=area_metadata(area);
+        colmapText=colormap(jet(size(allTestContrasts,2)));
+        colmapText=[colmapText(1,:);132/255 22/255 216/255;202/255 65/255 223/255;colmapText(3:7,:);157/255 212/255 61/255;colmapText(10:12,:);178/255 111/255 12/255;colmapText(end,:)];
+        markerText=markerTexts(2);markerS=8;
+        if minusSpontan==1
+            subfolder=['fano',num2str(epoch),'_mspontan_',area];%folder for stimulus-evoked responses minus spontaneous activity levels
+        elseif minusSpontan==0
+            subfolder=['fano',num2str(epoch),'_wspontan_',area];%folder for stimulus-evoked responses minus spontaneous activity levels
+        end
+        matSigCoefsName=['sigCoefs_',area];
+        matSigCoefsPath=fullfile('F:','PL','fano',animal,subfolder,matSigCoefsName);
+        loadText=['load ',matSigCoefsPath,' sigCoefs'];
+        eval(loadText);
+        subplotInd=subplot(2,2,animalInd+2*(areaInd-1));
+        for rowInd=1:size(sigCoefs,1)
+            plot(1,sigCoefs(4,sigCoefs(rowInd,3)),'Color',colmapText(sigCoefs(rowInd,3),:),'LineStyle','none','Marker',markerText,'MarkerFaceColor',colmapText(sigCoefs(rowInd,3),:),'MarkerEdgeColor',colmapText(sigCoefs(rowInd,3),:),'MarkerSize',markerS);hold on%'MarkerFaceColor',[1/i 1/i 1/i],
+            if sigCoefs(4,sigCoefs(rowInd,3))>0
+                aboveZero(animalInd+2*(areaInd-1))=aboveZero(animalInd+2*(areaInd-1))+1;
             end
         end
-        subplot(ceil(length(channels)/5),5,i);
-        markerText=markerTexts(2);markerS=8;
-        for cond=1:size(allTestContrasts,2)
-            plot(1:length(fanoSessions),fanoSessions(:,cond),'Color',colmapText(cond,:),'LineStyle','none','Marker',markerText,'MarkerFaceColor',colmapText(cond,:),'MarkerEdgeColor',colmapText(cond,:),'MarkerSize',markerS);hold on%'MarkerFaceColor',[1/i 1/i 1/i],
-            hold on
-        end
-%         xlabel('session');
-%         ylabel('Fano factor');
-                title(num2str(channels);
     end
-    saveMeanImageName=[area,'_',animal,'_epoch',num2str(epoch),'_between_channels_vs_session_',num2str(sampleContrast)];
-    saveMeanImageFolder=fullfile('F:','PL','fano',animal);
-    saveMeanImagePath=fullfile(saveMeanImageFolder,saveMeanImageName);
-    printtext=sprintf('print -dpng -r600 %s.png',saveMeanImagePath);
-    set(gcf,'PaperPositionMode','auto')
-    eval(printtext);
 end
-
-matGrandName=['fanoList_',area];
-matGrandPath=fullfile('F:','PL','fano',animal,subfolder,matGrandName);
-saveText=['save ',matGrandPath,' fanoSessions'];
-eval(saveText);
-close all
-
+aboveZero
