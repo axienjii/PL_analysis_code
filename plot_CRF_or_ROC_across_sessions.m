@@ -1,4 +1,4 @@
-function [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,dataArray,chNum,numsessions,sessionSorted1,sampleContrast,testContrast,calculateTangent,plotDiffC50_30,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,slC50MatPathname,slSigmaMultiple,c50SigmaMultiple)
+function [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData,threshold82lower,threshold82higher]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,dataArray,chNum,numsessions,sessionSorted1,sampleContrast,testContrast,calculateTangent,plotDiffC50_30,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,slC50MatPathname,slSigmaMultiple,c50SigmaMultiple,threshSigmaMultiple)
 if ischar(chNum)
     titleText=chNum;
     chNum=0;
@@ -8,13 +8,19 @@ end
 appendText=['_',num2str(sampleContrast)];
 fighandle1=  figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
 set(fighandle1, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+chSSE=[];
+slopeNeuro=[];
+c50=[];
+diffc50=[];
+minRate=[];
+maxRate=[];
 for i=1:numsessions
     datavals=dataArray{i,3};%for channel of interest, for each session
-    xvals=testContrast(1):1:testContrast(end);
     subplot(ceil(numsessions/5),5,i);
-    plot(testContrast,datavals,'ok');
-    hold on
     if strcmp(analysisType,'CRF')
+        xvals=testContrast(1):1:testContrast(end);
+        plot(testContrast,datavals,'ok');
+        hold on
         fittingFunction='n_r';
         options = optimset('Display','off','MaxFunEvals',10^6,'MaxIter',10^6,'TolFun',1.0E-6,'TolX',1.0E-6);
         X0=[max(datavals) 30 0.5 min(datavals)];
@@ -43,7 +49,13 @@ for i=1:numsessions
         end
         yvals=X(1)*(xvals.^X(3)./(xvals.^X(3)+X(2).^X(3)))+X(4);
         fitted_yvals=X(1)*(testContrast.^X(3)./(testContrast.^X(3)+X(2).^X(3)))+X(4);
+        residuals=datavals-fitted_yvals;
+        sseCRF=sum(residuals.^2);
+        chSSE(i,1:2)=[i sseCRF];
     elseif strcmp(analysisType,'ROC')
+        xvals=testContrast(1):1:testContrast(end);
+        plot(testContrast,datavals,'ok');
+        hold on
         if sum(datavals(1:3))<sum(datavals(end-2:end))||chNum==24&&sessionSorted1(1,i)==335||chNum==24&&sessionSorted1(1,i)==336||chNum==13
             X0=[2 30 0.2 0.1];
         elseif sum(datavals(1:3))>sum(datavals(end-2:end))
@@ -67,19 +79,69 @@ for i=1:numsessions
         fitted_yvals=1-X(4)-X(3).*exp(-(testContrast./X(2)).^X(1));
         minRate(1,i)=X(3);
         maxRate(1,i)=X(4);
+        residuals=datavals-fitted_yvals;
+        sseCRF=sum(residuals.^2);
+        chSSE(i,1:2)=[i sseCRF];
+    elseif strcmp(analysisType,'NVP')||strcmp(analysisType,'psycho')
+        colHighLow='rb';
+        for higherOrLower=1:2%separate curve fits for data where test contrast is below or above sample contrast
+            ind=find(testContrast<sampleContrast);
+            ind=ind(end);
+            if higherOrLower==1%lower contrast than sample
+                testContrastSplit(higherOrLower)={[0 fliplr(sampleContrast-testContrast(1:ind))]};%calculate absolute difference between sample and test contrasts
+                datavalsSplit(higherOrLower)={[0.5 fliplr(1-datavals(1:ind))]};
+            elseif higherOrLower==2%higher contrast than sample 
+                testContrastSplit(higherOrLower)={[0 testContrast(ind+1:end)-sampleContrast]};  
+                datavalsSplit(higherOrLower)={[0.5 datavals(ind+1:end)]};    
+            end
+            xvals=0:0.1:60;%hard coded 0:0.1:testContrastSplit{higherOrLower}(end)
+            plot([testContrastSplit{higherOrLower}],[100*datavalsSplit{higherOrLower}],'Marker','o','LineStyle','none','Color',colHighLow(higherOrLower));
+            hold on
+            options = optimset('Display','off','MaxFunEvals',10^6,'MaxIter',10^6,'TolFun',1.0E-6,'TolX',1.0E-6);
+            if sum(datavalsSplit{higherOrLower}(1:3))<sum(datavalsSplit{higherOrLower}(end-2:end))||chNum==24&&sessionSorted1(1,i)==335||chNum==24&&sessionSorted1(1,i)==336||chNum==13
+                X0=[10 1];
+            elseif sum(datavalsSplit{higherOrLower}(1:3))>sum(datavalsSplit{higherOrLower}(end-2:end))
+                X0=[10 -1];
+            end
+            X=fminsearch(@weibull_pointfive_one,X0,options,testContrastSplit{higherOrLower},datavalsSplit{higherOrLower},[1 1],[60 5],[1 1],[0 0]);
+            hold on
+            if higherOrLower==1%lower contrast than sample
+                threshold82lower(1,i)=X(1);%value of 81.161 is obtained when the contrast (x) is equal to the threshold (1-0.5*exp(-1) = 0.8161). value of 0.36 is from 2*(1-0.82)
+            elseif higherOrLower==2%higher contrast than sample
+                threshold82higher(1,i)=X(1);
+            end
+            yvals=100*(1-0.5.*exp(-(xvals./X(1)).^X(2)));
+            plot(xvals,yvals);         
+            fitted_yvals=100*(1-0.5.*exp(-(testContrastSplit{higherOrLower}./X(1)).^X(2)));
+            residuals=datavalsSplit{higherOrLower}-fitted_yvals/100;
+            sseCRF=sum(residuals.^2);
+            chSSE(i,1:2)=[i sseCRF];
+        end
     end
-    residuals=datavals-fitted_yvals;
-    sseCRF=sum(residuals.^2);
-    chSSE(i,1:2)=[i sseCRF];
-    plot(xvals,yvals,'r');
-    %         ylim([0,max(datavals)]);
-    % ylim([0 1]);
+    if strcmp(analysisType,'ROC')||strcmp(analysisType,'CRF')
+        ylim([0,max(datavals)]);
+%         ylim([0 1]);
+    end
     xlim([0 max(testContrast)]);
     subplottitle=num2str(i);
     title(subplottitle);
     [yLimData(i,1:2)]=get(gca,'YLim');
 end
-set_ylim_across_sessions(titleText,numsessions,sampleContrast,testContrast,c50,chSSE,yLimData,analysisType);
+if strcmp(analysisType,'NVP')||strcmp(analysisType,'psycho')
+    for i=1:numsessions
+        subplot(ceil(numsessions/5),5,i);
+        for higherOrLower=1:2
+            if higherOrLower==1%lower contrast than sample
+                set(gca,'YLim',yLimData(i,1:2));
+                plot(threshold82lower(1,i),yLimData(i,1):(yLimData(i,2)-yLimData(i,1))/100:yLimData(i,2),'Color',colHighLow(higherOrLower));
+            elseif higherOrLower==2%higher contrast than sample
+                plot(threshold82higher(1,i),yLimData(i,1):(yLimData(i,2)-yLimData(i,1))/100:yLimData(i,2),'Color',colHighLow(higherOrLower));
+            end
+        end
+    end
+elseif strcmp(analysisType,'ROC')||strcmp(analysisType,'CRF')
+    set_ylim_across_sessions(titleText,numsessions,sampleContrast,testContrast,c50,chSSE,yLimData,analysisType);
+end
 imageTitleText=titleText;
 if find(titleText==' ')
     imageTitleText(imageTitleText==' ')='_';
@@ -91,10 +153,23 @@ if excludeSessHighSSE==0
 elseif excludeSessHighSSE==1
     if excludeOutliers==0
         imagename=[imageTitleText,appendText,startEndTime,'_',area,'_goodSSE'];
-        saveText=['save ',slC50MatPathname,'.mat sessionSorted1 slopeNeuro c50'];
-        eval(saveText)
+        if strcmp(analysisType,'NVP')
+            saveText=['save ',slC50MatPathname,'.mat sessionSorted1 threshold82lower threshold82higher'];
+            eval(saveText)
+        elseif strcmp(analysisType,'psycho')
+            sessionSorted2=sessionSorted1;
+            saveText=['save ',slC50MatPathname,' sessionSorted2 threshold82lower threshold82higher'];
+            eval(saveText)
+        elseif strcmp(analysisType,'ROC')||strcmp(analysisType,'CRF')
+            saveText=['save ',slC50MatPathname,'.mat sessionSorted1 slopeNeuro c50'];
+            eval(saveText)
+        end
     elseif excludeOutliers==1
-        imagename=[imageTitleText,appendText,startEndTime,'_',area,'_goodSSE_no_outliers_sl',num2str(slSigmaMultiple),'_C50',num2str(c50SigmaMultiple)];
+        if strcmp(analysisType,'ROC')||strcmp(analysisType,'CRF')
+            imagename=[imageTitleText,appendText,startEndTime,'_',area,'_goodSSE_no_outliers_sl',num2str(slSigmaMultiple),'_C50',num2str(c50SigmaMultiple)];
+        elseif strcmp(analysisType,'NVP')||strcmp(analysisType,'psycho')
+            imagename=[imageTitleText,appendText,startEndTime,'_',area,'_goodSSE_no_outliers_th',num2str(threshSigmaMultiple)];
+        end
     end
 end
 subFolder=['neurometric_',analysisType];
@@ -105,11 +180,7 @@ if ~exist(folder,'dir')
 end
 printtext=sprintf('print -dpng %s.png',pathname);
 eval(printtext);
-appendData(1:numsessions,1)=chNum;
-appendData(1:numsessions,2)=sessionSorted1;
+% appendData(1:numsessions,1)=chNum;
+% appendData(1:numsessions,2)=sessionSorted1;
 % appendCRF(1:numsessions,3:length(testContrast)+2)=VALUES;
-if plotDiffC50_30==1
-    appendData=[appendData,slopeNeuro',c50',diffc50',minRate',maxRate'];
-else
-    appendData=[appendData slopeNeuro' c50' minRate' maxRate'];
-end
+% appendData=[appendData,threshold82lower',threshold82lower'];

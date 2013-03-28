@@ -3,6 +3,7 @@ function read_bj_crf_or_roc_batch(animal,area,analysisType)
 %Written by Xing 06/03/13
 %to calculate and write correlation coefficients
 excludeSessions=[26 50 306 312 316 322:328 342];
+test_epochs={0 512 512*2 512*3};durSpon=150;
 test_epochs={0 529 529*2 529*3};durSpon=150;
 channels=main_channels(animal,area);
 [sampleContrasts testContrasts]=area_metadata(area);
@@ -13,7 +14,7 @@ for i=1:length(channels)
         sampleContrast=sampleContrasts(sampleContrastsInd);
         testContrast=testContrasts(sampleContrastsInd,:);    
         for epoch=1:size(test_epochs,2)
-            if strcmp(analysisType,'CRF')||strcmp(analysisType,'ROC')&&epoch==4
+            if strcmp(analysisType,'CRF')||strcmp(analysisType,'ROC')&&epoch==4||strcmp(analysisType,'NVP')&&epoch==4
                 if epoch==1
                     periods=[-durSpon 0];
                 else
@@ -21,13 +22,21 @@ for i=1:length(channels)
                 end
                 for subPeriod=1:length(periods)-1
                     startEndTime=['_',num2str(periods(subPeriod)),'_to_',num2str(periods(subPeriod+1))];
-                    matName=[analysisType,'_Ch',num2str(channels(i)),'_',num2str(sampleContrast),startEndTime,'.mat'];
-                    matPath=fullfile('F:','PL',analysisType,animal,area,matName);
-                    loadText=['load ',matPath,' ',analysisType,'mat'];
+                    if strcmp(analysisType,'CRF')||strcmp(analysisType,'ROC')
+                        matName=[analysisType,'_Ch',num2str(channels(i)),'_',num2str(sampleContrast),startEndTime,'.mat'];
+                        matPath=fullfile('F:','PL',analysisType,animal,area,matName);
+                        loadText=['load ',matPath,' ',analysisType,'mat'];
+                    elseif strcmp(analysisType,'NVP')
+                        matName=['ROC_Ch',num2str(channels(i)),'_',num2str(sampleContrast),startEndTime,'.mat'];
+                        matPath=fullfile('F:','PL','ROC',animal,area,matName);
+                        loadText=['load ',matPath,' ROCmat'];
+                    end
                     eval(loadText);
                     if strcmp(analysisType,'CRF')
                         dataArray=CRFmat;
                     elseif strcmp(analysisType,'ROC')
+                        dataArray=ROCmat;
+                    elseif strcmp(analysisType,'NVP')
                         dataArray=ROCmat;
                     end
                     includeMatch=[];

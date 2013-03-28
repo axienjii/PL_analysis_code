@@ -66,14 +66,14 @@ if multipleTimes==0
     for i=1:length(channels)
         epochTimes(i,1)={channels(i)};
     end
-    epochTimes(:,3)={[0;529;529*2;529*3]};
+    epochTimes(:,3)={[0;512;512*2;512*3]};
 %     for i=1:size(epochTimes,1)
 %         epochTimes{i,3}(:)=[];
 %         epochTimes(i,3)={[1024;1536;1936]};
 %     end
 end
 
-cellEpochTimes={0 529 529*2 529*3};%{[0 40 300] 529 [529*2 529*2+40 529*2+300] 529*3}
+cellEpochTimes={0 512 512*2 512*3};%{[0 40 300] 529 [529*2 529*2+40 529*2+300] 529*3}
 if strcmp(area,'v1_2')
     sampleContrasts=[20 30 40];
 else

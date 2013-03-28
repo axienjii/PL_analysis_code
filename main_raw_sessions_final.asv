@@ -88,7 +88,7 @@ if ispc
             %                 conditions = [10 15 20 25 27 28 29 31 32 33 35 40 50 60];
             
         case ['jack','v1_2']
-            sessions = 78:119; % 
+            sessions = 78:120; % 
             
         case ['jack','v1_2_1']
             sessions = 78:93; % 
