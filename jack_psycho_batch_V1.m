@@ -16,12 +16,12 @@ function jack_psycho_batch_V1
 % monkeys=[{'blanco'} {'jack'}];
 % areas=[{'v4_1'} {'v4_2'} {'v1'}];
 roving=1;
-readData=0;
+readData=1;
 % for monkeyCount=1:2
 %     for areaCount=1:3
 %         monkey=monkeys{monkeyCount};
 %         area=areas{areaCount};
-        monkey='blanco';area='v1_2';animal=monkey;
+        monkey='jack';area='v1_4';animal=monkey;
         %no need to adjust:
         sampleContrast=30;
         appendText=[];
@@ -45,7 +45,7 @@ readData=0;
             elseif strcmp(area,'v1_3')
                 sessionNums=128:129;%126:127; v1_3 is bu/pl control task. 
             elseif strcmp(area,'v1_4')%v1_4 is jack's control task with stim in blanco's v1 location
-                sessionNums=183:183;%139 is non-roving, 14 conditions. 140 onwards is roving, 36 conditions. 163 onwards is with flankers.
+                sessionNums=184:189;%139 is non-roving, 14 conditions. 140 onwards is roving, 36 conditions. 163 to 184 are with flankers. 185 onwards are without flankers again.
             end
         elseif strcmp(monkey,'blanco')
             splitSessions=[355 405 435];
@@ -54,7 +54,7 @@ readData=0;
         analysisFolderAppend=[];
         for i=1:length(sessionNums)
             if strcmp(monkey,'jack')
-                [file_of_int,testContrast,sampleContrasts,roving]=session_metadata(sessionNums(i),monkey);
+                [file_of_int,testContrast,sampleContrasts]=session_metadata(sessionNums(i),monkey);
                 if sessionNums(i)==22
                     file_of_int='2161398.1';
                     testContrast=[10 15 20 25 35 40 60 90];
@@ -110,8 +110,11 @@ readData=0;
                 elseif sessionNums(i)>139&&sessionNums(i)<163%139 has single session of non-roving 30% sample and 14 conditions
                     file_of_int='225234912.1';%control task with jack's PL stimuli in blanco's V1 RF
                     analysisFolderAppend='_7';
-                elseif sessionNums(i)>162&&sessionNums(i)<184%roving samples and 36 conditions
+                elseif sessionNums(i)>162&&sessionNums(i)<185%roving samples and 36 conditions
                     file_of_int='2223412f.1';%control task with jack's PL stimuli in blanco's V1 RF, plus flankers
+                    analysisFolderAppend='_7';
+                elseif sessionNums(i)>184&&sessionNums(i)<190%roving samples and 36 conditions
+                    file_of_int='225234912.1';%control task with jack's PL stimuli in blanco's V1 RF, plus flankers
                     analysisFolderAppend='_7';
                 end
             elseif strcmp(monkey,'blanco')

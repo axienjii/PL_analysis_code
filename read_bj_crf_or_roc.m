@@ -1,4 +1,4 @@
-function []=read_bj_crf_or_roc(datamat,chNum,psychoname,testContrast,sampleContrast,animal,area,startEndTime,analysisType)
+function []=read_bj_crf_or_roc(datamat,chNum,psychoname,testContrast,sampleContrast,animal,area,startEndTime,analysisType,excludeSessHighSSE,excludeOutliers)
 %Modified from read_blanco_V1_crf
 %Written by Xing 06/03/13
 %
@@ -28,9 +28,7 @@ plotPsychoFig=0;
 excludeSessions=[26 50 306 312 316 322:328 342];
 % loadText=['load ',folder,'\allChROC',appendText,'.mat allChROC'];
 % eval(loadText)
-excludeSessHighSSE=1;%set to 1 to exclude sessions with poor Weibull fit
 SSEcutoff=0.09;
-excludeOutliers=0;
 slSigmaMultiple=3;
 c50SigmaMultiple=3;
 threshSigmaMultiple=3;
@@ -106,7 +104,9 @@ if excludeSessHighSSE==1
             tHsigma=std(threshold82higher);
             tLoutliers=abs((threshold82lower-mean(threshold82lower)))>threshSigmaMultiple*tLsigma;
             tHoutliers=abs((threshold82higher-mean(threshold82higher)))>threshSigmaMultiple*tHsigma;
-            ind=tLoutliers+tHoutliers;%find sessions where slope and/or C50 values are outliers (union)
+            thLOutliersHighcut=threshold82lower>manual_cutoff;%manual exclusion for obvious outliers (above 100%)
+            thHOutliersHighcut=threshold82higher>manual_cutoff;%manual exclusion for obvious outliers
+            ind=tLoutliers+tHoutliers+thLOutliersHighcut+thHOutliersHighcut;%find sessions where lower and/or higher contrast threshold values are outliers (union)
             sessionSorted1=sessionSorted1(~ind);%keep sessions that do not have outliers
             datamat=datamat(~ind,:);
             numsessions=length(sessionSorted1);
@@ -117,7 +117,7 @@ if excludeSessHighSSE==1
 end
 
 if plotFig==1
-    [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData,threshold82lower,threshold82higher]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,datamat,chNum,numsessions,sessionSorted1,sampleContrast,testContrast,calculateTangent,plotDiffC50_30,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,slC50MatPathname,slSigmaMultiple,c50SigmaMultiple);
+    [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData,threshold82lower,threshold82higher]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,datamat,chNum,numsessions,sessionSorted1,sampleContrast,testContrast,calculateTangent,plotDiffC50_30,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,slC50MatPathname,slSigmaMultiple,c50SigmaMultiple,threshSigmaMultiple);
 end
 
 % allChROC=[allChROC;appendROC];

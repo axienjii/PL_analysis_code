@@ -11,7 +11,7 @@ RT=[];RT_early=[];RT_distract=[];corrTrialList=[];RT_conds=[];RTerror_conds=[];R
 %     all_ave_RT=zeros(1,length(bins));
 fix1_dur=[];fix2_dur=[];fix3_dur=[];sample_dur=[];test_dur=[];fixchange_dur=[];trial_dur=[];
 trial=size(vals,1);
-sessSegments=1;%look at all trials across session
+sessSegments=3;%look at all trials across session
 for k=1:sessSegments;%examine all trials, then just first and last 30% of trials
     if k==1
         sizebin=trial;%trial

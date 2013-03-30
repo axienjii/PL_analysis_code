@@ -1,7 +1,7 @@
-function plot_bj_roc_batch_across_chs(animal,area,analysisType)
+function plot_bj_crf_or_roc_batch_across_chs(animal,area,analysisType)
 
-%written 03/11/11, modified from plot_blanco_V1_roc_batch2_across_chs. 
-%Batch file to read the ROC values for the 3 contrasts immediately 
+%written 03/11/11, modified from plot_bj_roc_batch_across_chs and plot_blanco_V1_roc_batch2_across_chs. 
+%Batch file to read the ROC/CRF values for the 3 contrasts immediately 
 %flanking the sample contrast, plots ROC value across sessions, for each of 
 %these 6 contrast conditions. 
 %Also reads all 14 ROC values for 14 conditions, to calculate averages and

@@ -7,11 +7,8 @@ roving=0;
 excludeSessHighSSE=1;%set to 1 to exclude sessions with poor Weibull fit
 SSEcutoff=0.09;
 excludeOutliers=1;
-slSigmaMultiple=3;
-c50SigmaMultiple=3;
+manual_cutoff=100;
 threshSigmaMultiple=3;
-calculateTangent=1;
-plotDiffC50_30=1;
 excludeSessions=[26 50 306 312 316 322:328 342];
 test_epochs={0 512 512*2 512*3};
 if roving==0
@@ -43,6 +40,8 @@ for animalInd=1:length(animals)
                     end
                 end
             end
+            numsessions=length(sessionSorted1);
+            datamat=psychomat;
             saveText=['save F:\PL\psycho_data\',animal,'\',area,'_psycho_array.mat psychomat'];
             eval(saveText)
             chSSE=zeros(length(sessionSorted1),2);
@@ -52,12 +51,12 @@ for animalInd=1:length(animals)
                 mkdir(SSEMatFolder);
             end
             SSEMatPath=fullfile(SSEMatFolder,SSEMatFileName);
-            slC50Matname=[area,appendText,startEndTime,'_psyThreshold'];
-            slC50MatFolder=fullfile('F:','PL',analysisType,animal,'psyThreshold_mat');
-            if ~exist(slC50MatFolder,'dir')
-                mkdir(slC50MatFolder);
+            psychoThresholdMatName=[area,appendText,'wholetrial_psyThreshold'];
+            psychoThresholdMatFolder=fullfile('F:','PL',analysisType,animal,'psyThreshold_mat');
+            if ~exist(psychoThresholdMatFolder,'dir')
+                mkdir(psychoThresholdMatFolder);
             end
-            slC50MatPathname=fullfile(slC50MatFolder,slC50Matname);
+            psychoThresholdMatPathname=fullfile(psychoThresholdMatFolder,psychoThresholdMatName);
             if excludeSessHighSSE==1
                 loadText=['load ',SSEMatPath,' chSSE'];
                 eval(loadText);
@@ -68,23 +67,25 @@ for animalInd=1:length(animals)
                 datamat=datamat(ind,:);
                 numsessions=length(sessionSorted1);
                 if excludeOutliers==1
-                    loadText=['load ',slC50MatPathname,' sessionSorted2 threshold82lower threshold82higher'];
+                    loadText=['load ',psychoThresholdMatPathname,' sessionSorted2 threshold82lower threshold82higher'];
                     eval(loadText)
                     tLsigma=std(threshold82lower);
                     tHsigma=std(threshold82higher);
                     tLoutliers=abs((threshold82lower-mean(threshold82lower)))>threshSigmaMultiple*tLsigma;
                     tHoutliers=abs((threshold82higher-mean(threshold82higher)))>threshSigmaMultiple*tHsigma;
-                    ind=tLoutliers+tHoutliers;%find sessions where slope and/or C50 values are outliers (union)
+                    thLOutliersHighcut=threshold82lower>manual_cutoff;%manual exclusion for obvious outliers (above 100%)
+                    thHOutliersHighcut=threshold82higher>manual_cutoff;%manual exclusion for obvious outliers
+                    ind=tLoutliers+tHoutliers+thLOutliersHighcut+thHOutliersHighcut;%find sessions where lower and/or higher contrast threshold values are outliers (union)
                     if sum(ind)>0
-                        sessionSorted2=sessionSorted2(~ind);%keep sessions that do not have outliers
+                        sessionSorted1=sessionSorted2(~ind);%keep sessions that do not have outliers
                         datamat=datamat(~ind,:);
-                        numsessions=length(sessionSorted2);
+                        numsessions=length(sessionSorted1);
                         threshold82lower=threshold82lower(~ind);
                         threshold82higher=threshold82higher(~ind);
                     end
                 end
             end
-            [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData,threshold82lower,threshold82higher]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,datamat,'psycho',numsessions,sessionSorted1,sampleContrast,testContrast,1,1,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,slC50MatPathname,[],[],threshSigmaMultiple);
+            [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData,threshold82lower,threshold82higher]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,datamat,'psycho',numsessions,sessionSorted1,sampleContrast,testContrast,1,1,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,psychoThresholdMatPathname,[],[],threshSigmaMultiple);
         end
     end
 end

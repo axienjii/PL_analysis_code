@@ -14,6 +14,9 @@ c50=[];
 diffc50=[];
 minRate=[];
 maxRate=[];
+yLimData=[];
+threshold82lower=[];
+threshold82higher=[];
 for i=1:numsessions
     datavals=dataArray{i,3};%for channel of interest, for each session
     subplot(ceil(numsessions/5),5,i);
@@ -111,7 +114,7 @@ for i=1:numsessions
                 threshold82higher(1,i)=X(1);
             end
             yvals=100*(1-0.5.*exp(-(xvals./X(1)).^X(2)));
-            plot(xvals,yvals);         
+            plot(xvals,yvals,'Color',colHighLow(higherOrLower));         
             fitted_yvals=100*(1-0.5.*exp(-(testContrastSplit{higherOrLower}./X(1)).^X(2)));
             residuals=datavalsSplit{higherOrLower}-fitted_yvals/100;
             sseCRF=sum(residuals.^2);
@@ -169,6 +172,13 @@ elseif excludeSessHighSSE==1
             imagename=[imageTitleText,appendText,startEndTime,'_',area,'_goodSSE_no_outliers_sl',num2str(slSigmaMultiple),'_C50',num2str(c50SigmaMultiple)];
         elseif strcmp(analysisType,'NVP')||strcmp(analysisType,'psycho')
             imagename=[imageTitleText,appendText,startEndTime,'_',area,'_goodSSE_no_outliers_th',num2str(threshSigmaMultiple)];
+            sessionSorted2=sessionSorted1;
+            if strcmp(analysisType,'NVP')
+                saveText=['save ',slC50MatPathname,' sessionSorted1 threshold82lower threshold82higher'];
+            elseif strcmp(analysisType,'psycho')
+                saveText=['save ',slC50MatPathname,' sessionSorted2 threshold82lower threshold82higher'];
+            end
+            eval(saveText)
         end
     end
 end
@@ -179,6 +189,7 @@ if ~exist(folder,'dir')
     mkdir(folder)
 end
 printtext=sprintf('print -dpng %s.png',pathname);
+set(gcf,'PaperPositionMode','auto')
 eval(printtext);
 % appendData(1:numsessions,1)=chNum;
 % appendData(1:numsessions,2)=sessionSorted1;

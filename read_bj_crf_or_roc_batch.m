@@ -1,7 +1,9 @@
-function read_bj_crf_or_roc_batch(animal,area,analysisType)
+function read_bj_crf_or_roc_batch(animal,area,analysisType,excludeSessHighSSE,excludeOutliers)
 
 %Written by Xing 06/03/13
 %to calculate and write correlation coefficients
+%excludeSessHighSSE: set to 1 to exclude sessions with poor Weibull fit
+%excludeOutliers: set to 1 to exclude outlying data points 
 excludeSessions=[26 50 306 312 316 322:328 342];
 test_epochs={0 512 512*2 512*3};durSpon=150;
 test_epochs={0 529 529*2 529*3};durSpon=150;
@@ -46,7 +48,7 @@ for i=1:length(channels)
                         end
                     end
                     dataArray=dataArray(includeMatch,:);
-                    read_bj_crf_or_roc(dataArray,channels(i),psychoPathname,testContrast,sampleContrast,animal,area,startEndTime,analysisType)
+                    read_bj_crf_or_roc(dataArray,channels(i),psychoPathname,testContrast,sampleContrast,animal,area,startEndTime,analysisType,excludeSessHighSSE,excludeOutliers)
                 end
             end
         end
