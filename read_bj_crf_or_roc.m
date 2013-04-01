@@ -51,7 +51,7 @@ end
 sessionSorted1=cell2mat(datamat(:,1))';
 numsessions=length(datamat);
 chSSE=zeros(length(sessionSorted1),2);
-SSEMatFileName=[num2str(chNum),appendText,startEndTime,'_SSE'];
+SSEMatFileName=[num2str(chNum),appendText,startEndTime,'_SSE_',area];
 SSEMatFolder=fullfile('F:','PL',analysisType,animal,'SSE_mat_files');
 if ~exist(SSEMatFolder,'dir')
     mkdir(SSEMatFolder);
@@ -62,7 +62,7 @@ if strcmp(analysisType,'ROC')||strcmp(analysisType,'CRF')
     slC50Matname=[num2str(chNum),appendText,startEndTime,'_slC50'];
     slC50MatFolder=fullfile('F:','PL',analysisType,animal,'slope_C50_mat');
 elseif strcmp(analysisType,'NVP')
-    slC50Matname=[num2str(chNum),appendText,startEndTime,'_nvpThreshold'];
+    slC50Matname=[num2str(chNum),appendText,startEndTime,'_nvpThreshold_',area];
     slC50MatFolder=fullfile('F:','PL',analysisType,animal,'nvpThreshold_mat');
 end
 if ~exist(slC50MatFolder,'dir')

@@ -1,12 +1,9 @@
-function write_psycho_thresholds_batch
+function write_psycho_thresholds_batch(roving,excludeSessHighSSE,excludeOutliers)
 analysisType='psycho';
 startEndTime='wholetrial';
 animalTexts=[{'subject B'} {'subject J'}];
 animals=[{'blanco'} {'jack'}];
-roving=0;
-excludeSessHighSSE=1;%set to 1 to exclude sessions with poor Weibull fit
 SSEcutoff=0.09;
-excludeOutliers=1;
 manual_cutoff=100;
 threshSigmaMultiple=3;
 excludeSessions=[26 50 306 312 316 322:328 342];
@@ -16,7 +13,7 @@ if roving==0
     areas=[{'v4_1'} {'v1_1'}];
 elseif roving==1
     areaTexts={'V1 roving data'};
-    areas={'v1_2'};
+    areas={'v1_2_1' 'v1_2_2' 'v1_2_3'};
 end
 for animalInd=1:length(animals)
     animal=animals{animalInd};
@@ -25,17 +22,22 @@ for animalInd=1:length(animals)
         [sampleContrasts testContrasts]=area_metadata(area);
         sessions=main_raw_sessions_final(animal,area,[],0);
         sessionSorted1=[];
-        loadText=['load F:\PL\psycho_data\',animal,'\',area,'_psycho_all_sessions.mat psychoAll'];
-        eval(loadText)
         for sampleInd=1:length(sampleContrasts)
             sampleContrast=sampleContrasts(sampleInd);
             testContrast=testContrasts(sampleInd,:);
             appendText=['_',num2str(sampleContrast)];
+            if roving==0
+                loadText=['load F:\PL\psycho_data\',animal,'\',area,'_psycho_all_sessions.mat psychoAll'];
+            elseif roving==1
+                loadText=['load F:\PL\psycho_data\',animal,'\v1_2_psycho_all_sessions',appendText,'.mat psychoAll'];
+            end
+            eval(loadText)
             psychomat=[];
+            sessionSorted1=[];
             for sessionInd=1:length(sessions)
                 for rowInd=1:size(psychoAll,1)
                     if psychoAll(rowInd,1)==sessions(sessionInd)
-                        psychomat=[psychomat;{psychoAll(rowInd,1)} {test_epochs} {psychoAll(rowInd,2:15)}];
+                        psychomat=[psychomat;{psychoAll(rowInd,1)} {test_epochs} {psychoAll(rowInd,2:length(testContrast)+1)}];
                         sessionSorted1=[sessionSorted1 psychoAll(rowInd,1)];
                     end
                 end

@@ -5,8 +5,11 @@ function read_bj_crf_or_roc_batch(animal,area,analysisType,excludeSessHighSSE,ex
 %excludeSessHighSSE: set to 1 to exclude sessions with poor Weibull fit
 %excludeOutliers: set to 1 to exclude outlying data points 
 excludeSessions=[26 50 306 312 316 322:328 342];
-test_epochs={0 512 512*2 512*3};durSpon=150;
-test_epochs={0 529 529*2 529*3};durSpon=150;
+if strcmp(area,'v4_1')||strcmp(area,'v1_1')
+    test_epochs={0 529 529*2 529*3};durSpon=150;
+elseif strncmp(area,'v1_2',4)
+    test_epochs={0 512 512*2 512*3};durSpon=150;
+end
 channels=main_channels(animal,area);
 [sampleContrasts testContrasts]=area_metadata(area);
 psychoname=['psycho_constants_',area];
