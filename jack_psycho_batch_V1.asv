@@ -21,32 +21,33 @@ readData=1;
 %     for areaCount=1:3
 %         monkey=monkeys{monkeyCount};
 %         area=areas{areaCount};
-        monkey='jack';area='v1_4';animal=monkey;
+        monkey='blanco';area='v1_2_1';animal=monkey;
         %no need to adjust:
         sampleContrast=30;
         appendText=[];
         splitSess=0;
         if strcmp(monkey,'jack')
             appendText='j_';
-            if strcmp(area,'v4_1')
-                sessionNums=[1:5];
-                sessionNums=[24 26 28:49];
-                sessionNums=24:50;
-            elseif strcmp(area,'v4_2')
-                sessionNums=73:77;
-            elseif strcmp(area,'v1')
-                sessionNums=51:72;
-            elseif strcmp(area,'v1_2')
-                %         sessionNums=[78:93];
-                %         sessionNums=94:115;
-                %         sessionNums=116:119;
-                sessionNums=78:119;
-                sessionNums=116:120;
-            elseif strcmp(area,'v1_3')
-                sessionNums=128:129;%126:127; v1_3 is bu/pl control task. 
-            elseif strcmp(area,'v1_4')%v1_4 is jack's control task with stim in blanco's v1 location
-                sessionNums=184:189;%139 is non-roving, 14 conditions. 140 onwards is roving, 36 conditions. 163 to 184 are with flankers. 185 onwards are without flankers again.
-            end
+%             if strcmp(area,'v4_1')
+%                 sessionNums=[1:5];
+%                 sessionNums=[24 26 28:49];
+%                 sessionNums=24:50;
+%             elseif strcmp(area,'v4_2')
+%                 sessionNums=73:77;
+%             elseif strcmp(area,'v1')
+%                 sessionNums=51:72;
+%             elseif strcmp(area,'v1_2')
+%                 %         sessionNums=[78:93];
+%                 %         sessionNums=94:115;
+%                 %         sessionNums=116:119;
+%                 sessionNums=78:119;
+%                 sessionNums=116:120;
+%             elseif strcmp(area,'v1_3')
+%                 sessionNums=128:129;%126:127; v1_3 is bu/pl control task. 
+%             elseif strcmp(area,'v1_4')%v1_4 is jack's control task with stim in blanco's v1 location
+%                 sessionNums=184:189;%139 is non-roving, 14 conditions. 140 onwards is roving, 36 conditions. 163 to 184 are with flankers. 185 onwards are without flankers again.
+%             end
+            sessionNums=main_raw_sessions_final(animal,area);
         elseif strcmp(monkey,'blanco')
             splitSessions=[355 405 435];
             sessionNums=main_raw_sessions_final(animal,area);
@@ -54,7 +55,7 @@ readData=1;
         analysisFolderAppend=[];
         for i=1:length(sessionNums)
             if strcmp(monkey,'jack')
-                [file_of_int,testContrast,sampleContrasts]=session_metadata(sessionNums(i),monkey);
+                [sampleContrasts testContrasts]=area_metadata(area);
                 if sessionNums(i)==22
                     file_of_int='2161398.1';
                     testContrast=[10 15 20 25 35 40 60 90];
@@ -188,7 +189,7 @@ readData=1;
                             if splitSess==1
                                 cdText=['cd ','F:\blanco\',area,'_events_files\',num2str(sessionNums(i)),'_1'];
                             else
-                                cdText=['cd ','F:\blanco\',area,'_events_files\',num2str(sessionNums(i))];
+                                cdText=['cd ','V:\thielelab\Groups\ThieleGroup\monkey_data\blanco\_grid\',area,'_events_files\',num2str(sessionNums(i))];
                             end
                             eval(cdText);
                         end
@@ -207,7 +208,7 @@ readData=1;
                     valsFolder=fullfile('F:','PL','vals_perf',animal,valsFileName); %#ok<NASGU>
                     saveText=['save ',valsFolder,' vals'];
                     vals=savevals;
-                    eval(saveText);
+%                     eval(saveText);
                 end
             end
         end
@@ -217,7 +218,7 @@ readData=1;
 taskCols=[230/256 230/256 250/256;255/256 222/256 173/256;154/256 205/256 50/256];%purple;orange;green
 taskColsDark=[153/256 50/256 204/256;210/256 105/256 30/256;34/256 139/256 34/256];%purple;orange;green
 
-plotRoving=1;
+plotRoving=0;
 if plotRoving==1
     if strcmp(animal,'jack')
         areas=[{'v1_2'} {'v1_4'}];

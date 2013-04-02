@@ -98,9 +98,6 @@ for k=1:sessSegments;%examine all trials, then just first and last 30% of trials
         mean_RT_conds(h,2)=std(RT_cond)/1000;
         mean_RTerror_conds(h,1)=mean(RTerror_cond)/1000;
         mean_RTerror_conds(h,2)=std(RTerror_cond)/1000;
-        if k==1
-            perfWholeTrial=perf;
-        end
     end
     perf
     rew_pulse_tally=[];
@@ -234,13 +231,13 @@ if writeMeanPerf==1
         sessionInd=find(allMeanPerf(:,1)==session);
         if ~isempty(sessionInd)
             if sessSegments==1
-                allMeanPerf(sessionInd,:)=[session mean_perf_bins(1) prop_corr(1,:) PSE(1) allX(1,1) allX(1,3) allX(1,4) all_ave_RT(1) all_std_RT(1) mean_RT_conds(:,1)' mean_RT_conds(:,2)' durations(:,1)' durations(:,2)' all_ave_RTerror(1) all_std_RTerror(1) mean_RTerror_conds(:,1)' mean_RTerror_conds(:,2)' meanRTce stdRTce];
+                allMeanPerf(sessionInd,:)=[session mean_perf_bins(1) prop_corr(1,:) PSE(1) allX(1,1) allX(1,3) allX(1,4) all_ave_RT(1) all_std_RT(1) mean_RT_conds(:,1)' mean_RT_conds(:,2)' all_ave_RT(1)/1000 mean(fix1_dur) mean(fix2_dur) mean(fix3_dur) mean(sample_dur) mean(test_dur) mean(trial_dur) std(fix1_dur) std(fix2_dur) std(fix3_dur) std(sample_dur) std(test_dur) std(trial_dur) all_ave_RTerror(1) all_std_RTerror(1) mean_RTerror_conds(:,1)' mean_RTerror_conds(:,2)' meanRTce stdRTce];
             elseif sessSegments==3
                 allMeanPerf(sessionInd,:)=[session mean_perf_bins(1) prop_corr(1,:) PSE(1) allX(1,1) allX(1,3) allX(1,4) all_ave_RT(1) all_std_RT(1) mean_RT_conds(:,1)' mean_RT_conds(:,2)' durations(:,1)' durations(:,2)' all_ave_RTerror(1) all_std_RTerror(1) mean_RTerror_conds(:,1)' mean_RTerror_conds(:,2)' meanRTce stdRTce mean_perf_bins(2) prop_corr(2,:) PSE(2) allX(2,1) allX(2,3) allX(2,4) all_ave_RT(2) all_std_RT(2) mean_perf_bins(3) prop_corr(3,:) PSE(3) allX(3,1) allX(3,3) allX(3,4) all_ave_RT(3) all_std_RT(3)];
             end
         else
             if sessSegments==1
-                allMeanPerf=[allMeanPerf;session mean_perf_bins(1) prop_corr(1,:) PSE(1) allX(1,1) allX(1,3) allX(1,4) all_ave_RT(1) all_std_RT(1) mean_RT_conds(:,1)' mean_RT_conds(:,2)' durations(:,1)' durations(:,2)' all_ave_RTerror(1) all_std_RTerror(1) mean_RTerror_conds(:,1)' mean_RTerror_conds(:,2)' meanRTce stdRTce];
+                allMeanPerf=[allMeanPerf;session mean_perf_bins(1) prop_corr(1,:) PSE(1) allX(1,1) allX(1,3) allX(1,4) all_ave_RT(1) all_std_RT(1) mean_RT_conds(:,1)' mean_RT_conds(:,2)' all_ave_RT(1)/1000 mean(fix1_dur) mean(fix2_dur) mean(fix3_dur) mean(sample_dur) mean(test_dur) mean(trial_dur) std(fix1_dur) std(fix2_dur) std(fix3_dur) std(sample_dur) std(test_dur) std(trial_dur) all_ave_RTerror(1) all_std_RTerror(1) mean_RTerror_conds(:,1)' mean_RTerror_conds(:,2)' meanRTce stdRTce mean_RTerror_conds(:,1)' mean_RTerror_conds(:,2)' meanRTce stdRTce mean_perf_bins(2) prop_corr(2,:) PSE(2) allX(2,1) allX(2,3) allX(2,4) all_ave_RT(2) all_std_RT(2) mean_perf_bins(3) prop_corr(3,:) PSE(3) allX(3,1) allX(3,3) allX(3,4) all_ave_RT(3) all_std_RT(3)];
             elseif sessSegments==3
                 allMeanPerf=[allMeanPerf;session mean_perf_bins(1) prop_corr(1,:) PSE(1) allX(1,1) allX(1,3) allX(1,4) all_ave_RT(1) all_std_RT(1) mean_RT_conds(:,1)' mean_RT_conds(:,2)' durations(:,1)' durations(:,2)' all_ave_RTerror(1) all_std_RTerror(1) mean_RTerror_conds(:,1)' mean_RTerror_conds(:,2)' meanRTce stdRTce mean_perf_bins(2) prop_corr(2,:) PSE(2) allX(2,1) allX(2,3) allX(2,4) all_ave_RT(2) all_std_RT(2) mean_perf_bins(3) prop_corr(3,:) PSE(3) allX(3,1) allX(3,3) allX(3,4) all_ave_RT(3) all_std_RT(3)];
             end
@@ -248,17 +245,17 @@ if writeMeanPerf==1
     else
         allMeanPerf=[];
         if sessSegments==1
-            allMeanPerf=[allMeanPerf;session mean_perf_bins(1) prop_corr(1,:) PSE(1) allX(1,1) allX(1,3) allX(1,4) all_ave_RT(1) all_std_RT(1) mean_RT_conds(:,1)' mean_RT_conds(:,2)' durations(:,1)' durations(:,2)' all_ave_RTerror(1) all_std_RTerror(1) mean_RTerror_conds(:,1)' mean_RTerror_conds(:,2)' meanRTce stdRTce];
+            allMeanPerf=[allMeanPerf;session mean_perf_bins(1) prop_corr(1,:) PSE(1) allX(1,1) allX(1,3) allX(1,4) all_ave_RT(1) all_std_RT(1) mean_RT_conds(:,1)' mean_RT_conds(:,2)' all_ave_RT(1)/1000 mean(fix1_dur) mean(fix2_dur) mean(fix3_dur) mean(sample_dur) mean(test_dur) mean(trial_dur) std(fix1_dur) std(fix2_dur) std(fix3_dur) std(sample_dur) std(test_dur) std(trial_dur) all_ave_RTerror(1) all_std_RTerror(1) mean_RTerror_conds(:,1)' mean_RTerror_conds(:,2)' meanRTce stdRTce];
         elseif sessSegments==3
-            allMeanPerf=[allMeanPerf;session mean_perf_bins(1) prop_corr(1,:) PSE(1) allX(1,1) allX(1,3) allX(1,4) all_ave_RT(1) all_std_RT(1) mean_RT_conds(:,1)' mean_RT_conds(:,2)' durations(:,1)' durations(:,2)' all_ave_RTerror(1) all_std_RTerror(1) mean_RTerror_conds(:,1)' mean_RTerror_conds(:,2)' meanRTce stdRTce mean_perf_bins(2) prop_corr(2,:) PSE(2) allX(2,1) allX(2,3) allX(2,4) all_ave_RT(2) all_std_RT(2) mean_perf_bins(3) prop_corr(3,:) PSE(3) allX(3,1) allX(3,3) allX(3,4) all_ave_RT(3) all_std_RT(3)];
+            allMeanPerf=[allMeanPerf;session mean_perf_bins(1) prop_corr(1,:) PSE(1) allX(1,1) allX(1,3) allX(1,4) all_ave_RT(1) all_std_RT(1) mean_RT_conds(:,1)' mean_RT_conds(:,2)' all_ave_RT(1)/1000 mean(fix1_dur) mean(fix2_dur) mean(fix3_dur) mean(sample_dur) mean(test_dur) mean(trial_dur) std(fix1_dur) std(fix2_dur) std(fix3_dur) std(sample_dur) std(test_dur) std(trial_dur) all_ave_RTerror(1) all_std_RTerror(1) mean_RTerror_conds(:,1)' mean_RTerror_conds(:,2)' meanRTce stdRTce mean_RTerror_conds(:,1)' mean_RTerror_conds(:,2)' meanRTce stdRTce mean_perf_bins(2) prop_corr(2,:) PSE(2) allX(2,1) allX(2,3) allX(2,4) all_ave_RT(2) all_std_RT(2) mean_perf_bins(3) prop_corr(3,:) PSE(3) allX(3,1) allX(3,3) allX(3,4) all_ave_RT(3) all_std_RT(3)];
         end
     end
     if sessSegments==1
-        segmentsText='all_early_late';
+        segmentsText='_all_early_late';
     else
         segmentsText=[];
     end
-    saveText=['save F:\PL\psycho_data\',monkey,'\allMeanPerf_',area,'_',num2str(sampleContrast),'.mat allMeanPerf'];
+    saveText=['save F:\PL\psycho_data\',monkey,'\allMeanPerf_',area,'_',num2str(sampleContrast),segmentsText,'.mat allMeanPerf'];
     eval(saveText)
 end
 if writeNumTrials==1
@@ -272,13 +269,13 @@ if writeNumTrials==1
     if ~isempty(perfAll)
         sessionInd=find(perfAll(:,1)==session);
         if ~isempty(sessionInd)
-            perfAll(sessionInd,:)=[session perfWholeTrial(:,1)' sum(perfWholeTrial(:,1))];
+            perfAll(sessionInd,:)=[session perf(:,1)' sum(perf(:,1))];
         else
-            perfAll=[perfAll;session perfWholeTrial(:,1)' sum(perfWholeTrial(:,1))];
+            perfAll=[perfAll;session perf(:,1)' sum(perf(:,1))];
         end
     else
         perfAll=[];
-        perfAll=[perfAll;session perfWholeTrial(:,1)' sum(perfWholeTrial(:,1))];
+        perfAll=[perfAll;session perf(:,1)' sum(perf(:,1))];
     end
     saveText=['save F:\PL\psycho_data\',monkey,'\allNumTrials_',area,'_',num2str(sampleContrast),'.mat perfAll'];
     eval(saveText)
