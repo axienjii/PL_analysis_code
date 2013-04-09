@@ -1,4 +1,10 @@
 function write_psycho_thresholds_batch(roving,excludeSessHighSSE,excludeOutliers)
+onExternalHD=1;
+if onExternalHD==0
+    rootFolder='G:\PL_backup_060413';
+else
+    rootFolder='F:';
+end
 analysisType='psycho';
 startEndTime='wholetrial';
 animalTexts=[{'subject B'} {'subject J'}];
@@ -27,9 +33,9 @@ for animalInd=1:length(animals)
             testContrast=testContrasts(sampleInd,:);
             appendText=['_',num2str(sampleContrast)];
             if roving==0
-                loadText=['load F:\PL\psycho_data\',animal,'\',area,'_psycho_all_sessions.mat psychoAll'];
+                loadText=['load ',rootFolder,'\PL\psycho_data\',animal,'\',area,'_psycho_all_sessions.mat psychoAll'];
             elseif roving==1
-                loadText=['load F:\PL\psycho_data\',animal,'\v1_2_psycho_all_sessions',appendText,'.mat psychoAll'];
+                loadText=['load ',rootFolder,'\PL\psycho_data\',animal,'\v1_2_psycho_all_sessions',appendText,'.mat psychoAll'];
             end
             eval(loadText)
             psychomat=[];
@@ -44,17 +50,17 @@ for animalInd=1:length(animals)
             end
             numsessions=length(sessionSorted1);
             datamat=psychomat;
-            saveText=['save F:\PL\psycho_data\',animal,'\',area,'_psycho_array.mat psychomat'];
+            saveText=['save ',rootFolder,'\PL\psycho_data\',animal,'\',area,'_psycho_array.mat psychomat'];
             eval(saveText)
             chSSE=zeros(length(sessionSorted1),2);
             SSEMatFileName=[area,appendText,startEndTime,'_SSE'];
-            SSEMatFolder=fullfile('F:','PL',analysisType,animal,'SSE_mat_files');
+            SSEMatFolder=fullfile(rootFolder,'PL',analysisType,animal,'SSE_mat_files');
             if ~exist(SSEMatFolder,'dir')
                 mkdir(SSEMatFolder);
             end
             SSEMatPath=fullfile(SSEMatFolder,SSEMatFileName);
             psychoThresholdMatName=[area,appendText,'wholetrial_psyThreshold'];
-            psychoThresholdMatFolder=fullfile('F:','PL',analysisType,animal,'psyThreshold_mat');
+            psychoThresholdMatFolder=fullfile(rootFolder,'PL',analysisType,animal,'psyThreshold_mat');
             if ~exist(psychoThresholdMatFolder,'dir')
                 mkdir(psychoThresholdMatFolder);
             end
@@ -87,7 +93,7 @@ for animalInd=1:length(animals)
                     end
                 end
             end
-            [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData,threshold82lower,threshold82higher]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,datamat,'psycho',numsessions,sessionSorted1,sampleContrast,testContrast,1,1,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,psychoThresholdMatPathname,[],[],threshSigmaMultiple);
+            [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData,threshold82lower,threshold82higher]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,datamat,'psycho',numsessions,sessionSorted1,sampleContrast,testContrast,1,1,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,psychoThresholdMatPathname,[],[],threshSigmaMultiple,rootFolder);
         end
     end
 end

@@ -8,24 +8,24 @@
  ERR=err;
  
  % limit % -----------------------------------------------------------------
-% if var_max_limit(1) ~= 0
-%     if p(1) > max_limit(1)
-%         err = 10^1000;
-%     end
-% end
-% if var_max_limit(2) ~= 0
-%     if p(2) > max_limit(2)
-%         err = 10^1000;
-%     end
-% end
-% % ---------------------------
-% if var_min_limit(1) ~= 0
-%     if p(1) < min_limit(1)
-%         err = 10^1000;
-%     end
-% end
-% if var_min_limit(2) ~= 0
-%     if p(2) < min_limit(2)
-%         err = 10^1000;
-%     end
-% end
+if var_max_limit(1) ~= 0
+    if p(1) > max_limit(1)
+        err = 10^1000;
+    end
+end
+if var_max_limit(2) ~= 0
+    if p(2) > max_limit(2)
+        err = 10^1000;
+    end
+end
+% ---------------------------
+if var_min_limit(1) ~= 0
+    if p(1) < min_limit(1)
+        err = 10^1000;
+    end
+end
+if var_min_limit(2) ~= 0
+    if p(2) < min_limit(2)
+        err = 10^1000;
+    end
+end

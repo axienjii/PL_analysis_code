@@ -1,9 +1,15 @@
-function vals=analyseVals2(vals,testContrast,conditions,sampleContrast,monkey,area,analysisFolderAppend,session,roving)
+function vals=analyseVals2(vals,testContrast,conditions,sampleContrast,monkey,area,analysisFolderAppend,session,roving,onExternalHD)
 
+if onExternalHD==1
+    rootFolder='G:\PL_backup_060413';
+else
+    rootFolder='F:';
+end
 writeWeibullPsycho=0;%remember to set correct directory!
-savePsychoCurves=1;
-writeMeanPerf=1;
+savePsychoCurves=0;
+writeMeanPerf=0;
 writeNumTrials=1;
+calculateTangent=1;
 numconds=length(testContrast);
 %     perf_bins=zeros(numconds,length(bins));%max num of trials per condition manually set to 300- adjust as needed
 perf=zeros(numconds,4);
@@ -142,6 +148,9 @@ for k=1:sessSegments;%examine all trials, then just first and last 30% of trials
     X0=[2 30 0.2 0.1];
     X=fminsearch(@fit_weibull,X0,[],testContrast,prop_corr(k,:),[],'least_square',[0 0 0 0],[],[0 0 0 0],[])
     allX(k,:)=X;
+    if calculateTangent==1
+        allX(k,1)=100*X(1)*X(3)*exp(-(sampleContrast/X(2))^X(1) )*sampleContrast^(X(1)-1)*(1/X(2))^X(1);%multiply by 100 as prop_corr given as fraction, not percentage
+    end
     %     X=fminsearch('weibull_zero_one',X0,[],testContrast,prop_corr)
     xvals=0:1:testContrast(end)+10;
     yvals=1-X(4)-X(3).*exp(-(xvals./X(2)).^X(1));
@@ -151,7 +160,7 @@ for k=1:sessSegments;%examine all trials, then just first and last 30% of trials
     set(gca,'FontSize',[6],'YLim',[0,1.01],'XLim',[0,testContrast(end)+10],'YTickMode','manual');%'YTick',[0.1]
     line(PSE(k),0:0.01:1,'Color','r');
     if savePsychoCurves==1&&k==1
-        filename1=['F:\jack\j_psycho_curves\',num2str(session),'_',num2str(sampleContrast)];
+        filename1=[rootFolder,'\PL\psycho_data\',monkey,'\psycho_curves\',num2str(session),'_',num2str(sampleContrast)];
         printtext=sprintf('print -dpng %s',filename1);
         eval(printtext);
     end
@@ -162,9 +171,9 @@ for k=1:sessSegments;%examine all trials, then just first and last 30% of trials
             analysisFolderAppend=[analysisFolderAppend,'\sample_',num2str(sampleContrast)];
         end
         if strcmp(monkey,'jack')
-            cdText=['cd F:\jack\j_',area,'_roc_analysis',analysisFolderAppend];
+            cdText=['cd ',rootFolder,'\jack\j_',area,'_roc_analysis',analysisFolderAppend];
         elseif strcmp(monkey,'blanco')
-            cdText=['cd F:\blanco\',area,'_roc_analysis',analysisFolderAppend];
+            cdText=['cd ',rootFolder,'\blanco\',area,'_roc_analysis',analysisFolderAppend];
         end
         eval(cdText)
         fid=fopen('psycho_constants','a+');
@@ -223,7 +232,7 @@ round(durations)
 %     end
 
 if writeMeanPerf==1
-    matPath=['F:\PL\psycho_data\',monkey,'\allMeanPerf_',area,'_',num2str(sampleContrast),'.mat'];
+    matPath=[rootFolder,'\PL\psycho_data\',monkey,'\allMeanPerf_',area,'_',num2str(sampleContrast),'.mat'];
     if ~exist(matPath,'file')
         allMeanPerf=[];
     else
@@ -258,15 +267,15 @@ if writeMeanPerf==1
     else
         segmentsText=[];
     end
-    saveText=['save F:\PL\psycho_data\',monkey,'\allMeanPerf_',area,'_',num2str(sampleContrast),'.mat allMeanPerf'];
+    saveText=['save ',rootFolder,'\PL\psycho_data\',monkey,'\allMeanPerf_',area,'_',num2str(sampleContrast),'.mat allMeanPerf'];
     eval(saveText)
 end
 if writeNumTrials==1
-    matPath=['F:\PL\psycho_data\',monkey,'\allNumTrials_',area,'_',num2str(sampleContrast),'.mat'];
+    matPath=[rootFolder,'\PL\psycho_data\',monkey,'\allNumTrials_',area,'_',num2str(sampleContrast),'.mat'];
     if ~exist(matPath,'file')
         perfAll=[];
     else
-        loadText=['load F:\PL\psycho_data\',monkey,'\allNumTrials_',area,'_',num2str(sampleContrast),'.mat perfAll'];
+        loadText=['load ',rootFolder,'\PL\psycho_data\',monkey,'\allNumTrials_',area,'_',num2str(sampleContrast),'.mat perfAll'];
         eval(loadText)
     end
     if ~isempty(perfAll)
@@ -280,6 +289,6 @@ if writeNumTrials==1
         perfAll=[];
         perfAll=[perfAll;session perfWholeTrial(:,1)' sum(perfWholeTrial(:,1))];
     end
-    saveText=['save F:\PL\psycho_data\',monkey,'\allNumTrials_',area,'_',num2str(sampleContrast),'.mat perfAll'];
+    saveText=['save ',rootFolder,'\PL\psycho_data\',monkey,'\allNumTrials_',area,'_',num2str(sampleContrast),'.mat perfAll'];
     eval(saveText)
 end

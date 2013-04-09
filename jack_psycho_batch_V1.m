@@ -16,14 +16,19 @@ function jack_psycho_batch_V1(animal,area)
 % monkeys=[{'blanco'} {'jack'}];
 % areas=[{'v4_1'} {'v4_2'} {'v1'}];
 roving=1;
-readData=1;
+readData=0;
+onExternalHD=0;
+if onExternalHD==1
+    rootFolder='G:\PL_backup_060413';
+else
+    rootFolder='F:';
+end
 % for monkeyCount=1:2
 %     for areaCount=1:3
 %         animal=monkeys{monkeyCount};
 %         area=areas{areaCount};
         %no need to adjust:
         sampleContrast=30;
-        appendText=[];
         splitSess=0;
         if strcmp(animal,'jack')
             appendText='j_';
@@ -46,10 +51,10 @@ readData=1;
 %             elseif strcmp(area,'v1_4')%v1_4 is jack's control task with stim in blanco's v1 location
 %                 sessionNums=184:189;%139 is non-roving, 14 conditions. 140 onwards is roving, 36 conditions. 163 to 184 are with flankers. 185 onwards are without flankers again.
 %             end
-            sessionNums=main_raw_sessions_final(animal,area);
+            sessionNums=main_raw_sessions_final(animal,area,[],1);
         elseif strcmp(animal,'blanco')
             splitSessions=[355 405 435];
-            sessionNums=main_raw_sessions_final(animal,area);
+            sessionNums=main_raw_sessions_final(animal,area,[],1);
         end
         analysisFolderAppend=[];
         for i=1:length(sessionNums)
@@ -110,15 +115,18 @@ readData=1;
                 elseif sessionNums(i)>139&&sessionNums(i)<163%139 has single session of non-roving 30% sample and 14 conditions
                     file_of_int='225234912.1';%control task with jack's PL stimuli in blanco's V1 RF
                     analysisFolderAppend='_7';
+                    roving=1;
                 elseif sessionNums(i)>162&&sessionNums(i)<185%roving samples and 36 conditions
                     file_of_int='2223412f.1';%control task with jack's PL stimuli in blanco's V1 RF, plus flankers
                     analysisFolderAppend='_7';
+                    roving=1;
                 elseif sessionNums(i)>184&&sessionNums(i)<190%roving samples and 36 conditions
                     file_of_int='225234912.1';%control task with jack's PL stimuli in blanco's V1 RF, plus flankers
                     analysisFolderAppend='_7';
+                    roving=1;
                 end
             elseif strcmp(animal,'blanco')
-                [file_of_int,testContrast,sampleContrasts,roving]=session_metadata(sessionNums(i),animal);
+                [file_of_int,testContrast]=session_metadata(sessionNums(i),animal);
                 if sessionNums(i)>305&&sessionNums(i)<343
                     file_of_int='21613614.1';
                     testContrast=[10 15 20 25 27 28 29 31 32 33 35 40 50 60];
@@ -158,20 +166,25 @@ readData=1;
             end
             if readData==1
                 if roving==0
+                    if strcmp(animal,'jack')
+                        cdText=['cd ','V:\thielelab\Groups\ThieleGroup\monkey_data\Jack\_jackgrid\j_',area,'_events_files\',num2str(sessionNums(i))];
+                    elseif strcmp(animal,'blanco')
+                        cdText=['cd V:\thielelab\Groups\ThieleGroup\monkey_data\blanco\_grid\',area,'_events_files\',num2str(sessionNums(i))];
+                    end
                     if splitSess==1
-                        cdText=['cd ','F:\blanco\',area,'_events_files\',num2str(sessionNums(i)),'_1'];
+                        cdText=['cd V:\thielelab\Groups\ThieleGroup\monkey_data\blanco\_grid\',area,'_events_files\',num2str(sessionNums(i)),'_1'];
                     end
                     eval(cdText);
                     conditions=1:length(testContrast);
                     [vals]=jack_2target_psycho_EV_v3_mex(file_of_int,sampleContrast,testContrast,sessionNums(i),conditions,area,analysisFolderAppend,animal);
                     if splitSess==1
-                        cdText=['cd ','F:\blanco\',area,'_events_files\',num2str(sessionNums(i)),'_2'];
+                        cdText=['cd V:\thielelab\Groups\ThieleGroup\monkey_data\blanco\_grid\',area,'_events_files\',num2str(sessionNums(i)),'_2'];
                         eval(cdText);
                         [vals2]=jack_2target_psycho_EV_v3_mex(file_of_int,sampleContrast,testContrast,sessionNums(i),conditions,area,analysisFolderAppend,animal);
                         vals=[vals;vals2];
                     end
 %                     analyseValsjexample(vals,testContrast,conditions,sampleContrast,animal,area,analysisFolderAppend,sessionNums(i));
-                    analyseVals2(vals,testContrast,conditions,sampleContrast,animal,area,analysisFolderAppend,sessionNums(i),roving);
+                    analyseVals2(vals,testContrast,conditions,sampleContrast,animal,area,analysisFolderAppend,sessionNums(i),roving,onExternalHD);
                     splitSess=0;
                 elseif roving==1
                     testContrasts=[5 10 12 15 18 22 25 28 35 45 63 90;5 10 15 22 25 28 32 35 38 45 60 90;5 10 15 25 32 35 38 42 45 50 60 90];
@@ -200,11 +213,11 @@ readData=1;
                             [vals2]=jack_2target_psycho_EV_v3_mex(file_of_int,sampleContrast,testContrast,sessionNums(i),conditions,area,analysisFolderAppend,animal);
                             vals=[vals;vals2];
                         end
-                        savevals{sampleNum}=analyseVals2(vals,testContrast,conditions,sampleContrast,animal,area,analysisFolderAppend,sessionNums(i),roving);
+                        savevals{sampleNum}=analyseVals2(vals,testContrast,conditions,sampleContrast,animal,area,analysisFolderAppend,sessionNums(i),roving,onExternalHD);
                     end
                     splitSess=0;
                     valsFileName=['vals_',num2str(sessionNums(i)),'.mat'];
-                    valsFolder=fullfile('F:','PL','vals_perf',animal,valsFileName); %#ok<NASGU>
+                    valsFolder=fullfile(rootFolder,'PL','vals_perf',animal,valsFileName); %#ok<NASGU>
                     saveText=['save ',valsFolder,' vals'];
                     vals=savevals;
 %                     eval(saveText);
@@ -214,10 +227,10 @@ readData=1;
 %     end
 % end
 
-taskCols=[230/256 230/256 250/256;255/256 222/256 173/256;154/256 205/256 50/256];%purple;orange;green
+taskCols=[204/256 153/256 256/256;255/256 222/256 173/256;154/256 205/256 50/256];%purple;orange;green
 taskColsDark=[153/256 50/256 204/256;210/256 105/256 30/256;34/256 139/256 34/256];%purple;orange;green
 
-plotRoving=0;
+plotRoving=1;
 if plotRoving==1
     if strcmp(animal,'jack')
         areas=[{'v1_2'} {'v1_4'}];
@@ -238,9 +251,6 @@ if plotRoving==1
             taskColDark=taskColsDark(flankerInd,:);
             markerFaceTypes=[{'none'} {taskCol} {taskColDark}];
             for i=1:length(sampleContrasts)
-                perf=[];
-                PSE=[];
-                slope=[];
                 sampleContrast=sampleContrasts(i);
                 if sampleContrast==30
                     markerFaceType=markerFaceTypes{2};
@@ -249,14 +259,11 @@ if plotRoving==1
                 elseif sampleContrast==40
                     markerFaceType=markerFaceTypes{3};
                 end
-                loadText=['load F:\PL\psycho_data\',animal,'\allMeanPerf_',area,'_',num2str(sampleContrast),'.mat allMeanPerf'];
+                loadText=['load ',rootFolder,'\PL\psycho_data\',animal,'\allMeanPerf\allMeanPerf_',area,'_',num2str(flankerInd),'_',num2str(sampleContrast),'.mat allMeanPerf'];
                 eval(loadText)
-                for sessionInd=1:length(flankerSessions{flankerInd})
-                    rowInd=find(allMeanPerf==flankerSessions{flankerInd}(sessionInd));
-                    perf=[perf allMeanPerf(rowInd,2)];
-                    PSE=[PSE allMeanPerf(rowInd,15)];
-                    slope=[slope allMeanPerf(rowInd,16)];
-                end
+                perf=allMeanPerf(:,2);
+                PSE=allMeanPerf(:,15);
+                slope=allMeanPerf(:,16);
                 if length(areas)==1
                     subplot(3,length(areas),1);
                 else
@@ -325,9 +332,9 @@ if plotRoving==1
     formatsCommand=[{'epsc'} {'png'}];
     for j=1:2
         if length(areas)==2
-            printFileName=['F:\PL\psycho_data\',animal,'\','PC_PSE_slope_',areas{1},'_',areas{2},'.',formats{j}];
+            printFileName=[rootFolder,'\PL\psycho_data\',animal,'\PC_PSE_slope_',areas{1},'_',areas{2},'.',formats{j}];
         elseif length(areas)==1
-            printFileName=['F:\PL\psycho_data\',animal,'\','PC_PSE_slope_',areas{1},'.',formats{j}];
+            printFileName=[rootFolder,'\PL\psycho_data\',animal,'\PC_PSE_slope_',areas{1},'.',formats{j}];
         end
         print(sprintf('-d%s',formatsCommand{j}),'-r300',printFileName)
     end

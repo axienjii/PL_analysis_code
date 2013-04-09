@@ -3,7 +3,13 @@ function plot_bj_nvp_batch_across_chs(roving,areas)
 %written 29/03/13, modified from plot_bj_crf_or_roc_batch_across_chs.
 %Reads neuro- and psychometric threshold values for all conditions, to calculate averages and
 %examine correlation between threshold and session.
-%input arg for roving data: areas={'v1_2_1'} or {'v1_2_2'} or {'v1_2_3'}
+%input arg for roving data: areas={'v1_2_1'} or {'v1_2_2'} or {'v1_2_3'}     
+onExternalHD=0;
+if onExternalHD==1
+    rootFolder='G:\PL_backup_060413';
+else
+    rootFolder='F:';
+end
 analysisType='NVP';
 animalTexts=[{'subject B'} {'subject J'}];
 animals=[{'blanco'} {'jack'}];
@@ -38,7 +44,7 @@ for animalInd=1:length(animals)
         end
         
         psychoname=['psycho_constants_',area];
-        psychoPathname=fullfile('F:','PL','psycho_data',animal,psychoname);
+        psychoPathname=fullfile(rootFolder,'PL','psycho_data',animal,psychoname);
         subplotTitleText={'neurometric threshold lower contrast' 'neurometric threshold higher contrast' 'psychometric threshold lower contrast' 'psychometric threshold higher contrast'};
         
         %read in psycho data
@@ -75,7 +81,7 @@ for animalInd=1:length(animals)
                     for subPeriod=1:length(periods)-1
                         startEndTime=['_',num2str(periods(subPeriod)),'_to_',num2str(periods(subPeriod+1))];
                         psychoThresholdMatName=[area,appendText,'wholetrial_psyThreshold'];
-                        psychoThresholdMatFolder=fullfile('F:','PL','psycho',animal,'psyThreshold_mat');
+                        psychoThresholdMatFolder=fullfile(rootFolder,'PL','psycho',animal,'psyThreshold_mat');
                         psychoThresholdMatPathname=fullfile(psychoThresholdMatFolder,psychoThresholdMatName);
                         loadText=['load ',psychoThresholdMatPathname,' sessionSorted2 threshold82lower threshold82higher'];
                         eval(loadText)
@@ -94,7 +100,7 @@ for animalInd=1:length(animals)
                         for i=1:length(channels)
                             chNum=channels(i);
                             thMatname=[num2str(chNum),appendText,startEndTime,'_nvpThreshold_',area];
-                            thMatFolder=fullfile('F:','PL',analysisType,animal,'nvpThreshold_mat');
+                            thMatFolder=fullfile(rootFolder,'PL',analysisType,animal,'nvpThreshold_mat');
                             thMatPathname=fullfile(thMatFolder,thMatname);
                             loadText=['load ',thMatPathname,' sessionSorted1 threshold82lower threshold82higher'];
                             eval(loadText)
@@ -155,7 +161,7 @@ for animalInd=1:length(animals)
                             %                     subplot(2,2,subplotRemap(subplotInd));
                             if ~isempty(allData{1,subplotInd})
                                 if subplotInd<=2
-                                    plot(allXData{1,subplotInd},allData{1,subplotInd},'Marker','o','Color',markerCols(subplotInd),'LineStyle','none','MarkerFaceColor','none');hold on
+%                                     plot(allXData{1,subplotInd},allData{1,subplotInd},'Marker','o','Color',markerCols(subplotInd),'LineStyle','none','MarkerFaceColor','none');hold on
                                 else
                                     plot(allXData{1,subplotInd},allData{1,subplotInd},'Marker','o','Color',markerCols(subplotInd),'LineStyle','none','MarkerFaceColor',markerCols(subplotInd));hold on
                                 end
@@ -233,7 +239,7 @@ if roving==0
 elseif roving==1
     saveCoefImageName=[areaTexts{1},'_',analysisType,'_coefs',startEndTime];
 end
-saveCoefImageFolder=fullfile('F:','PL',analysisType);
+saveCoefImageFolder=fullfile(rootFolder,'PL',analysisType);
 saveCoefImagePath=fullfile(saveCoefImageFolder,saveCoefImageName);
 printtext=sprintf('print -dpng %s.png',saveCoefImagePath);
 set(gcf, 'PaperOrientation', 'landscape');

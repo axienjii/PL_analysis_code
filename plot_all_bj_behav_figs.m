@@ -1,6 +1,14 @@
 function plot_all_bj_behav_figs(roving,areas)
 %Written by Xing 27/10/12.
 %Plot figures for both monkeys, for behavioural paper.
+
+printFigs=1;
+onExternalHD=0;
+if onExternalHD==1
+    rootFolder='G:\PL_backup_060413';
+else
+    rootFolder='F:';
+end
 animalTexts=[{'subject B'} {'subject J'}];
 animals=[{'blanco'} {'jack'}];
 if roving==0
@@ -21,13 +29,10 @@ for animalInd=1:length(animals)
             analysisFolderAppend=[];
             midInd=find(testContrast<sampleContrast);
             midInd=midInd(end);
-            if roving==1
-                loadText=['load F:\PL\psycho_data\',animal,'\allMeanPerf\allMeanPerf_',area,'_',num2str(sampleContrast),'.mat allMeanPerf'];
-            elseif roving==0
-                loadText=['load F:\PL\psycho_data\',animal,'\allMeanPerf\allMeanPerf_',num2str(sampleContrast),'_',area,'.mat allMeanPerf'];
-            end
+            loadText=['load ',rootFolder,'\PL\psycho_data\',animal,'\allMeanPerf\allMeanPerf_',area,'_',num2str(sampleContrast),'.mat allMeanPerf'];
             eval(loadText)
             if strcmp(area,'v4_1')
+                allMeanPerf=allMeanPerf(1:end-1,:);%exclude session with horizontal stimulus
                 maxV4_1(animalInd)=size(allMeanPerf,1);
             end
             if roving==0
@@ -70,7 +75,7 @@ for animalInd=1:length(animals)
             for i=1:numsessions
                 figure(psychoCurves(animalInd+2*(areaInd-1)))
                 prop_corr=VALUES(i,1:numconds);%psychometric performance for each session
-                X=fminsearch(@fit_weibull,X0,[],testContrast,prop_corr,[],'least_square',[0 0 1 0],[0 0 max(prop_corr) 0],[0 0 0 0],[]);
+                X=fminsearch(@fit_weibull,X0,[],testContrast,prop_corr,[],'least_square',[1 0 1 0],[20 0 max(prop_corr) 0],[1 0 0 0],[0 0 0 0]);
                 subplot(6,6,i);%check
                 plot(testContrast,prop_corr,'ok');
                 hold on
@@ -520,7 +525,14 @@ for animalInd=1:length(animals)
                         text('Position',[xLimVals(2)+(xLimVals(2)-xLimVals(1))/25 yLimVals(1)+unitSpace*i*2],'FontSize',9,'String',[markerText,'  ',num2str(testContrast(i)),'%'],'Color',colmapText(i,:));
                     end
                     plot(1:size(allMeanPerf,1),allMeanPerf(:,2+i)*100,'Color',colmapText(i,:),'LineStyle','none','Marker',markerText,'MarkerFaceColor',colmapText(i,:),'MarkerEdgeColor',colmapText(i,:),'MarkerSize',markerS);hold on%'MarkerFaceColor',[1/i 1/i 1/i],
-                    [chiselinearTemp(i,:) chiseTemp(i,:) coefperflinearTemp(i,:) coefperfTemp(i,:) aRSlinearTemp(i,:) aRSTemp(i,:)]=bj_linearexpo_fitting(testContrast,allMeanPerf(:,2+i)*100,i,1,'ROC');
+%                     if strcmp(area,'v1_2_1')%try a linear fit as little learning occurs during roving stage 4
+%                         plotLinear=1;
+%                         startpoint5=0;
+%                     else
+                        plotLinear=0;
+                        startpoint5=1;
+%                     end
+                    [chiselinearTemp(i,:) chiseTemp(i,:) coefperflinearTemp(i,:) coefperfTemp(i,:) aRSlinearTemp(i,:) aRSTemp(i,:)]=bj_linearexpo_fitting(testContrast,allMeanPerf(:,2+i)*100,i,startpoint5,'ROC',plotLinear);
                 end
                 %     yLimVals=get(gca,'ylim');
                 %     xLimVals=get(gca,'xlim');
@@ -806,7 +818,7 @@ if roving==0
     figure(pc_condFig)
     subplot(length(areaTexts),2,1);
     % ylim([-0.1 1.1]);
-    xlim([0 37]);
+    xlim([0 30]);
     ylim([-5 105]);
     subplot(length(areaTexts),2,2);
     % ylim([-0.1 1.1]);
@@ -842,7 +854,7 @@ if roving==0
     %mean RT with error bars
     figure(rtFig)
     subplot(length(areaTexts),2,1);
-    xlim([0 40]);
+    xlim([0 30]);
     ylim([80 300]);
     subplot(length(areaTexts),2,2);
     xlim([0 35]);
@@ -869,7 +881,7 @@ if roving==0
     %mean RT with error bars per cond
     figure(rt_condFig)
     subplot(length(areaTexts),2,1);
-    xlim([0 38]);
+    xlim([0 30]);
     ylim([20 320]);
     subplot(length(areaTexts),2,2);
     xlim([0 35]);
@@ -884,7 +896,7 @@ if roving==0
     %mean error trial RT with error bars per cond
     figure(rterror_condFig)
     subplot(length(areaTexts),2,1);
-    xlim([0 38]);
+    xlim([0 30]);
     ylim([10 470]);
     subplot(length(areaTexts),2,2);
     xlim([0 35]);
@@ -899,7 +911,7 @@ if roving==0
     %difference between correct and error trial RT
     figure(rtcediffFig)
     subplot(length(areaTexts),2,1);
-    xlim([0 38]);
+    xlim([0 30]);
     ylim([-10 10]);
     subplot(length(areaTexts),2,2);
     xlim([0 35]);
@@ -916,6 +928,8 @@ elseif roving==1
     figure(pcpseslFig)
 %     subplot(length(areaTexts),3,1);
 %     ylim([50 90]);
+    subplot(length(areaTexts),3,2);
+    ylim([1 5]);
 %     % ylim([0.55 0.9]);
 %     subplot(length(areaTexts),3,3);
 %     ylim([27 40]);
@@ -930,8 +944,8 @@ elseif roving==1
 %     subplot(length(areaTexts),3,1);
 %     ylim([0.5 0.9]);
 %     xlim([0 38]);
-%     subplot(length(areaTexts),3,2);
-%     ylim([0 20]);
+    subplot(length(areaTexts),3,2);
+    ylim([0 8]);
 %     xlim([0 38]);
     subplot(length(areaTexts),3,3);
     ylim([20 35]);
@@ -946,7 +960,7 @@ elseif roving==1
 %     ylim([16 36]);
 %     xlim([0 24]);
     subplot(length(areaTexts),3,8);
-    ylim([0 13]);
+    ylim([0 10]);
     subplot(length(areaTexts),3,9);
     ylim([25 40]);
     
@@ -1124,41 +1138,60 @@ elseif roving==1
     elseif strcmp(area,'v1_2_2')
     % %proportion correct
     figure(pcpseslFig)
-%     subplot(length(areaTexts),3,1);
+    subplot(length(areaTexts),3,1);
+    xlim([0 24]);
 %     ylim([50 90]);
 %     % ylim([0.55 0.9]);
-%     subplot(length(areaTexts),3,3);
+    subplot(length(areaTexts),3,2);
+    xlim([0 24]);
+    subplot(length(areaTexts),3,3);
+    xlim([0 24]);
 %     ylim([27 40]);
-%     subplot(length(areaTexts),3,4);
+    subplot(length(areaTexts),3,4);
+    xlim([0 24]);
 %     ylim([60 95]);
 %     % ylim([0.65 0.95]);
-%     xlim([0 24]);
+    subplot(length(areaTexts),3,5);
+    xlim([0 24]);
+    subplot(length(areaTexts),3,6);
+    xlim([0 24]);
+    ylim([20 50]);
+    subplot(length(areaTexts),3,7);
+    xlim([0 24]);
+    subplot(length(areaTexts),3,8);
+    xlim([0 24]);
+    subplot(length(areaTexts),3,9);
+    xlim([0 24]);
     
     % %proportion correct, slope, PSE: first and last 30% of trials within each
     % session
     figure(pcpsesl30Fig)
-%     subplot(length(areaTexts),3,1);
+    subplot(length(areaTexts),3,1);
 %     ylim([0.5 0.9]);
-%     xlim([0 38]);
+    xlim([0 24]);
     subplot(length(areaTexts),3,2);
-    ylim([0 10]);
-%     xlim([0 38]);
-%     subplot(length(areaTexts),3,3);
+    ylim([0 15]);
+    xlim([0 24]);
+    subplot(length(areaTexts),3,3);
 %     ylim([20 35]);
-%     xlim([0 38]);
-%     subplot(length(areaTexts),3,4);
+    xlim([0 24]);
+    subplot(length(areaTexts),3,4);
 %     ylim([0.65 0.95]);
-%     xlim([0 24]);
+    xlim([0 24]);
     subplot(length(areaTexts),3,5);
-    ylim([0 20]);
-%     xlim([0 24]);
+    ylim([0 10]);
+    xlim([0 24]);
     subplot(length(areaTexts),3,6);
     ylim([20 50]);
-%     xlim([0 24]);
+    xlim([0 24]);
+    subplot(length(areaTexts),3,7);
+    xlim([0 24]);
     subplot(length(areaTexts),3,8);
-    ylim([0 35]);
+    ylim([0 17]);
+    xlim([0 24]);
     subplot(length(areaTexts),3,9);
     ylim([25 65]);
+    xlim([0 24]);
     
     % %proportion correct, slope, PSE: first and last 30% of trials within each
     % session, index of difference
@@ -1181,7 +1214,7 @@ elseif roving==1
     xlim([0 24]);
     subplot(length(areaTexts),3,5);
     line([0 24],[0 0],'LineStyle',':','Color','k');
-    ylim([-3 10]);
+    ylim([-2 2]);
     xlim([0 24]);
     subplot(length(areaTexts),3,6);
     line([0 24],[0 0],'LineStyle',':','Color','k');
@@ -1203,25 +1236,27 @@ elseif roving==1
     figure(pc_condFig)
     subplot(length(areaTexts),2,1);
     % ylim([-0.1 1.1]);
-%     xlim([0 37]);
+    xlim([0 16]);
     ylim([-5 105]);
     subplot(length(areaTexts),2,2);
     % ylim([-0.1 1.1]);
-    xlim([0 17]);
+    xlim([0 23]);
     ylim([-5 105]);
     subplot(length(areaTexts),2,3);
+    xlim([0 16]);
     % ylim([-0.1 1.1]);
     ylim([-5 105]);
     subplot(length(areaTexts),2,4);
     % ylim([-0.1 1.1]);
-    xlim([0 17]);
+    xlim([0 23]);
     ylim([-5 105]);
     subplot(length(areaTexts),2,5);
+    xlim([0 16]);
     % ylim([-0.1 1.1]);
     ylim([-5 105]);
     subplot(length(areaTexts),2,6);
     % ylim([-0.1 1.1]);
-    xlim([0 17]);
+    xlim([0 23]);
     ylim([-5 105]);
     
    
@@ -1238,17 +1273,19 @@ elseif roving==1
     %mean RT with error bars
     figure(rtFig)
     subplot(length(areaTexts),2,1);
-%     xlim([0 40]);
+    xlim([0 16]);
 %     ylim([40 250]);
     subplot(length(areaTexts),2,2);
     xlim([0 23]);
 %     ylim([130 210]);
     subplot(length(areaTexts),2,3);
-%     xlim([0 18]);
+    xlim([0 16]);
 %     ylim([40 250]);
     subplot(length(areaTexts),2,4);
     xlim([0 23]);
 %     ylim([130 220]);
+    subplot(length(areaTexts),2,5);
+    xlim([0 16]);
     subplot(length(areaTexts),2,6);
     xlim([0 23]);
 %     ylim([130 210]);
@@ -1337,14 +1374,13 @@ elseif roving==1
     end
 end
 
-printFigs=0;
 if printFigs==1
     if roving==0
         rovingText='non_roving';
     elseif roving==1
         rovingText=['roving_',area];
     end
-    folderPrint=fullfile('F:','PL','psycho_data','behavioural_figures',rovingText);
+    folderPrint=fullfile(rootFolder,'PL','psycho_data','behavioural_figures',rovingText);
     formats=[{'epsc'} {'png'}];
     for i=1:length(formats)
         format=formats{i};
@@ -1357,11 +1393,13 @@ if printFigs==1
         end
         for animalInd=1:length(animals)
             for areaInd=1:length(areas)
+                for sampleInd=1:length(sampleContrasts)
                 figure(psychoCurves(animalInd+2*(areaInd-1)))
-                figName=[folderPrint,'\_',animals{animalInd},'_psycho_',areas{areaInd}];
+                figName=[folderPrint,'\_',animals{animalInd},'_psycho_',areas{areaInd},'_',sampleContrasts(sampleInd)];
                 printtext=sprintf('print -d%s %s -r600',format,figName);
                 set(gcf, 'PaperPositionMode', 'auto');
                 eval(printtext);
+                end
             end
         end
         figure(pc_condFig)

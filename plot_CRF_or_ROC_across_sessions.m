@@ -1,4 +1,4 @@
-function [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData,threshold82lower,threshold82higher]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,dataArray,chNum,numsessions,sessionSorted1,sampleContrast,testContrast,calculateTangent,plotDiffC50_30,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,slC50MatPathname,slSigmaMultiple,c50SigmaMultiple,threshSigmaMultiple)
+function [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData,threshold82lower,threshold82higher]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,dataArray,chNum,numsessions,sessionSorted1,sampleContrast,testContrast,calculateTangent,plotDiffC50_30,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,slC50MatPathname,slSigmaMultiple,c50SigmaMultiple,threshSigmaMultiple,rootFolder)
 if ischar(chNum)
     titleText=chNum;
     chNum=0;
@@ -35,7 +35,7 @@ for i=1:numsessions
         if calculateTangent==0
             slopeNeuro(1,i)=X(3);
         elseif calculateTangent==1
-            slopeNeuro(1,i)=X(2)^X(3)*30^(X(3)-1)/(30^X(3)+X(2)^X(3))^2;
+            slopeNeuro(1,i)=X(2)^X(3)*sampleContrast^(X(3)-1)/(30^X(3)+X(2)^X(3))^2;
         end
         c50(1,i)=X(2);
         minRate(1,i)=X(4);
@@ -69,7 +69,7 @@ for i=1:numsessions
         if calculateTangent==0
             slopeNeuro(1,i)=X(1);
         elseif calculateTangent==1
-            slopeNeuro(1,i)=X(1)*X(3)*exp(-(30/X(2))^X(1) )*30^(X(1)-1)*(1/X(2))^X(1);
+            slopeNeuro(1,i)=X(1)*X(3)*exp(-(sampleContrast/X(2))^X(1) )*sampleContrast^(X(1)-1)*(1/X(2))^X(1);
         end
         c50(1,i)=real(X(2).*(-log((0.5-X(4))/X(3))).^(1/X(1)));
         plot(testContrast,datavals,'ok');
@@ -183,8 +183,8 @@ elseif excludeSessHighSSE==1
     end
 end
 subFolder=['neurometric_',analysisType];
-pathname=fullfile('F:','PL',analysisType,animal,subFolder,imagename);
-folder=fullfile('F:','PL',analysisType,animal,subFolder);
+pathname=fullfile(rootFolder,'PL',analysisType,animal,subFolder,imagename);
+folder=fullfile(rootFolder,'PL',analysisType,animal,subFolder);
 if ~exist(folder,'dir')
     mkdir(folder)
 end

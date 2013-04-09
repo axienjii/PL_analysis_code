@@ -1,4 +1,4 @@
-function [chiselinear chise coefperflinear coefperf adjustedRSlinear adjustedRS]=bj_linearexpo_fitting(testContrast,allMeanPerf,i,startpoint5,analysisType)
+function [chiselinear chise coefperflinear coefperf adjustedRSlinear adjustedRS]=bj_linearexpo_fitting(testContrast,allMeanPerf,i,startpoint5,analysisType,plotLinear)
 %Written by Xing 20/12/12 to calculate chi-squared error associated with
 %linear polynomial and exponential curve fits. Returns normalised value of
 %chi squared error (summed across sessions).
@@ -7,11 +7,14 @@ function [chiselinear chise coefperflinear coefperf adjustedRSlinear adjustedRS]
 %of reports that test contrast is higher, or
 %0: a different measure of performance, such as PSE or slope.
 
+if nargin<=5
+    plotLinear=0;
+end
 % colmapText=[colormap(winter(size(testContrast,2)/2));colormap(cool(size(testContrast,2)/2))];
 if size(testContrast,2)>7
-colmapText=colormap(jet(size(testContrast,2)));
+    colmapText=colormap(jet(size(testContrast,2)));
 else
-colmapText=colormap(jet(14));
+    colmapText=colormap(jet(14));
 end
 colmapText=[colmapText(1,:);132/255 22/255 216/255;202/255 65/255 223/255;colmapText(3:7,:);157/255 212/255 61/255;colmapText(10:12,:);178/255 111/255 12/255;colmapText(end,:)];
 if i==0
@@ -37,11 +40,16 @@ elseif startpoint5==1
     seedvalslin=1;
 end
 fit3 = fit(xTemp,allMeanPerf,f,'StartPoint',seedvalslin,'Robust','on');
-%plot(fit3,'b:');
+% plot(fit3,'b:');
 [clinear,goflinear] = fit(xplot,yplot,fit3)    
 coefperflinear=coeffvalues(clinear);
 if startpoint5==1
     coefperflinear=[50 coefperflinear];
+end
+if plotLinear==1
+    xcurvevals=0:0.01:size(allMeanPerf,1);
+    ycurvevals=coefperflinear(1)+coefperflinear(2)*xcurvevals;
+    plot(xcurvevals,ycurvevals);
 end
 expected=coefperflinear(1)+allMeanPerf*coefperflinear(2);
 observed=allMeanPerf;
@@ -96,5 +104,7 @@ if startpoint5==0
 elseif startpoint5==1
     ycurvevals=50-coefperf(1)+coefperf(1).*exp(-1.*xcurvevals).^coefperf(2)+coefperf(3);
 end
-plot(xcurvevals,ycurvevals,'Color',colmapText(j,:),'LineStyle',lineText);
+if plotLinear==0
+    plot(xcurvevals,ycurvevals,'Color',colmapText(j,:),'LineStyle',lineText);
+end
 hold on%,'LineWidth',1%exponential fit
