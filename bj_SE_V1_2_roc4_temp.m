@@ -47,6 +47,7 @@ loadText=['load ',artifactTrialsPath,' rlist removeTrialsTimestamps'];
 eval(loadText);%removeTrialsTimestamps column 1: NLX_TRIAL_START; column 21: NLX_TRIAL_END
 % removeTrialsTimestamps=[0 0];
 plotRedArtifacts=1;
+writeROC=0;
 if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the same time- when .1 is processed.
     splitSess=1;
     [file_of_int,testContrasts,sampleContrasts,expt_type,rotated,area]=session_metadata(session,animal);
@@ -400,47 +401,49 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                 saveas(fig,imageName,'fig') 
             end
             
-            %write ROC values and Weibull function constants to file:
-            X=[0 0];
-            ROCMatFileName=[num2str(channel),'_',num2str(sampleContrast),'_roc'];
-            ROCMatFolder=fullfile('F:','PL','ROC_mat_files',animal);
-            ROCMatPath=fullfile(ROCMatFolder,ROCMatFileName);
-            matExists=0;
-            rocValsMat=[];
-            listing=dir(ROCMatFolder);
-            if size(listing,1)>2%check whether the mat file exists for that channel and session
-                for r=3:size(listing,1)
-                    fileName=listing(r,1).name;
-                    ind=find(fileName=='.');
-                    if ind
-                        chFolder=fileName(1:ind(1)-1);
-                        if strcmp(ROCMatFileName,chFolder)
-                            matExists=1;
+            if writeROC==1
+                %write ROC values and Weibull function constants to file:
+                X=[0 0];
+                ROCMatFileName=[num2str(channel),'_',num2str(sampleContrast),'_roc'];
+                ROCMatFolder=fullfile('F:','PL','ROC_mat_files',animal);
+                ROCMatPath=fullfile(ROCMatFolder,ROCMatFileName);
+                matExists=0;
+                rocValsMat=[];
+                listing=dir(ROCMatFolder);
+                if size(listing,1)>2%check whether the mat file exists for that channel and session
+                    for r=3:size(listing,1)
+                        fileName=listing(r,1).name;
+                        ind=find(fileName=='.');
+                        if ind
+                            chFolder=fileName(1:ind(1)-1);
+                            if strcmp(ROCMatFileName,chFolder)
+                                matExists=1;
+                            end
                         end
                     end
                 end
-            end
-            if matExists==1
-                loadText=['load ',ROCMatPath,' rocValsMat'];
-                eval(loadText);
-            end
-            addVar={[num2str(channel),'_',num2str(sampleContrast)]};
-            addVar=[addVar floor(session)];
-            addVar=[addVar rocvals];
-            addVar=[addVar X];
-            row=[];
-            for rowNum=1:size(rocValsMat,1)
-                if find(floor(rocValsMat{rowNum,2})==floor(session))
-                    row=rowNum;
+                if matExists==1
+                    loadText=['load ',ROCMatPath,' rocValsMat'];
+                    eval(loadText);
                 end
+                addVar={[num2str(channel),'_',num2str(sampleContrast)]};
+                addVar=[addVar floor(session)];
+                addVar=[addVar rocvals];
+                addVar=[addVar X];
+                row=[];
+                for rowNum=1:size(rocValsMat,1)
+                    if find(floor(rocValsMat{rowNum,2})==floor(session))
+                        row=rowNum;
+                    end
+                end
+                if isempty(row)
+                    rocValsMat=[rocValsMat;addVar];
+                else
+                    rocValsMat(row,:)=addVar;
+                end
+                saveText=['save ',ROCMatPath,'.mat rocValsMat'];
+                eval(saveText);
             end
-            if isempty(row)
-                rocValsMat=[rocValsMat;addVar];
-            else
-                rocValsMat(row,:)=addVar;
-            end
-            saveText=['save ',ROCMatPath,'.mat rocValsMat'];
-            eval(saveText);
             
             %pause
             close all hidden
