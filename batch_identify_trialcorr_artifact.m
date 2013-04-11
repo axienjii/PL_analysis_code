@@ -54,14 +54,16 @@ end
 
 initialThreshDrawing=0;
 if initialThreshDrawing==1
-    plotFigs=0;
+    plotFigs=1;
     allNumRemoveTrials=sessions';
     allRemoveTrialsStats=[];
     histoFig=figure;
     if strcmp(animal,'blanco')
-        if strncmp(area,'v4',2)
+        if strcmp(area,'v4')||strcmp(area,'v4_1')
             cutoffs=0.54:0.01:0.6;
-            cutoffs=0.50:0.01:0.51;
+        elseif strcmp(area,'v4_2')
+            cutoffs=0.45:0.01:0.8;
+            cutoffs=0.45:0.01:0.51;
             xlimTail=[0.4 1];
         elseif strncmp(area,'v1',2)
             cutoffs=0.54:0.01:0.59;
@@ -71,9 +73,10 @@ if initialThreshDrawing==1
     elseif strcmp(animal,'jack')
         if strncmp(area,'v4',2)
             cutoffs=0.42:0.01:0.50;
+            cutoffs=0.51:0.01:0.64;
             xlimTail=[0.3 0.9];
         elseif strncmp(area,'v1',2)
-            cutoffs=0.65:0.01:0.73;
+            cutoffs=0.75:0.01:0.85;
             xlimTail=[0.6 1];
         end
     end
@@ -125,11 +128,11 @@ if initialThreshDrawing==1
 %             xlim([0 1]);
 %             %         ylim([-100 2500]);
 %         end
-%         for i=1:length(sessions)
-%             subplot(ceil(length(sessions)/5),5,i);
-%             xlim(xlimTail);
-%             ylim([-100 500]);
-%         end
+        for i=1:length(sessions)
+            subplot(ceil(length(sessions)/5),5,i);
+            xlim(xlimTail);
+            ylim([-100 500]);
+        end
         allNumRemoveTrials=[allNumRemoveTrials numRemoveTrials'];
     end
     totalNumTrials=zeros(length(sessions),1);
