@@ -2,9 +2,9 @@ roc_vec=[];
 
 newroc_vec=[];
 corr_vec=[];
-x1=30+randn(1,1000)*sqrt(30);
-x1_1=sort(x1,'ascend');
-x2_1=33+randn(1,1000)*sqrt(30);
+x1=30+randn(1,1000)*30;
+x1_1=sort(x1,'ascend');%sample act
+x2_1=38+randn(1,1000)*30;%test act
 [x4,IX]=sort(x2_1);
 close all
 for hi=-1000:1:1000
@@ -25,7 +25,7 @@ for hi=-1000:1:1000
     end
     
     if hi ~=0
-    [roc1,vec1,vec2]= sglroc3 (x1_1,x2);
+    [roc1,vec1,vec2]= sglroc3 (x2,x1_1);
     roc_vec=[roc_vec roc1];
     
     

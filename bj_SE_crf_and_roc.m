@@ -71,8 +71,17 @@ if min(numTrials)>=minTrials
     for subPeriod=1:length(periods)-1
         for cond=1:size(matarray,1)
             %roc analysis:
-            [roc]=sglroc3(epoch4{cond,subPeriod}(1,:),epoch2{cond,subPeriod}(1,:));
+            higherTest=0;
+            for rowInd=1:length(epoch4{cond,subPeriod})
+                if epoch4{cond,subPeriod}(1,rowInd)>epoch2{cond,subPeriod}(1,rowInd)
+                    higherTest=higherTest+1;
+                end
+            end
+            roc=higherTest/length(epoch4{cond,subPeriod});
             rocvals(cond)=roc;
+            %previous method of calculating ROC values, does not take trial-by-trial fluctuations (i.e. trial-wise correlations between activity to sample and test) into account
+            %[roctemp]=sglroc3(epoch4{cond,subPeriod}(1,:),epoch2{cond,subPeriod}(1,:));
+            %rocvalstemp(cond)=roctemp;
         end
         startEndTime=['_',num2str(periods(subPeriod)),'_to_',num2str(periods(subPeriod+1))];
         if round(ch)~=ch
