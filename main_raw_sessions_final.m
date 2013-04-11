@@ -15,6 +15,12 @@ area = lower(area);
 
 if ispc
     switch [animal,area]
+        case ['blanco','v4_0_1']
+            sessions=304;
+        case ['blanco','v4_0_2']
+            sessions=305;
+        case ['blanco','v4_0_3']
+            sessions=306;
         case ['blanco','v4']
             %                 sessions = 306:342;
             % We know there is missing data for this, so just use the
@@ -36,11 +42,11 @@ if ispc
         case ['blanco','v1']
             % NB: session 355 is in two parts; 355_1 and 355_2
             % and the session metadata for these is as 355.1 and 355.2
-            sessions = [343:359];
+            sessions = 343:359;
             %                 conditions = [5 10 15 20 22 25 28 32 35 40 45 50 60 90];
             
           case ['blanco','v1_1']
-            sessions = [343:359];
+            sessions = 343:359;
             
         case ['blanco','v4_2']
             sessions = [360 361 362 363 364];%have to restore and play back 362 from tape
@@ -56,6 +62,12 @@ if ispc
                
         case ['blanco','v1_2_3']
             sessions = 453:459; %no flankers: 388 to 422. flankers: 431:452 no flankers: 453 to 459
+            
+        case ['jack','v4_0_1']
+            sessions=22;
+            
+        case ['jack','v4_0_2']
+            sessions=23;
             
         case ['jack','v4']
             % All present and correct
