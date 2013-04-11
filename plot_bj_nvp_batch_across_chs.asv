@@ -216,23 +216,22 @@ for animalInd=1:length(animals)
             end
             if calculateStats==1
                 if plotPsychoOnly==0
-                    anovaVals=[thresholdsNL thresholdsNH thresholdsPL thresholdsPH];
-                    nvpFactor=[zeros(1,length(thresholdsNL))+1 zeros(1,length(thresholdsNH))+1 zeros(1,length(thresholdsPL))+2 zeros(1,length(thresholdsPH))+2];
-                    highlowFactor=[zeros(1,length(thresholdsNL))+1 zeros(1,length(thresholdsNH))+2 zeros(1,length(thresholdsPL))+1 zeros(1,length(thresholdsPH))+2];
-                    %         sessionFactor=[zeros(1,(floor(length(thresholdsNL)/2)))+1 zeros(1,(ceil(length(thresholdsNL)/2)))+2 zeros(1,(floor(length(thresholdsNH)/2)))+1 zeros(1,(ceil(length(thresholdsNH)/2)))+2 zeros(1,(floor(length(thresholdsPL)/2)))+1 zeros(1,(ceil(length(thresholdsPL)/2)))+2 zeros(1,(floor(length(thresholdsPH)/2)))+1 zeros(1,(ceil(length(thresholdsPH)/2)))+2];
-                    %         sessionFactor=[zeros(1,(floor(length(thresholdsNL)/3)))+1 zeros(1,(floor(length(thresholdsNL)/3)))+2 zeros(1,length(thresholdsNL)-(2*floor(length(thresholdsNL)/3)))+3 zeros(1,(floor(length(thresholdsNH)/3)))+1 zeros(1,(floor(length(thresholdsNH)/3)))+2 zeros(1,length(thresholdsNH)-(2*floor(length(thresholdsNH)/3)))+3 zeros(1,(floor(length(thresholdsPL)/3)))+1 zeros(1,(floor(length(thresholdsPL)/3)))+2 zeros(1,length(thresholdsPL)-(2*floor(length(thresholdsPL)/3)))+3 zeros(1,(floor(length(thresholdsPH)/3)))+1 zeros(1,(floor(length(thresholdsPH)/3)))+2 zeros(1,length(thresholdsPH)-(2*floor(length(thresholdsPH)/3)))+3];
-                    %         [p,table,stats]=anovan(anovaVals,{nvpFactor highlowFactor sessionFactor},'model','full');anovap{animalInd+2*(areaInd-1)}=p;anovatable{animalInd+2*(areaInd-1)}=table;anovastats{animalInd+2*(areaInd-1)}=stats;
-                    [p,table,stats]=anovan(anovaVals,{nvpFactor highlowFactor},'model','full');anovap{sampCond,animalInd+2*(areaInd-1)}=p;anovatable{sampCond,animalInd+2*(areaInd-1)}=table;anovastats{sampCond,animalInd+2*(areaInd-1)}=stats;
-                    figure;
-                    [c,m,h,nms]=multcompare(stats)
-                    %%1st row: B V4, 2nd: B V1, 3rd: J V4, 4th: J V1; 1st column: NL vs NH, 2nd: PL vs PH, 3rd: NL vs PL, 4th: NH vs PH
-                    [h,p,ci,stats]=ttest(thresholdsNL,thresholdsNH);allh(1,animalInd+2*(areaInd-1))=h;allp(1,animalInd+2*(areaInd-1))=p;allci{1,animalInd+2*(areaInd-1)}=ci;allstats{1,animalInd+2*(areaInd-1)}=stats;
-                    [h,p,ci,stats]=ttest(thresholdsPL,thresholdsPH);allh(2,animalInd+2*(areaInd-1))=h;allp(2,animalInd+2*(areaInd-1))=p;allci{2,animalInd+2*(areaInd-1)}=ci;allstats{2,animalInd+2*(areaInd-1)}=stats;
-                    [h,p,ci,stats]=ttest(thresholdsNL,thresholdsPL);allh(3,animalInd+2*(areaInd-1))=h;allp(3,animalInd+2*(areaInd-1))=p;allci{3,animalInd+2*(areaInd-1)}=ci;allstats{3,animalInd+2*(areaInd-1)}=stats;
-                    [h,p,ci,stats]=ttest(thresholdsNH,thresholdsPH);allh(4,animalInd+2*(areaInd-1))=h;allp(4,animalInd+2*(areaInd-1))=p;allci{4,animalInd+2*(areaInd-1)}=ci;allstats{4,animalInd+2*(areaInd-1)}=stats;
-                else
-                    [h,p,ci,stats]=ttest(thresholdsPL,thresholdsPH);allh(1,animalInd+2*(areaInd-1))=h;allp(1,animalInd+2*(areaInd-1))=p;allci{1,animalInd+2*(areaInd-1)}=ci;allstats{1,animalInd+2*(areaInd-1)}=stats;
-                end
+                anovaVals=[thresholdsNL thresholdsNH thresholdsPL thresholdsPH];
+                nvpFactor=[zeros(1,length(thresholdsNL))+1 zeros(1,length(thresholdsNH))+1 zeros(1,length(thresholdsPL))+2 zeros(1,length(thresholdsPH))+2];
+                highlowFactor=[zeros(1,length(thresholdsNL))+1 zeros(1,length(thresholdsNH))+2 zeros(1,length(thresholdsPL))+1 zeros(1,length(thresholdsPH))+2];
+                %         sessionFactor=[zeros(1,(floor(length(thresholdsNL)/2)))+1 zeros(1,(ceil(length(thresholdsNL)/2)))+2 zeros(1,(floor(length(thresholdsNH)/2)))+1 zeros(1,(ceil(length(thresholdsNH)/2)))+2 zeros(1,(floor(length(thresholdsPL)/2)))+1 zeros(1,(ceil(length(thresholdsPL)/2)))+2 zeros(1,(floor(length(thresholdsPH)/2)))+1 zeros(1,(ceil(length(thresholdsPH)/2)))+2];
+                %         sessionFactor=[zeros(1,(floor(length(thresholdsNL)/3)))+1 zeros(1,(floor(length(thresholdsNL)/3)))+2 zeros(1,length(thresholdsNL)-(2*floor(length(thresholdsNL)/3)))+3 zeros(1,(floor(length(thresholdsNH)/3)))+1 zeros(1,(floor(length(thresholdsNH)/3)))+2 zeros(1,length(thresholdsNH)-(2*floor(length(thresholdsNH)/3)))+3 zeros(1,(floor(length(thresholdsPL)/3)))+1 zeros(1,(floor(length(thresholdsPL)/3)))+2 zeros(1,length(thresholdsPL)-(2*floor(length(thresholdsPL)/3)))+3 zeros(1,(floor(length(thresholdsPH)/3)))+1 zeros(1,(floor(length(thresholdsPH)/3)))+2 zeros(1,length(thresholdsPH)-(2*floor(length(thresholdsPH)/3)))+3];
+                %         [p,table,stats]=anovan(anovaVals,{nvpFactor highlowFactor sessionFactor},'model','full');anovap{animalInd+2*(areaInd-1)}=p;anovatable{animalInd+2*(areaInd-1)}=table;anovastats{animalInd+2*(areaInd-1)}=stats;
+                [p,table,stats]=anovan(anovaVals,{nvpFactor highlowFactor},'model','full');anovap{sampCond,animalInd+2*(areaInd-1)}=p;anovatable{sampCond,animalInd+2*(areaInd-1)}=table;anovastats{sampCond,animalInd+2*(areaInd-1)}=stats;
+                figure;
+                [c,m,h,nms]=multcompare(stats)
+                %%1st row: B V4, 2nd: B V1, 3rd: J V4, 4th: J V1; 1st column: NL vs NH, 2nd: PL vs PH, 3rd: NL vs PL, 4th: NH vs PH
+                [h,p,ci,stats]=ttest(thresholdsNL,thresholdsNH);allh(1,animalInd+2*(areaInd-1))=h;allp(1,animalInd+2*(areaInd-1))=p;allci{1,animalInd+2*(areaInd-1)}=ci;allstats{1,animalInd+2*(areaInd-1)}=stats;
+                [h,p,ci,stats]=ttest(thresholdsPL,thresholdsPH);allh(2,animalInd+2*(areaInd-1))=h;allp(2,animalInd+2*(areaInd-1))=p;allci{2,animalInd+2*(areaInd-1)}=ci;allstats{2,animalInd+2*(areaInd-1)}=stats;
+                [h,p,ci,stats]=ttest(thresholdsNL,thresholdsPL);allh(3,animalInd+2*(areaInd-1))=h;allp(3,animalInd+2*(areaInd-1))=p;allci{3,animalInd+2*(areaInd-1)}=ci;allstats{3,animalInd+2*(areaInd-1)}=stats;
+                [h,p,ci,stats]=ttest(thresholdsNH,thresholdsPH);allh(4,animalInd+2*(areaInd-1))=h;allp(4,animalInd+2*(areaInd-1))=p;allci{4,animalInd+2*(areaInd-1)}=ci;allstats{4,animalInd+2*(areaInd-1)}=stats;
+            else
+                [h,p,ci,stats]=ttest(thresholdsPL,thresholdsPH);allh(1,animalInd+2*(areaInd-1))=h;allp(1,animalInd+2*(areaInd-1))=p;allci{1,animalInd+2*(areaInd-1)}=ci;allstats{1,animalInd+2*(areaInd-1)}=stats;
             end
             if roving==1
                 grandANOVATable(1:3,(sampCond*2)-1+6*(animalInd-1))=anovap{sampCond,animalInd};
