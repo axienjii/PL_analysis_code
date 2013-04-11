@@ -15,8 +15,8 @@ function jack_psycho_batch_V1(animal,area)
 %set accordingly:
 % monkeys=[{'blanco'} {'jack'}];
 % areas=[{'v4_1'} {'v4_2'} {'v1'}];
-roving=1;
-readData=0;
+roving=0;
+readData=1;
 onExternalHD=0;
 if onExternalHD==1
     rootFolder='G:\PL_backup_060413';
@@ -60,12 +60,12 @@ end
         for i=1:length(sessionNums)
             if strcmp(animal,'jack')
                 [sampleContrasts testContrasts]=area_metadata(area);
-                if sessionNums(i)==22
-                    file_of_int='2161398.1';
-                    testContrast=[10 15 20 25 35 40 60 90];
-                elseif sessionNums(i)<22
+                if sessionNums(i)<22
                     file_of_int='2161392.1';
                     testContrast=[10 90];
+                elseif sessionNums(i)==22
+                    file_of_int='2161398.1';
+                    testContrast=[10 15 20 25 35 40 60 90];
                 elseif sessionNums(i)==23
                     file_of_int='21613912.1';%wrongly named in Cheetah encode- actual name should be 21613612.1
                     testContrast=[10 15 20 25 27 29 31 33 35 40 50 60];
@@ -127,7 +127,13 @@ end
                 end
             elseif strcmp(animal,'blanco')
                 [file_of_int,testContrast]=session_metadata(sessionNums(i),animal);
-                if sessionNums(i)>305&&sessionNums(i)<343
+                if sessionNums(i)==304
+                    file_of_int='21653090.1';
+                    testContrast=[5 10 20 25 35 40 60 90];
+                elseif sessionNums(i)==305
+                    file_of_int='216136.2';
+                    testContrast=[10 15 20 25 27 29 31 33 35 40 50 60];
+                elseif sessionNums(i)>305&&sessionNums(i)<343
                     file_of_int='21613614.1';
                     testContrast=[10 15 20 25 27 28 29 31 32 33 35 40 50 60];
                 elseif sessionNums(i)>342&&sessionNums(i)<360
@@ -220,7 +226,7 @@ end
                     valsFolder=fullfile(rootFolder,'PL','vals_perf',animal,valsFileName); %#ok<NASGU>
                     saveText=['save ',valsFolder,' vals'];
                     vals=savevals;
-%                     eval(saveText);
+                    eval(saveText);
                 end
             end
         end
@@ -230,7 +236,7 @@ end
 taskCols=[204/256 153/256 256/256;255/256 222/256 173/256;154/256 205/256 50/256];%purple;orange;green
 taskColsDark=[153/256 50/256 204/256;210/256 105/256 30/256;34/256 139/256 34/256];%purple;orange;green
 
-plotRoving=1;
+plotRoving=0;
 if plotRoving==1
     if strcmp(animal,'jack')
         areas=[{'v1_2'} {'v1_4'}];
