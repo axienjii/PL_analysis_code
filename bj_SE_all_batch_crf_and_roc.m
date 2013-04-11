@@ -61,7 +61,7 @@ end
 % %smaller time windows:
 
 channels = main_channels(animal,area);
-sessionNums = main_raw_sessions_final(animal,area);
+sessionNums = main_raw_sessions_final(animal,area,[],0);
 if multipleTimes==0
     for i=1:length(channels)
         epochTimes(i,1)={channels(i)};

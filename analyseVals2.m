@@ -7,7 +7,7 @@ else
 end
 writeWeibullPsycho=0;%remember to set correct directory!
 savePsychoCurves=0;
-writeMeanPerf=0;
+writeMeanPerf=1;
 writeNumTrials=1;
 calculateTangent=1;
 numconds=length(testContrast);

@@ -16,6 +16,7 @@ function bj_SE_batch_roc_temp(animal,area,channels,sessions,icopy,ncopies,istart
 % area='v1_2';
 verbose=0;
 rewriteSessions=1;
+checkFileDateMod=0;
 if nargin<3 || isempty(channels)
     channels = main_channels(animal,area);
 end
@@ -60,10 +61,14 @@ for iter = icopy:(length(channels)*length(sessions))
         if ~exist(output_fname, 'file')
             bj_SE_V1_2_roc4_temp(animal, channel, session, max(0,verbose-1))% if not, create it
         elseif rewriteSessions==1 
-            fileinfo = dir(output_fname)
-            modDate=fileinfo.date;
-            if ~strcmp(modDate(4:6),'Mar')||str2double(modDate(1:2))<19||str2double(modDate(1:2))==19&&str2double(modDate(13:14))<13&&str2double(modDate(16:17))<04
-                bj_SE_V1_2_roc4_temp(animal, channel, session, max(0,verbose-1))% or overwrite it
+            if checkFileDateMod==0
+                bj_SE_V1_2_roc4_temp(animal, channel, session, max(0,verbose-1))% overwrite it regardless of last date of modification
+            else
+                fileinfo=dir(output_fname);
+                modDate=fileinfo.date;
+                if ~strcmp(modDate(4:6),'Mar')||str2double(modDate(1:2))<19||str2double(modDate(1:2))==19&&str2double(modDate(13:14))<13&&str2double(modDate(16:17))<04
+                    bj_SE_V1_2_roc4_temp(animal, channel, session, max(0,verbose-1))% or overwrite it
+                end
             end
         end        
     catch ME
@@ -81,6 +86,7 @@ for iter = icopy:(length(channels)*length(sessions))
 end
 if drawFigs==1
     formats=[{'eps'} {'png'}];
+    formatsCommand=[{'epsc'} {'png'}];
     for iter = icopy:(length(channels)*length(sessions))
         if iter<istart
             continue;
@@ -106,7 +112,7 @@ if drawFigs==1
                 uiopen(figFileName,1)
                 for j=1:2
                     printFileName=['F:\PL\PSTHs\',animal,'\',num2str(channel),'\',formats{j},'\',num2str(channel),'_',num2str(session),'_',num2str(sampleContrasts(i)),'.',formats{j}];
-                    print(sprintf('-d%s',formats{j}),'-r300',printFileName)
+                    print(sprintf('-d%s',formatsCommand{j}),'-r300',printFileName)
                 end
             catch ME
                 disp(ME)
