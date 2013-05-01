@@ -1,4 +1,4 @@
-function bj_SE_crf_and_roc(ch,session,test_epochs,minusSpon,matarray,animal,area,sampleContrast,testContrast)
+function bj_SE_crf_and_roc(ch,session,test_epochs,minusSpon,matarray,animal,area,sampleContrast,testContrast,ROCmethod)
 %Writes CRF values to mat file:
 %session number, time epochs, CRF in spikes/s for each condition durnig
 %spontaneous period, during sample, during ISI, and during test.
@@ -8,6 +8,7 @@ function bj_SE_crf_and_roc(ch,session,test_epochs,minusSpon,matarray,animal,area
 %before sample onset. Average firing rates (also in spikes/s) are
 %calculated for epochs 4 and 5, and spontaneous rates are subtracted.
 
+ROCmethod='old';
 durSpon=150;%length of period prior to sample onset from which spontaneous rates are calculated. Can take on a value of up to 512 ms.
 minTrials=10;%set value of minumum number of trials for inclusion of session
 
@@ -64,7 +65,7 @@ if min(numTrials)>=minTrials
                 CRFmat=[CRFmat;CRFmatTemp];
             end
             saveText=['save ',CRFmatPath,' CRFmat'];
-            eval(saveText);
+%             eval(saveText);
         end
     end
     
@@ -77,11 +78,14 @@ if min(numTrials)>=minTrials
                     higherTest=higherTest+1;
                 end
             end
-            roc=higherTest/length(epoch4{cond,subPeriod});
-            rocvals(cond)=roc;
-            %previous method of calculating ROC values, does not take trial-by-trial fluctuations (i.e. trial-wise correlations between activity to sample and test) into account
-            %[roctemp]=sglroc3(epoch4{cond,subPeriod}(1,:),epoch2{cond,subPeriod}(1,:));
-            %rocvalstemp(cond)=roctemp;
+            if strcmp(ROCmethod,'old')
+                %previous method of calculating ROC values, does not take trial-by-trial fluctuations (i.e. trial-wise correlations between activity to sample and test) into account
+                [roctemp]=sglroc3(epoch4{cond,subPeriod}(1,:),epoch2{cond,subPeriod}(1,:));
+                rocvals(cond)=roctemp;
+            elseif strcmp(ROCmethod,'new')
+                roc=higherTest/length(epoch4{cond,subPeriod});
+                rocvals(cond)=roc;
+            end
         end
         startEndTime=['_',num2str(periods(subPeriod)),'_to_',num2str(periods(subPeriod+1))];
         if round(ch)~=ch
@@ -89,18 +93,33 @@ if min(numTrials)>=minTrials
         else
             ROCmatName=['ROC_Ch',num2str(ch),'_',num2str(sampleContrast),startEndTime,'.mat'];
         end
-        ROCmatFolder=fullfile('F:','PL','ROC',animal,area);
+        if strcmp(ROCmethod,'old')
+            ROCmatFolder=fullfile('F:','PL','ROC_sglroc3',animal,area);
+            ROCmatPath=fullfile('F:','PL','ROC_sglroc3',animal,area,ROCmatName);
+        elseif strcmp(ROCmethod,'new')
+            ROCmatFolder=fullfile('F:','PL','ROC',animal,area);
+            ROCmatPath=fullfile('F:','PL','ROC',animal,area,ROCmatName);
+        end
         if ~exist(ROCmatFolder,'dir')
             mkdir(ROCmatFolder);
         end
-        ROCmatPath=fullfile('F:','PL','ROC',animal,area,ROCmatName);
         ROCmatTemp=[{session} {test_epochs} {rocvals}];
         if ~exist(ROCmatPath,'file')
             ROCmat=ROCmatTemp;
         elseif exist(ROCmatPath,'file')
             loadText=['load ',ROCmatPath,' ROCmat'];
             eval(loadText);
-            ROCmat=[ROCmat;ROCmatTemp];
+            replace=[];
+            for rowInd=1:size(ROCmat,1)
+                if ROCmat{rowInd,1}==session
+                    replace=rowInd;
+                end
+            end
+            if ~isempty(replace)
+                ROCmat(replace,:)=ROCmatTemp;
+            else
+                ROCmat=[ROCmat;ROCmatTemp];
+            end
         end
         saveText=['save ',ROCmatPath,' ROCmat'];
         eval(saveText);
