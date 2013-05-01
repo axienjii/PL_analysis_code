@@ -1,10 +1,10 @@
-function fname = spikeData_finder(animal, session, channel,sampleText)
+function fname = spikeData_finder(animal, session, channel,sampleText,plotRedArtifactsText)
 
 animal = lower(animal);
 
 if ispc
 %     if strncmp(getComputerName(),'alex40',6)
-        root_roc_vals_folder = fullfile('F:','PL','spikeData',animal);
+        root_roc_vals_folder = fullfile('F:','PL','spikeData',animal,plotRedArtifactsText);
 %     end
 end
 
