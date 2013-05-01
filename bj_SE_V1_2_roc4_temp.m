@@ -1,4 +1,4 @@
-function[rocvals]=bj_SE_V1_2_roc4_temp(animal,channel,session,verbose)
+function[rocvals]=bj_SE_V1_2_roc4_temp(animal,channel,session,verbose,plotRedArtifacts)
 %Modified 30/01/13 to process artifact-free, spontaneous-activity-matched data.
 %Compares spike activity between sample
 %and test presentations, for each condition, and calculates ROC value based
@@ -40,13 +40,11 @@ function[rocvals]=bj_SE_V1_2_roc4_temp(animal,channel,session,verbose)
 %temporally variable events, and align them according to an idealised time sequence.
 %The third time period can be visualised in its entirety: 'set(test,'XLim',[512 1536]);'
 %OR only for the first 512 ms: 'set(test,'XLim',[512 1024]);,' as desired.
-
 artifactTrialsName=[num2str(session),'_corrtrialartifact.mat'];
 artifactTrialsPath=fullfile('F:','PL','pl_corr_art_trials',animal,artifactTrialsName);
 loadText=['load ',artifactTrialsPath,' rlist removeTrialsTimestamps'];
 eval(loadText);%removeTrialsTimestamps column 1: NLX_TRIAL_START; column 21: NLX_TRIAL_END
 % removeTrialsTimestamps=[0 0];
-plotRedArtifacts=1;
 writeROC=0;
 if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the same time- when .1 is processed.
     splitSess=1;
@@ -94,6 +92,7 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
             rocvals=[];%for roc analysis
             for h=1:length(conditions)
                 spontan=[];sample_act=[];fix2_act=[];test_act=[];fix3_act=[];
+                matRowCount=0;
                 for sessHalf=1:splitSess
                     if splitSess==2
                         sessionName=[num2str(floor(session)),'.',num2str(sessHalf)];
@@ -103,6 +102,12 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                         valsFolder=fullfile('F:','PL','vals_perf',animal); %#ok<NASGU>
                         valsPath=fullfile('F:','PL','vals_perf',animal,valsFileName);
                         load(valsPath);
+                        removeTrialsTimestamps1=removeTrialsTimestamps;
+                        artifactTrialsName=[num2str(floor(session)),'.',num2str(sessHalf),'_corrtrialartifact.mat'];
+                        artifactTrialsPath=fullfile('F:','PL','pl_corr_art_trials',animal,artifactTrialsName);
+                        loadText=['load ',artifactTrialsPath,' rlist removeTrialsTimestamps'];
+                        eval(loadText);%removeTrialsTimestamps column 1: NLX_TRIAL_START; column 21: NLX_TRIAL_END
+                        removeTrialsTimestamps=[removeTrialsTimestamps1;removeTrialsTimestamps];
                     elseif splitSess==1
                         nsePath=fullfile('I:','pl_spnorm_nse',animal,num2str(session),nseName);
                         [SE_TimeStamps,dummy]=open_nse_file(nsePath);
@@ -147,7 +152,8 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                                 %     SE_EV_TimeStamps(j)=find(SE_TimeStamps<vals(i,j+1)&&SE_TimeStamps>=vals(i,j));
                                 %     spikes(j)=DataPoints(:,:,SE_EV_TimeStamps(j));
                                 %     end
-                                if (vals(i,22)>-1)
+                                if (vals(i,22)>-1)||(vals(i,23)>-1)%correct OR incorrect
+                                    matRowCount=matRowCount+1;
                                     numTrialsCond(1,h)=numTrialsCond(1,h)+1;%tally number of trials per condition
                                     temp1=find(SE_TimeStamps<vals(i,10));%spontaneous activity
                                     temp2=find(SE_TimeStamps(temp1)>=vals(i,8));
@@ -173,9 +179,9 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                                         plot([spikeTimes(m)/1000 spikeTimes(m)/1000],[100+numTrialsCond(h)-0.5 100+numTrialsCond(h)+0.5],rasterColour);hold on
                                     end
                                     if numTrialsCond(h)==1
-                                        matarray(h,1,:)={spikeTimes/1000};
+                                        matarray{h,1,:}(matRowCount,1)={spikeTimes/1000};
                                     else
-                                        matarray(h,1,:)={[matarray{h,1}(:,:);{spikeTimes/1000}]};
+                                        matarray{h,1,:}(matRowCount,1)={spikeTimes/1000};
                                     end
                                     spontan=[spontan length(temp2)*1000000/(vals(i,10)-vals(i,8))];%convert from spikes/microsecond to spikes/second
                                     temp1=find(SE_TimeStamps<vals(i,11));%activity during sample presentation
@@ -199,9 +205,9 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                                         plot([spikeTimes(m)/1000 spikeTimes(m)/1000],[100+numTrialsCond(h)-0.5 100+numTrialsCond(h)+0.5],rasterColour);hold on
                                     end
                                     if numTrialsCond(h)==1
-                                        matarray(h,2,:)={spikeTimes/1000};
+                                        matarray{h,2,:}(matRowCount,1)={spikeTimes/1000};
                                     else
-                                        matarray(h,2,:)={[matarray{h,2}(:,:);{spikeTimes/1000}]};
+                                        matarray{h,2,:}(matRowCount,1)={spikeTimes/1000};
                                     end
                                     sample_act=[sample_act length(temp2)*1000000/(vals(i,11)-vals(i,10))];
                                     temp1=find(SE_TimeStamps<vals(i,12));%activity during sample-test interval
@@ -225,9 +231,9 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                                         plot([spikeTimes(m)/1000 spikeTimes(m)/1000],[100+numTrialsCond(h)-0.5 100+numTrialsCond(h)+0.5],rasterColour);hold on
                                     end
                                     if numTrialsCond(h)==1
-                                        matarray(h,3,:)={spikeTimes/1000};
+                                        matarray{h,3,:}(matRowCount,1)={spikeTimes/1000};
                                     else
-                                        matarray(h,3,:)={[matarray{h,3}(:,:);{spikeTimes/1000}]};
+                                        matarray{h,3,:}(matRowCount,1)={spikeTimes/1000};
                                     end
                                     fix2_act=[fix2_act length(temp2)*1000000/(vals(i,12)-vals(i,11))];
                                     temp1=find(SE_TimeStamps<vals(i,13));%activity during test presentation
@@ -250,10 +256,13 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                                     for m=1:length(spikeTimes)%raster plots
                                         plot([spikeTimes(m)/1000 spikeTimes(m)/1000],[100+numTrialsCond(h)-0.5 100+numTrialsCond(h)+0.5],rasterColour);hold on
                                     end
+                                    if h==8&&isempty(spikeTimes)
+                                        pause=1;
+                                    end
                                     if numTrialsCond(h)==1
-                                        matarray(h,4,:)={spikeTimes/1000};
+                                        matarray{h,4,:}(matRowCount,1)={spikeTimes/1000};
                                     else
-                                        matarray(h,4,:)={[matarray{h,4}(:,:);{spikeTimes/1000}]};
+                                        matarray{h,4,:}(matRowCount,1)={spikeTimes/1000};
                                     end
                                     test_act=[test_act length(temp2)*1000000/(vals(i,13)-vals(i,12))];
                                     temp1=find(SE_TimeStamps<vals(i,14));%activity during test-targets interval
@@ -277,9 +286,9 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                                         plot([spikeTimes(m)/1000 spikeTimes(m)/1000],[100+numTrialsCond(h)-0.5 100+numTrialsCond(h)+0.5],rasterColour);hold on
                                     end
                                     if numTrialsCond(h)==1
-                                        matarray(h,5,:)={spikeTimes/1000};
+                                        matarray{h,5,:}(matRowCount,1)={spikeTimes/1000};
                                     else
-                                        matarray(h,5,:)={[matarray{h,5}(:,:);{spikeTimes/1000}]};
+                                        matarray{h,5,:}(matRowCount,1)={spikeTimes/1000};
                                     end
                                     fix3_act=[fix3_act length(temp2)*1000000/(vals(i,14)-vals(i,13))];
                                 end
@@ -384,21 +393,29 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
             mean_act;
             
             spikeDataName=[num2str(channel),'_',num2str(floor(session)),'_',num2str(sampleContrast)]
-            spikeDataFolder=fullfile('F:','PL','spikeData',animal,spikeDataName);
+            if plotRedArtifacts==1
+                spikeDataFolder=fullfile('F:','PL','spikeData',animal,'plotRedArtifacts',spikeDataName);
+            else
+                spikeDataFolder=fullfile('F:','PL','spikeData',animal,spikeDataName);
+            end
             saveText=['save ',spikeDataFolder,'.mat matarray'];
             eval(saveText);
             
             formats=[{'eps'} {'png'}];
             formats={'fig'};
             for j=1:1%2
-                imageFolderName=fullfile('F:','PL','PSTHs',animal,num2str(channel),formats{j});
+                if plotRedArtifacts==1
+                    imageFolderName=fullfile('F:','PL','PSTHs','plotRedArtifacts',animal,num2str(channel),formats{j});
+                else
+                    imageFolderName=fullfile('F:','PL','PSTHs',animal,num2str(channel),formats{j});
+                end
                 if ~exist(imageFolderName,'dir')
                     mkdir(imageFolderName);
                 end
                 imageName=fullfile(imageFolderName,spikeDataName);
                 %export_fig(imageName,formats{j});
                 printtext=sprintf('print -d%s %s',formats{j},imageName);
-                saveas(fig,imageName,'fig') 
+                saveas(fig,imageName,'fig')
             end
             
             if writeROC==1
