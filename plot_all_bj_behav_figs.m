@@ -1,7 +1,7 @@
-function plot_all_bj_behav_figs(roving,areas)
+function plot_all_bj_behav_figs(roving,areas,psychoOnly)
 %Written by Xing 27/10/12.
 %Plot figures for both monkeys, for behavioural paper.
-includeV4_0=1;
+includeV4_0=0;
 printFigs=1;
 if includeV4_0==1
     printFigs=0;
@@ -27,12 +27,17 @@ for animalInd=1:length(animals)
     for areaInd=1:length(areas)
         area=areas{areaInd};
         [sampleContrasts allTestContrasts]=area_metadata(area);
+        if psychoOnly==1&&strcmp(area,'v4_1')
+            psychoOnlyText='_psycho_only';
+        else
+            psychoOnlyText=[];
+        end
         for sampleInd=1:length(sampleContrasts)
             sampleContrast=sampleContrasts(sampleInd);
             testContrast=allTestContrasts(sampleInd,:);   
             midInd=find(testContrast<sampleContrast);
             midInd=midInd(end);
-            loadText=['load ',rootFolder,'\PL\psycho_data\',animal,'\allMeanPerf\allMeanPerf_',area,'_',num2str(sampleContrast),'.mat allMeanPerf'];
+            loadText=['load ',rootFolder,'\PL\psycho_data\',animal,'\allMeanPerf\allMeanPerf_',area,'_',num2str(sampleContrast),psychoOnlyText,'.mat allMeanPerf'];
             eval(loadText)
             if strcmp(area,'v4_1')
                 if strcmp(animal,'blanco')&&includeV4_0==1
@@ -184,16 +189,20 @@ for animalInd=1:length(animals)
             animalMarkerFaceColors={'none' 'k'};
             animalMarkerEdgeColors={'auto' 'k'};
             if strcmp(area,'v4_2')
-                plot(3+maxV4_1(animalInd):size(allMeanPerf,1)+maxV4_1(animalInd)+2,allMeanPerf(:,2)*100,'ok','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd},'MarkerEdgeColor',animalMarkerEdgeColors{animalInd});
+                plot(3+max(maxV4_1):7+max(maxV4_1),allMeanPerf(:,2)*100,'ok','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd},'MarkerEdgeColor',animalMarkerEdgeColors{animalInd});
             else
-                plot(1:size(allMeanPerf,1),allMeanPerf(:,2)*100,'ok','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd},'MarkerEdgeColor',animalMarkerEdgeColors{animalInd});
+                if strcmp(area,'v4_1')&&includeV4_0==1
+                    plot(1:size(allMeanPerf,1)-2,allMeanPerf(3:end,2)*100,'ok','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd},'MarkerEdgeColor',animalMarkerEdgeColors{animalInd});
+                else
+                    plot(1:size(allMeanPerf,1),allMeanPerf(:,2)*100,'ok','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd},'MarkerEdgeColor',animalMarkerEdgeColors{animalInd});
+                end
             end
             if strcmp(animal,'jack')&&strcmp(area,'v1_1')
                 ylim([65 95]);
                 xlim([0 24]);
             end
             hold on
-            if strcmp(area,'v4_1')&&plotHorzPerf==1%horizontal Gabor session
+            if strcmp(area,'v4_1')%horizontal Gabor session
                 animalMarkerFaceColors={'none' 'b'};
                 plot(size(allMeanPerf,1)+1,horizontalPerf(1,2)*100,'Marker','o','Color','b','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
             end
@@ -215,17 +224,18 @@ for animalInd=1:length(animals)
             subplot(length(areaTexts),3,1+(plotAreaInd-1)*3);
             animalMarkerFaceColors={'none' 'k'};
             if strcmp(area,'v4_2')
-                plot(3+maxV4_1(animalInd):size(allMeanPerf,1)+maxV4_1(animalInd)+2,allMeanPerf(:,27+numconds*5),'Marker','o','Color','k','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
+                plot(3+max(maxV4_1):max(maxV4_1)+7,allMeanPerf(:,27+numconds*5),'Marker','o','Color','k','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
             else
                 plot(1:size(allMeanPerf,1),allMeanPerf(:,27+numconds*5),'Marker','o','Color','k','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
             end
             hold on
             animalMarkerFaceColors={'none' 'r'};
             if strcmp(area,'v4_2')
-                plot(3+maxV4_1(animalInd):size(allMeanPerf,1)+maxV4_1(animalInd)+2,allMeanPerf(:,34+numconds*6),'Marker','o','Color','r','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
+                plot(3+max(maxV4_1):max(maxV4_1)+7,allMeanPerf(:,34+numconds*6),'Marker','o','Color','r','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
             else
                 plot(1:size(allMeanPerf,1),allMeanPerf(:,34+numconds*6),'Marker','o','Color','r','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
-                [hperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),1),pperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),1)]=ttest(allMeanPerf(:,27+numconds*5),allMeanPerf(:,34+numconds*6));
+                [hperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),1),pperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),1) CI stats]=ttest(allMeanPerf(:,27+numconds*5),allMeanPerf(:,34+numconds*6));
+                statsperfIndpair{plotAreaInd+length(areaTexts)*(animalInd-1),1}=stats;
             end
             
             % index of difference in simple proportion correct without error bars,
@@ -355,7 +365,7 @@ for animalInd=1:length(animals)
             % rterrorFig=figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.8, 0.8]);
             if animalInd==1&&areaInd==1&&sampleInd==1
                 if roving==0
-                    rtFig=figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.8, 0.8]);
+                    rtFig=figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.6, 0.8]);
                 elseif roving==1
                     rtFig=figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.5, 0.8]);
                 end
@@ -520,6 +530,7 @@ for animalInd=1:length(animals)
                     line([0 35],[0 0],'LineStyle',':');
                 end
                [h,pRTind(animalInd+2*(plotAreaInd-1)),ciRTind(animalInd+2*(plotAreaInd-1),:),stats] = ttest(allMeanPerf(:,32+6*length(testContrast)),allMeanPerf(:,39+7*length(testContrast)))
+               statsRTind{animalInd+2*(plotAreaInd-1)}=stats;
             end
             
             %proportion of trials monkey reported that test was higher contrast,
@@ -641,7 +652,7 @@ for animalInd=1:length(animals)
             subplot(length(areaTexts),3,3+(plotAreaInd-1)*3);
             animalMarkerFaceColors={'none' 'k'};
             if strcmp(area,'v4_2')
-                plot(3+maxV4_1(animalInd):size(allMeanPerf,1)+maxV4_1(animalInd)+2,allMeanPerf(:,17),'ok','MarkerFaceColor',animalMarkerFaceColors{animalInd});
+                plot(3+max(maxV4_1):7+max(maxV4_1),allMeanPerf(:,17),'ok','MarkerFaceColor',animalMarkerFaceColors{animalInd});
                 if strcmp(animal,'jack')
                     xlim([0 38]);
                     ylim([26 40]);
@@ -681,7 +692,7 @@ for animalInd=1:length(animals)
             subplot(length(areaTexts),3,2+(plotAreaInd-1)*3);
             animalMarkerFaceColors={'none' 'k'};
             if strcmp(area,'v4_2')
-                plot(3+maxV4_1(animalInd):size(allMeanPerf,1)+maxV4_1(animalInd)+2,allMeanPerf(:,4+length(testContrast)),'ok','MarkerFaceColor',animalMarkerFaceColors{animalInd});
+                plot(3+max(maxV4_1):7+max(maxV4_1),allMeanPerf(:,4+length(testContrast)),'ok','MarkerFaceColor',animalMarkerFaceColors{animalInd});
                 if strcmp(animal,'jack')
                     xlim([0 38]);
                     ylim([1 11]);
@@ -721,32 +732,34 @@ for animalInd=1:length(animals)
             subplot(length(areaTexts),3,2+(plotAreaInd-1)*3);
             animalMarkerFaceColors={'none' 'k'};
             if strcmp(area,'v4_2')
-                plot(3+maxV4_1(animalInd):size(allMeanPerf,1)+maxV4_1(animalInd)+2,allMeanPerf(:,29+numconds*6),'Marker','o','Color','k','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
+                plot(3+max(maxV4_1):max(maxV4_1)+7,allMeanPerf(:,29+numconds*6),'Marker','o','Color','k','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
             else
                 plot(1:size(allMeanPerf,1),allMeanPerf(:,29+numconds*6),'Marker','o','Color','k','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
             end
             hold on
             animalMarkerFaceColors={'none' 'r'};
             if strcmp(area,'v4_2')
-                plot(3+maxV4_1(animalInd):size(allMeanPerf,1)+maxV4_1(animalInd)+2,allMeanPerf(:,36+numconds*7),'Marker','o','Color','r','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
+                plot(3+max(maxV4_1):max(maxV4_1)+7,allMeanPerf(:,36+numconds*7),'Marker','o','Color','r','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
             else
                 plot(1:size(allMeanPerf,1),allMeanPerf(:,36+numconds*7),'Marker','o','Color','r','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
-                [hperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),2),pperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),2)]=ttest(allMeanPerf(:,29+numconds*6),allMeanPerf(:,36+numconds*7));
+                [hperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),2),pperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),2) CI stats]=ttest(allMeanPerf(:,29+numconds*6),allMeanPerf(:,36+numconds*7));
+                statsperfIndpair{plotAreaInd+length(areaTexts)*(animalInd-1),2}=stats;
             end
             subplot(length(areaTexts),3,3+(plotAreaInd-1)*3);
             animalMarkerFaceColors={'none' 'k'};
             if strcmp(area,'v4_2')
-                plot(3+maxV4_1(animalInd):size(allMeanPerf,1)+maxV4_1(animalInd)+2,allMeanPerf(:,28+numconds*6),'Marker','o','Color','k','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
+                plot(3+max(maxV4_1):max(maxV4_1)+7,allMeanPerf(:,28+numconds*6),'Marker','o','Color','k','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
             else
                 plot(1:size(allMeanPerf,1),allMeanPerf(:,28+numconds*6),'Marker','o','Color','k','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
             end
             hold on
             animalMarkerFaceColors={'none' 'r'};
             if strcmp(area,'v4_2')
-                plot(3+maxV4_1(animalInd):size(allMeanPerf,1)+maxV4_1(animalInd)+2,allMeanPerf(:,35+numconds*7),'Marker','o','Color','r','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
+                plot(3+max(maxV4_1):max(maxV4_1)+7,allMeanPerf(:,35+numconds*7),'Marker','o','Color','r','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
             else
                 plot(1:size(allMeanPerf,1),allMeanPerf(:,35+numconds*7),'Marker','o','Color','r','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
-                [hperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),3),pperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),3)]=ttest(allMeanPerf(:,28+numconds*6),allMeanPerf(:,35+numconds*7));
+                [hperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),3),pperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),3) CI stats]=ttest(allMeanPerf(:,28+numconds*6),allMeanPerf(:,35+numconds*7));
+                statsperfIndpair{plotAreaInd+length(areaTexts)*(animalInd-1),3}=stats;
             end
             
             % index of difference in slope and PSE,
@@ -775,6 +788,28 @@ for animalInd=1:length(animals)
         end
     end
 end
+
+% if includeV4_0==1
+%     figure(pcpseslFig)
+%     subplot(2,3,1)
+%     xlim([0 41])
+%     subplot(2,3,2)
+%     xlim([0 41])
+%     ylim([0 12])
+%     subplot(2,3,3)
+%     xlim([0 41])
+%     ylim([28 48])
+% end
+
+% subplot(2,2,1)
+% ylim([-15 105])
+% xlim([0 38])
+% subplot(2,2,2)
+% ylim([-15 105])
+% subplot(2,2,3)
+% ylim([-15 105])
+% subplot(2,2,4)
+% ylim([-15 105])
 
 %compare sizes of adjusted R-square values, between linear and polynomial fits, for PC divided by test contrast
 aRSlinexpo1=[];
@@ -1059,6 +1094,13 @@ elseif roving==1
     line([0 38],[0 0],'LineStyle',':','Color','k');
     ylim([-0.2 0.2]);
     xlim([0 37]);
+    
+%     subplot(2,3,1)
+%     ylim([.55 .9])
+%     subplot(2,3,2)
+%     ylim([0 14])
+%     subplot(2,3,3)
+%     ylim([27 38])
     
     figure(pc_condFig)
     subplot(length(areaTexts),2,1);

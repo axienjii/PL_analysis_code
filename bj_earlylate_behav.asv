@@ -57,11 +57,7 @@ for sampleContrastInd=1:length(sampleContrasts)
         end
         eval(loadText)
         maxSess=size(allMeanPerf,1);
-        if strcmp(area,'v4_1')
-            numN=floor((maxSess-1)*0.3);%exclude horizontal grating
-        else
-            numN=floor(maxSess*0.3);%number of sessions in each set
-        end
+        numN=floor(maxSess*0.3);%number of sessions in each set
         % boxplot([allMeanPerf(1:numN,2) allMeanPerf(end-numN+1:end,2)]);hold on
         grouping=[zeros(numN,1);ones(numN,1)];%for groups in boxplot
         bpc=[allMeanPerf(1:numN,2);allMeanPerf(end-numN:end-1,2)];%exclude session with horizontal Gabor
@@ -85,22 +81,22 @@ for sampleContrastInd=1:length(sampleContrasts)
         p1elAll(3,1+monkeyMultiple*5:5+monkeyMultiple*5)=[mean(bpse(grouping==0)),var(bpse(grouping==0)),mean(bpses1l),var(bpses1l),anovan(bpse(1:end),grouping(1:end))];
         p1elAll(4,1+monkeyMultiple*5:5+monkeyMultiple*5)=[mean(brt(grouping==0)),var(brt(grouping==0)),mean(brts1l),var(brts1l),anovan(brt(1:end),grouping(1:end))];
         p1elAll(5,1+monkeyMultiple*5:5+monkeyMultiple*5)=[mean(brterr(grouping==0)),var(brterr(grouping==0)),mean(brterrs1l),var(brterrs1l),anovan(brterr(1:end),grouping(1:end))];
-        [h p1e1(1+monkeyMultiple) CI stats1e1(1+monkeyMultiple)]=ttest(bpc(1:numN),bpc(end-numN+1:end));
-        [h p1e1(1+monkeyMultiple) CI stats1e1(3+monkeyMultiple)]=ttest(bsl(1:numN),bsl(end-numN+1:end));
-        [h p1e1(1+monkeyMultiple) CI stats1e1(5+monkeyMultiple)]=ttest(bpse(1:numN),bpse(end-numN+1:end));
-        [h p1e1(1+monkeyMultiple) CI stats1e1(7+monkeyMultiple)]=ttest(brt(1:numN),brt(end-numN+1:end));
-        [h p1e1(1+monkeyMultiple) CI stats1e1(9+monkeyMultiple)]=ttest(brterr(1:numN),brterr(end-numN+1:end));
+        p1elAll(1,1+monkeyMultiple*5:5+monkeyMultiple*5)=ttest(bpc(1:numN),bpc(end-numN+1:end);%exclude session with horizontal Gabor
+        p1elAll(2,1+monkeyMultiple*5:5+monkeyMultiple*5)=[mean(bsl(grouping==0)),var(bsl(grouping==0)),mean(bsls1l),var(bsls1l),anovan(bsl(1:end),grouping(1:end))];
+        p1elAll(3,1+monkeyMultiple*5:5+monkeyMultiple*5)=[mean(bpse(grouping==0)),var(bpse(grouping==0)),mean(bpses1l),var(bpses1l),anovan(bpse(1:end),grouping(1:end))];
+        p1elAll(4,1+monkeyMultiple*5:5+monkeyMultiple*5)=[mean(brt(grouping==0)),var(brt(grouping==0)),mean(brts1l),var(brts1l),anovan(brt(1:end),grouping(1:end))];
+        p1elAll(5,1+monkeyMultiple*5:5+monkeyMultiple*5)=[mean(brterr(grouping==0)),var(brterr(grouping==0)),mean(brterrs1l),var(brterrs1l),anovan(brterr(1:end),grouping(1:end))];
         r1lh{1+monkeyMultiple}=[min(bpcs1l),max(bpcs1l),pcs1h];
         r1lh{3+monkeyMultiple}=[min(bsls1l),max(bsls1l),sls1h];
         r1lh{5+monkeyMultiple}=[min(bpses1l),max(bpses1l),pses1h];
         r1lh{7+monkeyMultiple}=[min(brts1l),max(brts1l),rts1h];
         r1lh{9+monkeyMultiple}=[min(brterrs1l),max(brterrs1l),rterrs1h];
         %range of stage 1 late vs horizontal stimulus session
-        [h p1lh(1+monkeyMultiple)]=ttest(bpcs1l,pcs1h);
-        [h p1lh(3+monkeyMultiple)]=ttest(bsls1l,sls1h);
-        [h p1lh(5+monkeyMultiple)]=ttest(bpses1l,pses1h);
-        [h p1lh(7+monkeyMultiple)]=ttest(brts1l,rts1h);
-        [h p1lh(9+monkeyMultiple)]=ttest(brterrs1l,rterrs1h);
+        [h p1lh(1+monkeyMultiple) CI stats(1+monkeyMultiple)]=ttest(bpcs1l,pcs1h);
+        [h p1lh(3+monkeyMultiple) CI stats(3+monkeyMultiple)]=ttest(bsls1l,sls1h);
+        [h p1lh(5+monkeyMultiple) CI stats(5+monkeyMultiple)]=ttest(bpses1l,pses1h);
+        [h p1lh(7+monkeyMultiple) CI stats(7+monkeyMultiple)]=ttest(brts1l,rts1h);
+        [h p1lh(9+monkeyMultiple) CI stats(9+monkeyMultiple)]=ttest(brterrs1l,rterrs1h);
         
         if plotStage3==1%V4_2/V1_2_3
             area=areas{roving+1,3};
@@ -250,11 +246,6 @@ for sampleContrastInd=1:length(sampleContrasts)
         p1elAll(3,11+monkeyMultiple*5:15+monkeyMultiple*5)=[mean(bpse(grouping==0)),var(bpse(grouping==0)),mean(bpse(grouping==1)),var(bpse(grouping==1)),anovan(bpse,grouping)];
         p1elAll(4,11+monkeyMultiple*5:15+monkeyMultiple*5)=[mean(brt(grouping==0)),var(brt(grouping==0)),mean(brt(grouping==1)),var(brt(grouping==1)),anovan(brt,grouping)];
         p1elAll(5,11+monkeyMultiple*5:15+monkeyMultiple*5)=[mean(brterr(grouping==0)),var(brterr(grouping==0)),mean(brterr(grouping==1)),var(brterr(grouping==1)),anovan(brterr,grouping)];
-        [h p1e1(1+monkeyMultiple) CI stats1e1(2,1+monkeyMultiple)]=ttest(bpc(1:numN),bpc(end-numN+1:end));
-        [h p1e1(1+monkeyMultiple) CI stats1e1(2,3+monkeyMultiple)]=ttest(bsl(1:numN),bsl(end-numN+1:end));
-        [h p1e1(1+monkeyMultiple) CI stats1e1(2,5+monkeyMultiple)]=ttest(bpse(1:numN),bpse(end-numN+1:end));
-        [h p1e1(1+monkeyMultiple) CI stats1e1(2,7+monkeyMultiple)]=ttest(brt(1:numN),brt(end-numN+1:end));
-        [h p1e1(1+monkeyMultiple) CI stats1e1(2,9+monkeyMultiple)]=ttest(brterr(1:numN),brterr(end-numN+1:end));
         if roving==1||roving==2%compare flanker late with flankerless late (late Stage 4 vs late Stage 5)
             figure(bjboxplots_s1ls2l)
             groupings1ls2l=[zeros(length(bpcs1l),1);ones(length(bpc(grouping==1)),1)];

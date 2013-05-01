@@ -1,11 +1,12 @@
-function write_psycho_thresholds_batch(roving,excludeSessHighSSE,excludeOutliers)
+function write_psycho_thresholds_batch(roving,excludeSessHighSSE,excludeOutliers,analysisType)
 onExternalHD=1;
 if onExternalHD==0
     rootFolder='G:\PL_backup_060413';
 else
     rootFolder='F:';
 end
-analysisType='psycho';
+% analysisType='psycho';
+% analysisType='psycho_param';
 startEndTime='wholetrial';
 animalTexts=[{'subject B'} {'subject J'}];
 animals=[{'blanco'} {'jack'}];
@@ -16,7 +17,7 @@ excludeSessions=[26 50 306 312 316 322:328 342];
 test_epochs={0 512 512*2 512*3};
 if roving==0
     areaTexts=[{'V4'} {'V1'}];
-    areas=[{'v4_1'} {'v1_1'}];
+    areas=[{'v4_1'} {'v1_1'} {'v4_2'}];
 elseif roving==1
     areaTexts={'V1 roving data'};
     areas={'v1_2_1' 'v1_2_2' 'v1_2_3'};
@@ -26,7 +27,7 @@ for animalInd=1:length(animals)
     for areaInd=1:length(areas)
         area=areas{areaInd};
         [sampleContrasts testContrasts]=area_metadata(area);
-        sessions=main_raw_sessions_final(animal,area,[],0);
+        sessions=main_raw_sessions_final_psycho(animal,area,[],0);
         sessionSorted1=[];
         for sampleInd=1:length(sampleContrasts)
             sampleContrast=sampleContrasts(sampleInd);
@@ -93,7 +94,7 @@ for animalInd=1:length(animals)
                     end
                 end
             end
-            [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData,threshold82lower,threshold82higher]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,datamat,'psycho',numsessions,sessionSorted1,sampleContrast,testContrast,1,1,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,psychoThresholdMatPathname,[],[],threshSigmaMultiple,rootFolder);
+            [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData,threshold82lower,threshold82higher]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,datamat,analysisType,numsessions,sessionSorted1,sampleContrast,testContrast,1,1,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,psychoThresholdMatPathname,[],[],threshSigmaMultiple,rootFolder);
         end
     end
 end
