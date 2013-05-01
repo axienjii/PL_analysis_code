@@ -1,4 +1,4 @@
-function []=read_bj_crf_or_roc(datamat,chNum,psychoname,testContrast,sampleContrast,animal,area,startEndTime,analysisType,excludeSessHighSSE,excludeOutliers)
+function []=read_bj_crf_or_roc(datamat,chNum,psychoname,testContrast,sampleContrast,animal,area,startEndTime,analysisType,excludeSessHighSSE,excludeOutliers,rootFolder)
 %Modified from read_blanco_V1_crf
 %Written by Xing 06/03/13
 %
@@ -22,9 +22,12 @@ function []=read_bj_crf_or_roc(datamat,chNum,psychoname,testContrast,sampleContr
 %time, 1,3 CRF with Psycho. p-vals: 2,1 CRF with time 2,2 Psycho with
 %time, 2,3 CRF with Psycho.
 
-writeCoefs=1;
+writeCoefs=0;
 plotFig=1;
 plotPsychoFig=0;
+if strcmp(analysisType,'ROC_diff')||strcmp(analysisType,'ROC_diff2')
+    plotPsychoFig=0;
+end
 excludeSessions=[26 50 306 312 316 322:328 342];
 % loadText=['load ',folder,'\allChROC',appendText,'.mat allChROC'];
 % eval(loadText)
@@ -37,12 +40,16 @@ plotDiffC50_30=1;
             
 appendText=['_',num2str(sampleContrast)];
 
-if strcmp(analysisType,'ROC')||strcmp(analysisType,'NVP')
+if strcmp(analysisType,'ROC')||strcmp(analysisType,'NVP')||strcmp(analysisType,'ROC_diff2')
     manualCutoffMatText=['load F:\PL\ROC_mat_files\',animal,'\manual_cutoff.mat manualCutoff'];
     eval(manualCutoffMatText);
-    ind=find(chNum==manualCutoff(:,1));
-    if ~isempty(ind)
-        manual_cutoff=manualCutoff(ind,2);
+    if ~isempty(manualCutoff)
+        ind=find(chNum==manualCutoff(:,1));
+        if ~isempty(ind)
+            manual_cutoff=manualCutoff(ind,2);
+        else
+            manual_cutoff=100;
+        end
     else
         manual_cutoff=100;
     end
@@ -58,7 +65,7 @@ if ~exist(SSEMatFolder,'dir')
 end
 SSEMatPath=fullfile(SSEMatFolder,SSEMatFileName);
 
-if strcmp(analysisType,'ROC')||strcmp(analysisType,'CRF')
+if strcmp(analysisType,'ROC')||strcmp(analysisType,'CRF')||strcmp(analysisType,'ROC_diff2')||strcmp(analysisType,'ROC_diff')
     slC50Matname=[num2str(chNum),appendText,startEndTime,'_slC50'];
     slC50MatFolder=fullfile('F:','PL',analysisType,animal,'slope_C50_mat');
 elseif strcmp(analysisType,'NVP')
@@ -117,7 +124,7 @@ if excludeSessHighSSE==1
 end
 
 if plotFig==1
-    [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData,threshold82lower,threshold82higher]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,datamat,chNum,numsessions,sessionSorted1,sampleContrast,testContrast,calculateTangent,plotDiffC50_30,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,slC50MatPathname,slSigmaMultiple,c50SigmaMultiple,threshSigmaMultiple);
+    [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData,threshold82lower,threshold82higher]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,datamat,chNum,numsessions,sessionSorted1,sampleContrast,testContrast,calculateTangent,plotDiffC50_30,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,slC50MatPathname,slSigmaMultiple,c50SigmaMultiple,threshSigmaMultiple,rootFolder);
 end
 
 % allChROC=[allChROC;appendROC];
@@ -128,7 +135,7 @@ end
 % end
 % eval(saveText)
 
-if plotPsychoFig==1
+if plotPsychoFig==1&&~strcmp(analysisType,'ROC_diff')
     plot_psycho_across_sessions(psychoname,sampleContrast,testContrast,excludeSessions,calculateTangent)
 end
 
@@ -139,4 +146,6 @@ elseif strcmp(analysisType,'NVP')
     plot_nvp_threshold_coefs(animal,area,chNum,appendText,startEndTime,threshold82lower,threshold82higher,sessionSorted1,analysisType,excludeSessHighSSE,excludeOutliers,writeCoefs,threshSigmaMultiple)
 end
 % pause
+if ~strcmp(analysisType,'ROC_diff2')
 close all
+end
