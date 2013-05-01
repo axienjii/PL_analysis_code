@@ -13,7 +13,7 @@ if onExternalHD==1
 else
     rootFolder='F:';
 end
-numBins=6;
+numBins=4;
 animals=[{'blanco'} {'jack'}];
 areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
 for animalInd=1:length(animals)
@@ -21,7 +21,7 @@ for animalInd=1:length(animals)
     for areaInd=1:length(areas)
         area=areas{areaInd};
         [sampleContrasts testContrasts]=area_metadata(area);
-        sessions = main_raw_sessions_final(animal,area,[],0);
+        sessions = main_raw_sessions_final_psycho(animal,area,[],0);
         for sampleInd=1:length(sampleContrasts)
             durations=[];
             allP123=[]
@@ -80,7 +80,7 @@ for animalInd=1:length(animals)
                     %[cDurANOVA(animalInd+2*(areaInd-1),:),m,h]=multcompare(stats)
                     if pDurFirstlastANOVA(1)<0.05
                         multcompare(stats)
-                        pause
+%                         pause
                     end
                     allPFirstlast(i,:)=pDurFirstlastANOVA;
                     close all hidden
@@ -89,22 +89,25 @@ for animalInd=1:length(animals)
             sessCorrect=[];
             sessDurList=[];
             sessCondList=[];
+            sessNumList=[];
             for sessCount=1:length(allCorrect)
                 sessCorrect=[sessCorrect;allCorrect{sessCount}];
                 sessDurList=[sessDurList;durList];
                 sessCondList=[sessCondList;condList];
+                sessNumList=[sessNumList;zeros(size(allCorrect{sessCount},1),size(allCorrect{sessCount},2))+sessCount];
             end
             sessCorrectReshape=reshape(sessCorrect,1,size(sessCorrect,1)*size(sessCorrect,2));
             durReshape=reshape(sessDurList,1,size(sessDurList,1)*size(sessDurList,2));
             condReshape=reshape(sessCondList,1,size(sessCondList,1)*size(sessCondList,2));
-            [pDurSessANOVA,table,stats]=anovan(sessCorrectReshape,{durReshape,condReshape})
+            sessReshape=reshape(sessNumList,1,size(sessCondList,1)*size(sessCondList,2));
+            [pDurSessANOVA,table,stats]=anovan(sessCorrectReshape,{durReshape,condReshape,sessReshape},'model','interaction')
             %[cDurANOVA(animalInd+2*(areaInd-1),:),m,h]=multcompare(stats)
             close all hidden
             saveMatName=['ISI_test_durations_',area,'_',num2str(sampleContrasts(sampleInd)),'_',num2str(numBins),'bins'];
             saveMatFolder=fullfile(rootFolder,'PL','vals_perf',animal);
             saveMatPath=fullfile(saveMatFolder,saveMatName);
             if strcmp(area,'v4_1')&&strcmp(animal,'blanco')
-                saveText=['save ',saveMatPath,' durations allCorrect allPBins allPFirstlast'];
+                saveText=['save ',saveMatPath,' durations allCorrect allPBins allPFirstlast pDurSessANOVA table stats'];
             else
                 saveText=['save ',saveMatPath,' durations'];
             end
