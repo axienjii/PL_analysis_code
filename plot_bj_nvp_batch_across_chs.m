@@ -27,6 +27,11 @@ end
 calculateStats=1;
 fig=figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.55, 0.8]);
 set(fig,'PaperUnits','centimeters','PaperType','A4','PaperOrientation', 'portrait', 'PaperPosition', [0.63452 0.63452 21/8*5.5 28.41]);
+allcReshape=[];
+allcondReshape=[];
+allsessHalfReshape=[];
+allsubjectReshape=[];
+allareaReshape=[];
 for animalInd=1:length(animals)
     animal=animals{animalInd};
     for areaInd=1:length(areas)
@@ -169,7 +174,7 @@ for animalInd=1:length(animals)
                         condList=[zeros(size((allData{1,comparison})',1),size((allData{1,comparison})',2))+1 zeros(size((allData{1,comparison})',1),size((allData{1,comparison})',2))+2];
                         sessHalfList=[zeros(ceil(size(c,1)/2),size(c,2))+1;zeros(floor(size(c,1)/2),size(c,2))+2];%divide sessions into first half and second half
                         cReshape=reshape(c,1,size(c,1)*size(c,2));
-                        condReshape=reshape(condList,1,size(condList,1)*size(condList,2));
+                        condReshape=reshape(condList,1,size(condList,1)*size(condList,2));%1:lower; 2: higher
                         sessHalfReshape=reshape(sessHalfList,1,size(sessHalfList,1)*size(sessHalfList,2));
                         [p,table,stats]=anovan(cReshape,{condReshape,sessHalfReshape},'model','interaction')%check for differences in threshold based on condition type (higher or lower test than sample contrast) and on whether session belongs to first or second half of training
                         pCondHalfANOVA{areaInd,animalInd}=p;
@@ -179,6 +184,16 @@ for animalInd=1:length(animals)
                                 grandCorrTable((sampCond-1)*2+animalInd,3+(tableInd-1)*4)=coefficientsCat(animalInd,tableInd);
                                 grandCorrTable((sampCond-1)*2+animalInd,1+(tableInd-1)*4)=pCat(animalInd,tableInd);
                             end
+                        end
+                        subjectList=zeros(1,length(cReshape))+animalInd;
+                        areaList=zeros(1,length(cReshape))+areaInd;
+                        allcReshape=[allcReshape cReshape];
+                        allcondReshape=[allcondReshape condReshape];
+                        allsessHalfReshape=[allsessHalfReshape sessHalfReshape];
+                        allsubjectReshape=[allsubjectReshape subjectList];
+                        allareaReshape=[allareaReshape areaList];
+                        if animalInd==length(animals)&&areaInd==length(areas)
+                            [allp,alltable,allstats]=anovan(allcReshape,{allcondReshape,allsessHalfReshape,allsubjectReshape,allareaReshape},'model','full')%check for differences in threshold based on condition type (higher or lower test than sample contrast) and on whether session belongs to first or second half of training
                         end
                         subplotRemap=[1 2 3 4];
                         figure(fig);
