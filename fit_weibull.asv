@@ -35,7 +35,7 @@ end
 if strcmp(err_type,'mle')==1
     y=1-p(4)-p(3).*exp(-(conditions./p(2)).^p(1));
     y=y*.99+.005;
-    err=sum(response.*log(y) + (1-response).*log(1-y));
+    err = sum(response.*log(y) + (1-response).*log(1-y));
 end
 % -------------------------------------------------------------------------
 
