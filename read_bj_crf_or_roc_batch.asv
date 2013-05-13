@@ -1,11 +1,10 @@
-function read_bj_crf_or_roc_batch(animal,area,analysisType,excludeSessHighSSE,excludeOutliers)
+function read_bj_crf_or_roc_batch(animal,area,analysisType,excludeSessHighSSE,excludeOutliers,comparisonType)
 
 %Written by Xing 06/03/13
 %to calculate and write correlation coefficients
 %excludeSessHighSSE: set to 1 to exclude sessions with poor Weibull fit
 %excludeOutliers: set to 1 to exclude outlying data points 
 if strcmp(analysisType,'ROC_diff')
-    comparisonType=1;
     switch(comparisonType)
         case(1)%compare ROC values between two methods, using all trials
             ROC1='ROC_sglroc3';
@@ -44,12 +43,12 @@ for i=1:length(channels)
                 for subPeriod=1:length(periods)-1
                     startEndTime=['_',num2str(periods(subPeriod)),'_to_',num2str(periods(subPeriod+1))];
                     if strcmp(analysisType,'ROC_diff')%load ROC values from previous sglroc3 method
+                        matName=['ROC','_Ch',num2str(channels(i)),'_',num2str(sampleContrast),startEndTime,'.mat'];
                         if strcmp(area,'v4_1')||strcmp(area,'v1_1')
                             if strcmp(ROC1,'ROC_sglroc3_correct_only')
                                 matName=['ROC','_Ch',num2str(channels(i)),'_',num2str(sampleContrast),'_1058_to_1587.mat'];
-                            else
-                                matName=['ROC','_Ch',num2str(channels(i)),'_',num2str(sampleContrast),startEndTime,'.mat'];
                             end
+                        end
                         matPath=fullfile('F:','PL',ROC1,animal,area,matName);
                         loadText=['load ',matPath,' ','ROCmat'];
                         eval(loadText);

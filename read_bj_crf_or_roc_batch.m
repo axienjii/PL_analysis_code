@@ -1,11 +1,10 @@
-function read_bj_crf_or_roc_batch(animal,area,analysisType,excludeSessHighSSE,excludeOutliers)
+function read_bj_crf_or_roc_batch(animal,area,analysisType,excludeSessHighSSE,excludeOutliers,comparisonType)
 
 %Written by Xing 06/03/13
 %to calculate and write correlation coefficients
 %excludeSessHighSSE: set to 1 to exclude sessions with poor Weibull fit
 %excludeOutliers: set to 1 to exclude outlying data points 
 if strcmp(analysisType,'ROC_diff')
-    comparisonType=1;
     switch(comparisonType)
         case(1)%compare ROC values between two methods, using all trials
             ROC1='ROC_sglroc3';
@@ -24,7 +23,7 @@ if onExternalHD==1
 else
     rootFolder='F:';
 end
-excludeSessions=[26 50 306 312 316 322:328 342];
+excludeSessions=[26 50 306 312 316 322:328 342 398 451];
 test_epochs={0 512 512*2 512*3};durSpon=150;
 channels=main_channels(animal,area);
 [sampleContrasts testContrasts]=area_metadata(area);
