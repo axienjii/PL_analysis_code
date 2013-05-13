@@ -12,7 +12,7 @@ else
 end
 animals=[{'blanco'} {'jack'}];
 areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
-areas=[{'v4_1'} {'v1_1'} {'v1_2'}];
+% areas=[{'v4_1'} {'v4_2'}];
 test_epochs={0 512 512*2 512*3};durSpon=150;
 for animalInd=1:length(animals)
     animal=animals{animalInd};
