@@ -132,6 +132,10 @@ end
                     file_of_int='225234912.1';%control task with jack's PL stimuli in blanco's V1 RF, plus flankers
                     analysisFolderAppend='_7';
                     roving=1;
+                elseif sessionNums(i)==192%roving samples and 36 conditions
+                    file_of_int='473914.1';%control task with jack's PL stimuli in blanco's V1 RF, plus flankers
+                    roving=0;
+                    testContrast=testContrasts;
                 end
             elseif strcmp(animal,'blanco')
                 [file_of_int,testContrast]=session_metadata(sessionNums(i),animal);

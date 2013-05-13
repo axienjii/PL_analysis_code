@@ -126,6 +126,9 @@ if ispc
         case ['jack','v1_4_3']
             sessions = 185:189; % control task with stimuli at Blanco's V1 location
             
+        case ['jack','v1_6']
+            sessions = 192; % control task with no sample at Jack's V1 location
+            
     end
 else
     switch expt_type

@@ -6,19 +6,19 @@ else
     rootFolder='F:';
 end
 writeWeibullPsycho=0;%remember to set correct directory!
-savePsychoCurves=0;
+savePsychoCurves=1;
 writeMeanPerf=1;
 writeNumTrials=1;
 calculateTangent=1;
 numconds=length(testContrast);
 %     perf_bins=zeros(numconds,length(bins));%max num of trials per condition manually set to 300- adjust as needed
 perf=zeros(numconds,4);
-RT=[];RT_early=[];RT_distract=[];corrTrialList=[];RT_conds=[];RTerror_conds=[];RTce=[];
-%     all_ave_RT=zeros(1,length(bins));
-fix1_dur=[];fix2_dur=[];fix3_dur=[];sample_dur=[];test_dur=[];fixchange_dur=[];trial_dur=[];
 trial=size(vals,1);
 sessSegments=3;%look at all trials across session
 for k=1:sessSegments;%examine all trials, then just first and last 30% of trials
+    RT=[];RT_early=[];RT_distract=[];corrTrialList=[];RT_conds=[];RTerror_conds=[];RTce=[];
+    %     all_ave_RT=zeros(1,length(bins));
+    fix1_dur=[];fix2_dur=[];fix3_dur=[];sample_dur=[];test_dur=[];fixchange_dur=[];trial_dur=[];
     if k==1
         sizebin=trial;%trial
         trialsRange=1:size(vals,1);
@@ -134,6 +134,13 @@ for k=1:sessSegments;%examine all trials, then just first and last 30% of trials
     all_std_RTerror(k)=std_RTerror;
     meanRTce=mean(RTce);
     stdRTce=std(RTce);
+    if k==2
+        RTfirst=RT;
+        RTerrorfirst=RT_distract;
+    elseif k==3
+        RTlast=RT;
+        RTerrorlast=RT_distract;
+    end
     perf_bins(1:numconds,k)=percent_perf;
     perf_bins%performance for each condition in each time bin
     mean_perf_bins=mean(perf_bins,1)%average across conditions
@@ -146,16 +153,17 @@ for k=1:sessSegments;%examine all trials, then just first and last 30% of trials
     plot(testContrast,prop_corr(k,:),'ok');
     hold on
     X0=[2 30 0.2 0.1];
-    X=fminsearch(@fit_weibull,X0,[],testContrast,prop_corr(k,:),[],'least_square',[0 0 0 0],[],[0 0 0 0],[])
+    X=fminsearch(@fit_weibull,X0,[],testContrast,prop_corr(k,:),[],'least_square',[0 0 0 0],[],[0 0 0 0],[]);
     allX(k,:)=X;
     if calculateTangent==1
         allX(k,1)=100*X(1)*X(3)*exp(-(sampleContrast/X(2))^X(1) )*sampleContrast^(X(1)-1)*(1/X(2))^X(1);%multiply by 100 as prop_corr given as fraction, not percentage
     end
+    allX
     %     X=fminsearch('weibull_zero_one',X0,[],testContrast,prop_corr)
     xvals=0:1:testContrast(end)+10;
     yvals=1-X(4)-X(3).*exp(-(xvals./X(2)).^X(1));
     %     yvals=1-exp(-((xvals/X(1)).^X(2)));
-    PSE(k)=X(2).*(-log((0.5-X(4))/X(3))).^(1/X(1));
+    PSE(k)=X(2).*(-log((0.5-X(4))/X(3))).^(1/X(1))
     plot(xvals,yvals,'r');
     set(gca,'FontSize',[6],'YLim',[0,1.01],'XLim',[0,testContrast(end)+10],'YTickMode','manual');%'YTick',[0.1]
     line(PSE(k),0:0.01:1,'Color','r');
@@ -230,6 +238,13 @@ round(durations)
 %         plot(xvals,yvals,'r');
 %         set(gca,'FontSize',[6],'YLim',[0,1.01],'XLim',[0,testContrast(end)+10],'YTickMode','manual');%'YTick',[0.1]
 %     end
+
+if sessSegments==3
+    allRT30=[RTfirst RTlast RTerrorfirst RTerrorlast];
+    allRTperiod=[zeros(1,length(RTfirst))+1 zeros(1,length(RTlast))+2 zeros(1,length(RTerrorfirst))+1 zeros(1,length(RTerrorlast))+2];
+    allRTce=[zeros(1,length(RTfirst))+1 zeros(1,length(RTlast))+1 zeros(1,length(RTerrorfirst))+2 zeros(1,length(RTerrorlast))+2];
+    [h p stats]=anovan(allRT30,{allRTperiod,allRTce},'model','full')
+end
 
 if writeMeanPerf==1
     if psychoOnly==1
