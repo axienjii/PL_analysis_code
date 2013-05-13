@@ -1,4 +1,4 @@
-function bj_SE_batch_roc_temp(animal,area,channels,sessions,icopy,ncopies,istart,drawFigs,plotRedArtifacts)
+function bj_SE_batch_roc_temp(animal,area,channels,sessions,icopy,ncopies,istart,drawFigs,plotRedArtifacts,generateSpikes)
 %created on 30/01/13 for GitHub version control.
 %modified from bj_SE_V1_2_batch_roc
 %on 23/06/12 to analyse data from either jack or blanco.
@@ -38,54 +38,56 @@ if nargin<7 || isempty(istart)
     istart = 1;
 end
 
-% for iter = icopy:ncopies:(length(channels)*length(sessions))    
-parfor iter = icopy:(length(channels)*length(sessions)) 
-    if iter<istart
-        continue;
-    end    
-    isess = ceil(iter/length(channels));
-    ichan = mod(iter-1,length(channels))+1;
-    
-    session = sessions(isess);
-    channel = channels(ichan);
-    
-    if verbose; fprintf('%d(%d): %d/%d Processing session %.1f (%d/%d), channel %d (%d/%d)\n',...
-            icopy, ncopies, iter, length(channels)*length(sessions), ...
-            session, isess, length(sessions), ...
-            channel, ichan, length(channels));
-    end
-    try
-        % Check if file with ROC values already exists
-        if strcmp(area,'v1_2')
-            sampleText=40;
-        else
-            sampleText=30;
+if generateSpikes==1
+    % for iter = icopy:ncopies:(length(channels)*length(sessions))
+    parfor iter = icopy:(length(channels)*length(sessions))
+        if iter<istart
+            continue;
         end
-        output_fname = spikeData_finder(animal, session, channel,sampleText,plotRedArtifactsText);
-        % If it does, skip this one
-        if ~exist(output_fname, 'file')
-            bj_SE_V1_2_roc4_temp(animal, channel, session, max(0,verbose-1),plotRedArtifacts)% if not, create it
-        elseif rewriteSessions==1 
-            if checkFileDateMod==0
-                bj_SE_V1_2_roc4_temp(animal, channel, session, max(0,verbose-1),plotRedArtifacts)% overwrite it regardless of last date of modification
+        isess = ceil(iter/length(channels));
+        ichan = mod(iter-1,length(channels))+1;
+        
+        session = sessions(isess);
+        channel = channels(ichan);
+        
+        if verbose; fprintf('%d(%d): %d/%d Processing session %.1f (%d/%d), channel %d (%d/%d)\n',...
+                icopy, ncopies, iter, length(channels)*length(sessions), ...
+                session, isess, length(sessions), ...
+                channel, ichan, length(channels));
+        end
+        try
+            % Check if file with ROC values already exists
+            if strcmp(area,'v1_2')
+                sampleText=40;
             else
-                fileinfo=dir(output_fname);
-                modDate=fileinfo.date;
-                if ~strcmp(modDate(4:6),'Apr')||str2double(modDate(1:2))<18||str2double(modDate(1:2))==18&&str2double(modDate(13:14))<19&&str2double(modDate(16:17))<08
-                    bj_SE_V1_2_roc4_temp(animal, channel, session, max(0,verbose-1),plotRedArtifacts)% or overwrite it
+                sampleText=30;
+            end
+            output_fname = spikeData_finder(animal, session, channel,sampleText,plotRedArtifactsText);
+            % If it does, skip this one
+            if ~exist(output_fname, 'file')
+                bj_SE_V1_2_roc4_temp(animal, channel, session, max(0,verbose-1),plotRedArtifacts)% if not, create it
+            elseif rewriteSessions==1
+                if checkFileDateMod==0
+                    bj_SE_V1_2_roc4_temp(animal, channel, session, max(0,verbose-1),plotRedArtifacts)% overwrite it regardless of last date of modification
+                else
+                    fileinfo=dir(output_fname);
+                    modDate=fileinfo.date;
+                    if ~strcmp(modDate(4:6),'Apr')||str2double(modDate(1:2))<18||str2double(modDate(1:2))==18&&str2double(modDate(13:14))<19&&str2double(modDate(16:17))<08
+                        bj_SE_V1_2_roc4_temp(animal, channel, session, max(0,verbose-1),plotRedArtifacts)% or overwrite it
+                    end
                 end
             end
-        end        
-    catch ME
-        %If an error occured, output the details about the error
-        animal
-        session
-        channel
-        
-        disp(ME);
-        for i=1:length(ME.stack);
-            last_error_made = ME.stack(i);
-            fprintf('In ==> %s at %d.\n', last_error_made.file, last_error_made.line);
+        catch ME
+            %If an error occured, output the details about the error
+            animal
+            session
+            channel
+            
+            disp(ME);
+            for i=1:length(ME.stack);
+                last_error_made = ME.stack(i);
+                fprintf('In ==> %s at %d.\n', last_error_made.file, last_error_made.line);
+            end
         end
     end
 end
