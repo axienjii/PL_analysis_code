@@ -61,6 +61,7 @@ if initialThreshDrawing==1
     if strcmp(animal,'blanco')
         if strcmp(area,'v4')||strcmp(area,'v4_1')
             cutoffs=0.54:0.01:0.6;
+            cutoffs=0.44:0.01:0.49;
         elseif strcmp(area,'v4_2')
             cutoffs=0.45:0.01:0.8;
             cutoffs=0.45:0.01:0.51;
@@ -68,6 +69,7 @@ if initialThreshDrawing==1
         elseif strncmp(area,'v1',2)
             cutoffs=0.54:0.01:0.59;
             cutoffs=0.79:0.01:0.85;
+            cutoffs=0.76:0.01:0.78;
             xlimTail=[0.4 1];
         end
     elseif strcmp(animal,'jack')
@@ -130,7 +132,7 @@ if initialThreshDrawing==1
 %         end
         for i=1:length(sessions)
             subplot(ceil(length(sessions)/5),5,i);
-            xlim(xlimTail);
+%             xlim(xlimTail);
             ylim([-100 500]);
         end
         allNumRemoveTrials=[allNumRemoveTrials numRemoveTrials'];
@@ -155,7 +157,7 @@ end
 
 %Once histograms have been generated and scrutinised, and threshold values
 %manually selected and written to file 'sessThresholds.mat':
-plotFigs=1;
+plotFigs=0;
 allNumRemoveTrials=sessions';
 histoFig=figure;
 sessThresholdsPath=fullfile('F:','PL','pl_corr_art_trials',animal,'sessThresholds.mat');

@@ -1,4 +1,4 @@
-function bj_corr_sample_test_act
+function bj_corr_sample_test_act(animals)
 %written by Xing 12/04/13
 %Calculates correlations in activity to sample and test
 
@@ -18,11 +18,11 @@ else
 end
 plotDual=1;
 plotFigs=1;
-animals=[{'blanco'} {'jack'}];
+% animals=[{'blanco'} {'jack'}];
 areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
 % areas=[{'v4_2'} {'v1_2'}];
 % areas=[{'v4_1'} {'v1_1'}];
-areas=[{'v1_1'} {'v1_2'}];
+areas=[{'v1_2'}];
 test_epochs={0 512 512*2 512*3};durSpon=150;
 durSpon=150;%length of period prior to sample onset from which spontaneous rates are calculated. Can take on a value of up to 512 ms.
 minTrials=10;%set value of minumum number of trials for inclusion of session
@@ -31,7 +31,6 @@ for animalInd=1:length(animals)
     animal=animals{animalInd};
     for areaInd=1:length(areas)
         area=areas{areaInd};
-        [sampleContrasts testContrasts]=area_metadata(area);
         channels=main_channels(animal,area);
         sessionNums = main_raw_sessions_final(animal,area,[],0);
         cellEpochTimes={0 512 512*2 512*3};%{[0 40 300] 529 [529*2 529*2+40 529*2+300] 529*3}

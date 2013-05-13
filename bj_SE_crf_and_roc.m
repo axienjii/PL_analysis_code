@@ -8,7 +8,6 @@ function bj_SE_crf_and_roc(ch,session,test_epochs,minusSpon,matarray,animal,area
 %before sample onset. Average firing rates (also in spikes/s) are
 %calculated for epochs 4 and 5, and spontaneous rates are subtracted.
 
-ROCmethod='old';
 durSpon=150;%length of period prior to sample onset from which spontaneous rates are calculated. Can take on a value of up to 512 ms.
 minTrials=10;%set value of minumum number of trials for inclusion of session
 
@@ -65,7 +64,7 @@ if min(numTrials)>=minTrials
                 CRFmat=[CRFmat;CRFmatTemp];
             end
             saveText=['save ',CRFmatPath,' CRFmat'];
-%             eval(saveText);
+            eval(saveText);
         end
     end
     
