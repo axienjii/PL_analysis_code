@@ -1,4 +1,4 @@
-function []=read_bj_crf_or_roc(datamat,chNum,psychoname,testContrast,sampleContrast,animal,area,startEndTime,analysisType,excludeSessHighSSE,excludeOutliers,rootFolder)
+function []=read_bj_crf_or_roc(datamat,chNum,psychoname,testContrast,sampleContrast,animal,area,startEndTime,analysisType,excludeSessHighSSE,excludeOutliers,rootFolder,plotLeastSquares)
 %Modified from read_blanco_V1_crf
 %Written by Xing 06/03/13
 %
@@ -66,7 +66,7 @@ end
 SSEMatPath=fullfile(SSEMatFolder,SSEMatFileName);
 
 if strcmp(analysisType,'ROC')||strcmp(analysisType,'CRF')||strcmp(analysisType,'ROC_diff2')||strcmp(analysisType,'ROC_diff')
-    slC50Matname=[num2str(chNum),appendText,startEndTime,'_slC50'];
+    slC50Matname=[num2str(chNum),appendText,startEndTime,'_slC50_',area];
     slC50MatFolder=fullfile('F:','PL',analysisType,animal,'slope_C50_mat');
 elseif strcmp(analysisType,'NVP')
     slC50Matname=[num2str(chNum),appendText,startEndTime,'_nvpThreshold_',area];
@@ -124,7 +124,7 @@ if excludeSessHighSSE==1
 end
 
 if plotFig==1
-    [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData,threshold82lower,threshold82higher]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,datamat,chNum,numsessions,sessionSorted1,sampleContrast,testContrast,calculateTangent,plotDiffC50_30,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,slC50MatPathname,slSigmaMultiple,c50SigmaMultiple,threshSigmaMultiple,rootFolder);
+    [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData,threshold82lower,threshold82higher]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,datamat,chNum,numsessions,sessionSorted1,sampleContrast,testContrast,calculateTangent,plotDiffC50_30,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,slC50MatPathname,slSigmaMultiple,c50SigmaMultiple,threshSigmaMultiple,rootFolder,plotLeastSquares);
 end
 
 % allChROC=[allChROC;appendROC];
