@@ -77,6 +77,9 @@ if var_max_limit(4) ~= 0
         err = 10^1000;
     end
 end
+if 1-p(4)>1||1-p(4)-p(3)<0
+    err=10^1000;
+end
 % ---------------------------
 if var_min_limit(1) ~= 0
     if p(1) < min_limit(1)
