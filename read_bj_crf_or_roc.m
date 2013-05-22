@@ -1,4 +1,4 @@
-function []=read_bj_crf_or_roc(datamat,chNum,psychoname,testContrast,sampleContrast,animal,area,startEndTime,analysisType,excludeSessHighSSE,excludeOutliers,rootFolder,plotLeastSquares)
+function []=read_bj_crf_or_roc(datamat,chNum,psychoname,testContrast,sampleContrast,animal,area,startEndTime,analysisType,excludeSessHighSSE,excludeOutliers,rootFolder,plotLeastSquares,modifyMinMax)
 %Modified from read_blanco_V1_crf
 %Written by Xing 06/03/13
 %
@@ -22,7 +22,7 @@ function []=read_bj_crf_or_roc(datamat,chNum,psychoname,testContrast,sampleContr
 %time, 1,3 CRF with Psycho. p-vals: 2,1 CRF with time 2,2 Psycho with
 %time, 2,3 CRF with Psycho.
 
-writeCoefs=0;
+writeCoefs=1;
 plotFig=1;
 plotPsychoFig=0;
 if strcmp(analysisType,'ROC_diff')||strcmp(analysisType,'ROC_diff2')
@@ -123,7 +123,7 @@ if excludeSessHighSSE==1
     end
 end
 
-if plotFig==1
+if plotFig==1&&~modifyMinMax
     [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData,threshold82lower,threshold82higher]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,datamat,chNum,numsessions,sessionSorted1,sampleContrast,testContrast,calculateTangent,plotDiffC50_30,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,slC50MatPathname,slSigmaMultiple,c50SigmaMultiple,threshSigmaMultiple,rootFolder,plotLeastSquares);
 end
 
@@ -139,6 +139,39 @@ if plotPsychoFig==1&&~strcmp(analysisType,'ROC_diff')
     plot_psycho_across_sessions(psychoname,sampleContrast,testContrast,excludeSessions,calculateTangent)
 end
 
+if modifyMinMax==1
+    if isempty(chNum)
+        chText='mean_across_channels';
+    else
+        chText=num2str(chNum);
+    end
+    %load previous minRate & maxRate values and calculate correct ones:
+    if excludeSessHighSSE==0
+        coefMatname=[chText,appendText,startEndTime,'_',analysisType,'_coefs_',area];
+    elseif excludeSessHighSSE==1
+        if excludeOutliers==0
+            coefMatname=[chText,appendText,startEndTime,'_',analysisType,'_coefs_',area,'_goodSSE'];
+        elseif excludeOutliers==1
+            coefMatname=[chText,appendText,startEndTime,'_',analysisType,'_coefs_',area,'_goodSSE_no_outliers_sl',num2str(slSigmaMultiple),'_C50',num2str(c50SigmaMultiple)];
+        end
+    end
+    subFolderName=[analysisType,'_coef_mat'];
+    coefMatFolder=fullfile('F:','PL',analysisType,animal,subFolderName);
+    coefMatPathname=fullfile(coefMatFolder,coefMatname);
+    if ~exist(coefMatFolder,'dir')
+        mkdir(coefMatFolder)
+    end
+    if plotDiffC50_30==1
+        loadText=['load ',coefMatPathname,'.mat coefficients sessionSorted1 slopeNeuro sessionSorted2 slopePsycho matchPsycho c50 diffc50 minRate maxRate'];
+    else
+        loadText=['load ',coefMatPathname,'.mat coefficients sessionSorted1 slopeNeuro sessionSorted2 slopePsycho matchPsycho c50 minRate maxRate'];
+    end
+    eval(loadText)
+    incorrectMaxRate=maxRate;
+    incorrectMinRate=minRate;
+    maxRate=1-incorrectMinRate;
+    minRate=1-incorrectMinRate-incorrectMaxRate;
+end
 if strcmp(analysisType,'ROC')||strcmp(analysisType,'CRF')
     example_ch_54=0;
     plot_neurometric_coefs(animal,area,chNum,appendText,startEndTime,slopeNeuro,c50,plotDiffC50_30,diffc50,minRate,maxRate,sessionSorted1,analysisType,example_ch_54,excludeSessHighSSE,excludeOutliers,writeCoefs,slSigmaMultiple,c50SigmaMultiple)

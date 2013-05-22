@@ -84,14 +84,14 @@ else
     plot(matchPsycho,slopeNeuro,'ok');
     title('neurometric slope vs psychometric slope')
     if plotDiffC50_30==1    
-        subplot(2,3,3);
+        subplot(2,3,6);
         plot(1:length(sessionSorted1),minRate,'ok');
         if strcmp(analysisTypeText,'ROC')
             title('minimum ROC value vs time')
         else
             title('minimum firing rate vs time')
         end
-        subplot(2,3,6);
+        subplot(2,3,3);
         plot(1:length(sessionSorted1),maxRate,'ok');
         if strcmp(analysisTypeText,'ROC')
             title('maximum ROC value vs time')
@@ -222,11 +222,11 @@ if length(coefficients1)>1
         if ~exist(coefMatFolder,'dir')
             mkdir(coefMatFolder)
         end
-    if plotDiffC50_30==1
-        saveText=['save ',coefMatPathname,'.mat coefficients sessionSorted1 slopeNeuro sessionSorted2 slopePsycho matchPsycho c50 diffc50 minRate maxRate'];
-    else
-        saveText=['save ',coefMatPathname,'.mat coefficients sessionSorted1 slopeNeuro sessionSorted2 slopePsycho matchPsycho c50 minRate maxRate'];
-    end
-    eval(saveText)
+        if plotDiffC50_30==1
+            saveText=['save ',coefMatPathname,'.mat coefficients sessionSorted1 slopeNeuro sessionSorted2 slopePsycho matchPsycho c50 diffc50 minRate maxRate'];
+        else
+            saveText=['save ',coefMatPathname,'.mat coefficients sessionSorted1 slopeNeuro sessionSorted2 slopePsycho matchPsycho c50 minRate maxRate'];
+        end
+        eval(saveText)
     end
 end

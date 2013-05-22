@@ -1,9 +1,11 @@
-function read_bj_crf_or_roc_batch(animal,area,analysisType,excludeSessHighSSE,excludeOutliers,comparisonType,plotLeastSquares)
+function read_bj_crf_or_roc_batch(animal,area,analysisType,excludeSessHighSSE,excludeOutliers,comparisonType,plotLeastSquares,modifyMinMax)
 
 %Written by Xing 06/03/13
 %to calculate and write correlation coefficients
 %excludeSessHighSSE: set to 1 to exclude sessions with poor Weibull fit
 %excludeOutliers: set to 1 to exclude outlying data points 
+%modifyMinMax: set to 1 to read old minRate & maxRate values and calculate
+%correct ones, set to 0 if values in file are already orrect.
 if strcmp(analysisType,'ROC_diff')
     switch(comparisonType)
         case(1)%compare ROC values between two methods, using all trials
@@ -22,6 +24,9 @@ if onExternalHD==1
     rootFolder='G:\PL_backup_060413';
 else
     rootFolder='F:';
+end
+if nargin<7||isempty(plotLeastSquares)
+    plotLeastSquares=[];
 end
 excludeSessions=[26 50 306 312 316 322:328 342 398 451];
 test_epochs={0 512 512*2 512*3};durSpon=150;
@@ -92,7 +97,7 @@ for i=1:length(channels)
                         end
                     end
                     dataArray=dataArray(includeMatch,:);
-                    read_bj_crf_or_roc(dataArray,channels(i),psychoPathname,testContrast,sampleContrast,animal,area,startEndTime,analysisType,excludeSessHighSSE,excludeOutliers,rootFolder,plotLeastSquares)
+                    read_bj_crf_or_roc(dataArray,channels(i),psychoPathname,testContrast,sampleContrast,animal,area,startEndTime,analysisType,excludeSessHighSSE,excludeOutliers,rootFolder,plotLeastSquares,modifyMinMax)
                 end
             end
         end

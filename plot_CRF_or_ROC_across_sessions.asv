@@ -65,13 +65,13 @@ for i=1:numsessions
         elseif sum(datavals(1:3))>sum(datavals(end-2:end))
             X0=[-2 30 0.2 0.1];
         end
-        options = optimset('Display','off','MaxFunEvals',10^6,'MaxIter',10^6,'TolFun',1.0E-6,'TolX',1.0E-6);
-        X1=fminsearch(@fit_weibull,X0,options,testContrast,datavals,[],'least_square',[1 1 1 0],[20 100 1.2 0],[1 1 0 0],[-20 0 0 0]);
+        options = optimset('Display','off','MaxFunEvals',10^4,'MaxIter',10^4,'TolFun',1.0E-6,'TolX',1.0E-6);
+        X1=fminsearch(@fit_weibull,X0,options,testContrast,datavals,[],'least_square',[1 1 1 0],[10 100 1 0],[1 1 0 0],[-20 0 0 0]);
 %         X=fminsearch(@fit_weibull,X1,options,testContrast,datavals,[],'mle',[1 1 1 1],[2 100 1 0.2],[1 1 0 0],[-20 0 0 0]);
-        X=fminsearch(@fit_weibull,X1,options,testContrast,datavals,[],'mle',[1 1 1 1],[10 100 1 1],[1 1 1 1],[-20 0 0 0]);
+        X=fminsearch(@fit_weibull,X1,options,testContrast,datavals,[],'mle',[1 1 1 1],[10 100 1 0],[1 1 0 0],[-10 0 0 0]);
         fitted_yvals=1-X(4)-X(3).*exp(-(testContrast./X(2)).^X(1));
-        minRate(1,i)=X(3);
-        maxRate(1,i)=X(4);
+        maxRate(1,i)=1-X(4);
+        minRate(1,i)=1-X(4)-X(3);
         residuals=datavals-fitted_yvals;
         sseCRF=sum(residuals.^2);
         chSSE(i,1:2)=[i sseCRF];
@@ -217,15 +217,24 @@ for i=1:numsessions
                 elseif sum(datavalsSplit{higherOrLower}(1:3))>sum(datavalsSplit{higherOrLower}(end-2:end))
                     X0=[10 -1];
                 end
-                X=fminsearch(@weibull_pointfive_one,X0,options,testContrastSplit{higherOrLower},datavalsSplit{higherOrLower},[1 1],[maxDiff(higherOrLower) 10],[1 1],[0 0],'mle');%place upper limit on threshold value, depending on whether examining higher or lower test contrast conds
+                if strcmp(analysisType,'NVP')
+                    X=fminsearch(@weibull_pointfive_one,X0,options,testContrastSplit{higherOrLower},datavalsSplit{higherOrLower},[1 1],[maxDiff(higherOrLower) 10],[1 1],[0 0],[]);%place upper limit on threshold value, depending on whether examining higher or lower test contrast conds
+                    if higherOrLower==1%lower contrast than sample
+                        threshold82lower(1,i)=X(1);%value of 81.161 is obtained when the contrast (x) is equal to the threshold (1-0.5*exp(-1) = 0.8161). value of 0.36 is from 2*(1-0.82)
+                    elseif higherOrLower==2%higher contrast than sample
+                        threshold82higher(1,i)=X(1);
+                    end
+                else
+                    X=fminsearch(@weibull_pointfive_one,X0,options,testContrastSplit{higherOrLower},datavalsSplit{higherOrLower},[1 1],[maxDiff(higherOrLower) 10],[1 1],[0 0],'mle');%place upper limit on threshold value, depending on whether examining higher or lower test contrast conds
+                end
             end
             hold on
             if strcmp(analysisType,'psycho')
-            if higherOrLower==1%lower contrast than sample
-                threshold82lower(1,i)=X(1);%value of 81.161 is obtained when the contrast (x) is equal to the threshold (1-0.5*exp(-1) = 0.8161). value of 0.36 is from 2*(1-0.82)
-            elseif higherOrLower==2%higher contrast than sample
-                threshold82higher(1,i)=X(1);
-            end
+                if higherOrLower==1%lower contrast than sample
+                    threshold82lower(1,i)=X(1);%value of 81.161 is obtained when the contrast (x) is equal to the threshold (1-0.5*exp(-1) = 0.8161). value of 0.36 is from 2*(1-0.82)
+                elseif higherOrLower==2%higher contrast than sample
+                    threshold82higher(1,i)=X(1);
+                end
             elseif strcmp(analysisType,'psycho_param')
                 if higherOrLower==1%lower contrast than sample
                     threshold82lower(1,i)=X(1).*(-log(1-(1-0.5*exp(-1)-0.5)./(0.5-(1-datavalsSplit{higherOrLower}(end))))).^(1/X(2));%value of 81.161 is obtained when the contrast (x) is equal to the threshold (1-0.5*exp(-1) = 0.8161). value of 0.36 is from 2*(1-0.82)

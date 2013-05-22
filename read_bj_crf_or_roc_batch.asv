@@ -1,4 +1,4 @@
-function read_bj_crf_or_roc_batch(animal,area,analysisType,excludeSessHighSSE,excludeOutliers,comparisonType)
+function read_bj_crf_or_roc_batch(animal,area,analysisType,excludeSessHighSSE,excludeOutliers,comparisonType,plotLeastSquares)
 
 %Written by Xing 06/03/13
 %to calculate and write correlation coefficients
@@ -23,7 +23,12 @@ if onExternalHD==1
 else
     rootFolder='F:';
 end
-excludeSessions=[26 50 306 312 316 322:328 342];
+if numinarg<6||isempty(comparisonType)
+    comparisonType=[];
+if numinarg<6||isempty(comparisonType)
+    comparisonType=[];
+end
+excludeSessions=[26 50 306 312 316 322:328 342 398 451];
 test_epochs={0 512 512*2 512*3};durSpon=150;
 channels=main_channels(animal,area);
 [sampleContrasts testContrasts]=area_metadata(area);
@@ -92,7 +97,7 @@ for i=1:length(channels)
                         end
                     end
                     dataArray=dataArray(includeMatch,:);
-                    read_bj_crf_or_roc(dataArray,channels(i),psychoPathname,testContrast,sampleContrast,animal,area,startEndTime,analysisType,excludeSessHighSSE,excludeOutliers,rootFolder)
+                    read_bj_crf_or_roc(dataArray,channels(i),psychoPathname,testContrast,sampleContrast,animal,area,startEndTime,analysisType,excludeSessHighSSE,excludeOutliers,rootFolder,plotLeastSquares)
                 end
             end
         end
