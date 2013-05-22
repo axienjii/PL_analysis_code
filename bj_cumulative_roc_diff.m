@@ -1,0 +1,250 @@
+function bj_cumulative_roc_diff(exampleFig,cutoff,animals)
+%Written by Xing 17/05/13
+%Calculate ROC values based on cumulative spike data across channels, not
+%just on that from individual channels.
+%To compare cumulatively-calculated ROC values obtained using 2 methods:
+%1. sglroc3 (blue, old) and 2. the mean trial-wise higher/lower activity (red, new).
+%Also plots distributions of sample- and test-evoked activity, and ROC
+%curves, for each of the two methods.
+%Set exampleFig to 0 to plot ROC curves for new and old methods, set to 1
+%to only plot example figures of distributions of stimulus-evoked activity
+%and condition-dependent ROC curves.
+analysisType='ROC';
+sglroc3IndividualChs=0;%set to 0 to read ROC values for individual channels and calculate mean ROC across channels; set to 1 to calculate ROCs based on pooled activity across channels
+onExternalHD=0;
+if onExternalHD==1
+    rootFolder='G:\PL_backup_060413';
+else
+    rootFolder='F:';
+end
+plotDiffC50_30=1;
+calculateTangent=1;
+% animals=[{'blanco'} {'jack'}];
+% animals={'blanco'};
+areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
+areas=[{'v4_1'} {'v1_1'} {'v1_2_1'} {'v1_2_2'} {'v1_2_3'}];
+if exampleFig==1
+    animals={'jack'};
+    areas={'v1_1'};
+    sglroc3IndividualChs=1;
+    figGauss=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+    set(figGauss, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+    figROCconds=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+    set(figROCconds, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+    figROCcondsExp=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+    set(figROCcondsExp, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+    figROCnew=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+    set(figROCnew, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+end
+for animalInd=1:length(animals)
+    animal=animals{animalInd};
+    for areaInd=1:length(areas)
+        area=areas{areaInd};
+        [sampleContrasts testContrasts]=area_metadata(area);
+        channels=main_channels(animal,area);
+        sessionNums=main_raw_sessions_final(animal,area,[],0);
+        if exampleFig==1
+            channels=51;
+%             sessionNums=307;
+        end
+        for sampleContrastsInd=1:length(sampleContrasts)
+            sampleContrast=sampleContrasts(sampleContrastsInd);
+            testContrast=testContrasts(sampleContrastsInd,:); 
+            %read in list of included channels
+            matname=['good_SNR_',area,'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10),'.mat'];
+            pathname=fullfile(rootFolder,'PL','SNR',animal,matname);
+            loadText=['load ',pathname,' includeSessionsAll'];
+            eval(loadText);
+            if exampleFig==1
+                colmapText=colormap(jet(size(testContrast,2)));
+                colmapText=[colmapText(1,:);132/255 22/255 216/255;202/255 65/255 223/255;colmapText(3:7,:);157/255 212/255 61/255;colmapText(10:12,:);178/255 111/255 12/255;colmapText(end,:)];
+            else
+                figROC=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+                set(figROC, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+            end
+            rocvals_sglroc3=zeros(1,length(testContrast));
+            rocvals=zeros(1,length(testContrast));
+            all_rocvals_sglroc3=[];
+            all_rocvals=[];
+            slopeNeuroNew=[];PNENew=[];diffPNENew=[];minRateNew=[];maxRateNew=[];chSSENew=[];
+            slopeNeuroOld=[];PNEOld=[];diffPNEOld=[];minRateOld=[];maxRateOld=[];chSSEOld=[];
+            sessionCounter=1;
+            for i=1:length(sessionNums)
+                matFolder=['F:\PL\spikeData\',animal];
+                ROCmatChs=[];
+                for condInd=1:length(testContrast)
+                    higherTestAct=0;
+                    lowerTestAct=0;
+                    allEpoch2=[];
+                    allEpoch4=[];
+                    for chInd=1:length(channels)
+                        chStr=[num2str(channels(chInd)),'_',num2str(sessionNums(i)),'_',num2str(sampleContrast),'.mat'];
+                        matPath=fullfile(matFolder,chStr);
+                        matExists=0;
+                        if exist(matPath,'file')
+                            matExists=1;
+                        end
+                        includeRows=includeSessionsAll(find(includeSessionsAll(:,1)==channels(chInd)),2);%include this session in analysis
+                        includeRow=find(includeRows==sessionNums(i));
+                        if matExists==1&&~isempty(includeRow)
+                            valsText=['load ',matPath,' matarray'];
+                            eval(valsText);
+                            if size(matarray{condInd,2},1)~=size(matarray{condInd,4},1)
+                                pause%if number of trials are not equal
+                            end
+                            for n=1:size(matarray{condInd,2})
+                                if length(matarray{condInd,2}{n})<length(matarray{condInd,4}{n})
+                                    higherTestAct=higherTestAct+1;
+                                elseif length(matarray{condInd,2}{n})>length(matarray{condInd,4}{n})
+                                    lowerTestAct=lowerTestAct+1;
+                                elseif length(matarray{condInd,2}{n})==length(matarray{condInd,4}{n})
+                                end
+                                if sglroc3IndividualChs==1
+                                    actList2(n)=length(matarray{condInd,2}{n})*1000/512;
+                                    actList4(n)=length(matarray{condInd,4}{n})*1000/512;
+                                end
+                            end
+                            if sglroc3IndividualChs==1
+                                allEpoch2=[allEpoch2 actList2];
+                                allEpoch4=[allEpoch4 actList4];
+                            elseif sglroc3IndividualChs==0%read ROC values generated earlier for each channel
+                                if condInd==1%only need to read ROC vals once, as they have been pre-calculated for all conditions
+                                    loadText=['load F:\PL\ROC_sglroc3\',animal,'\',area,'\ROC_Ch',num2str(channels(chInd)),'_',num2str(sampleContrast),'_1024_to_1536 ROCmat'];
+                                    eval(loadText);
+                                    sessionsList=[];
+                                    for j=1:size(ROCmat,1)
+                                        sessionsList=[sessionsList ROCmat{j,1}];
+                                    end
+                                    rowInd=find(sessionsList==sessionNums(i));
+                                    ROCmatChs=[ROCmatChs;ROCmat{rowInd,3}];
+                                end
+                            end
+                        end
+                    end
+                    if exampleFig==1
+                        if condInd==1
+                            cond1t=allEpoch4;
+                            cond1s=allEpoch2;
+                        elseif condInd==14
+                            cond14t=allEpoch4;
+                            cond14s=allEpoch2;
+                        end
+                    end
+                    if sglroc3IndividualChs==1
+                        if size(allEpoch2)~=size(allEpoch4)
+                            pause%if number of trials are not equal
+                        end
+                        [rocvals_sglroc3_xing(condInd) vec1 vec2]=sglroc3_xing(allEpoch4,allEpoch2);%old method
+%                         figure(figROCcondsExp)
+%                         subplot(ceil(length(sessionNums)/5),5,i);
+%                         plot(exp(vec1),exp(vec2),'Marker','o','Color',colmapText(condInd,:),'LineStyle','none');hold on
+%                         bj_linearexpo_fitting(exp(vec1)',exp(vec2)',condInd,0,'NVP',0)
+                        figure(figROCconds)
+                        subplot(ceil(length(sessionNums)/5),5,i);
+                        plot(vec1,vec2,'Marker','o','MarkerSize',5,'Color',colmapText(condInd,:),'LineStyle','none');hold on
+                        title(num2str(i),'FontSize',20);
+                        if i==5                        
+                            yLimVals=get(gca,'ylim');
+                            xLimVals=get(gca,'xlim');
+                            unitSpace=(yLimVals(2)-yLimVals(1))/30;
+                            text('Position',[xLimVals(2)+0.25 yLimVals(1)+unitSpace*condInd*10-5],'FontSize',20,'String',[num2str(testContrast(condInd)),'%'],'Color',colmapText(condInd,:));
+                        end
+%                         bj_linearexpo_fitting(vec1',vec2',condInd,0,'NVP',0)
+                        rocvals_sglroc3(condInd)=sglroc3(allEpoch4,allEpoch2);%old method
+                    end
+                    rocvals(condInd)=higherTestAct/(higherTestAct+lowerTestAct);%new method
+                end
+                if exampleFig==1
+                    figure(figROCconds)
+                    subplot(ceil(length(sessionNums)/5),5,i);
+                    axis square
+                    plot([0 1],[0 1],'k--','Marker','none','LineWidth',2);%line of equality
+                    figure(figGauss);
+                    subplot(ceil(length(sessionNums)/5),5,i);
+                    exampleFig_gauss(cond1t,cond1s,cond14t,cond14s);
+                    title(num2str(i),'FontSize',20);
+                    figure(figROCnew);
+                    subplot(ceil(length(sessionNums)/5),5,i);
+                    bar(testContrast,rocvals,'k');hold on
+                    xlim([0 max(testContrast)+10]);
+                    title(num2str(i),'FontSize',20);
+                    set(gca,'XTick',[5 30 90],'XTickLabel',[5 30 90]);
+                end
+                if sglroc3IndividualChs==0%find mean ROC across channels
+                    rocvals_sglroc3_mean=mean(ROCmatChs,1);%old method
+                end
+                if exampleFig==0
+                    if ~isnan(rocvals)
+                        figure(figROC);
+                        subplot(ceil(length(sessionNums)/5),5,sessionCounter);
+                        plot(testContrast,rocvals,'ro');hold on
+                        xlim([0 max(testContrast)+10]);
+                        if sglroc3IndividualChs==1
+                            plot(testContrast,rocvals_sglroc3,'bo');hold on
+                            all_rocvals_sglroc3(i,:)=[sessionNums(i) rocvals_sglroc3];
+                            [slopeNeuroOld,PNEOld,diffPNEOld,minRateOld,maxRateOld,chSSEOld]=weibull_fitting(rocvals_sglroc3,sampleContrast,testContrast,'old',sessionCounter,slopeNeuroOld,chSSEOld,PNEOld,minRateOld,maxRateOld,diffPNEOld,plotDiffC50_30,calculateTangent);
+                        elseif sglroc3IndividualChs==0
+                            if ~isempty(rocvals_sglroc3_mean)
+                                plot(testContrast,rocvals_sglroc3_mean,'bo');hold on
+                                all_rocvals_sglroc3(sessionCounter,:)=[sessionNums(i) rocvals_sglroc3_mean];
+                                [slopeNeuroOld,PNEOld,diffPNEOld,minRateOld,maxRateOld,chSSEOld]=weibull_fitting(rocvals_sglroc3_mean,sampleContrast,testContrast,'old',sessionCounter,slopeNeuroOld,chSSEOld,PNEOld,minRateOld,maxRateOld,diffPNEOld,plotDiffC50_30,calculateTangent);
+                            end
+                        end
+                        all_rocvals(sessionCounter,:)=[sessionNums(i) rocvals];
+                        [slopeNeuroNew,PNENew,diffPNENew,minRateNew,maxRateNew,chSSENew]=weibull_fitting(rocvals,sampleContrast,testContrast,'new',sessionCounter,slopeNeuroNew,chSSENew,PNENew,minRateNew,maxRateNew,diffPNENew,plotDiffC50_30,calculateTangent);
+                        sessionCounter=sessionCounter+1;
+                    end
+                end
+            end
+            if exampleFig==0
+                [hS,pS,ciS,statsS]=ttest(slopeNeuroNew,slopeNeuroOld)
+                [hP,pP,ciP,statsP]=ttest(PNENew,PNEOld)
+                [hmin,pmin,cimin,statsmin]=ttest(minRateNew,minRateOld)
+                [hmax,pmax,cimax,statsmax]=ttest(maxRateNew,maxRateOld)
+                figure(figROC);
+                if sglroc3IndividualChs==1
+                    subFolder='new_vs_old_sglroc3acrosschannels';
+                elseif sglroc3IndividualChs==0
+                    subFolder='new_vs_old_sglrocmeanchannels';
+                end
+                imagename=['cumulative_ROCs_old_new_',area,'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10)];
+                pathname=fullfile(rootFolder,'PL',analysisType,animal,subFolder,imagename);
+                printtext=sprintf('print -dpng %s.png',pathname);
+                set(gcf,'PaperPositionMode','auto')
+                eval(printtext);
+                matname=['cumulative_ROCs_old_new_',area,'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10)];
+                pathname=fullfile(rootFolder,'PL',analysisType,animal,subFolder,matname);
+                if sglroc3IndividualChs==1
+                    saveText=['save ',pathname,'.mat all_rocvals_sglroc3 all_rocvals slopeNeuroNew PNENew diffPNENew minRateNew maxRateNew chSSENew slopeNeuroOld PNEOld diffPNEOld minRateOld maxRateOld chSSEOld'];
+                elseif sglroc3IndividualChs==0
+                    saveText=['save ',pathname,'.mat all_rocvals_sglroc3 all_rocvals slopeNeuroNew PNENew diffPNENew minRateNew maxRateNew chSSENew slopeNeuroOld PNEOld diffPNEOld minRateOld maxRateOld chSSEOld hS pS ciS statsS hmin pmin cimin statsmin hP pP ciP statsP hmax pmax cimax statsmax'];
+                end
+                eval(saveText);
+            elseif exampleFig==1
+                figure(figGauss);
+                if sglroc3IndividualChs==1
+                    subFolder='new_vs_old_sglroc3acrosschannels';
+                elseif sglroc3IndividualChs==0
+                    subFolder='new_vs_old_sglrocmeanchannels';
+                end
+                imagename=['gauss_sample_test_act_',area,'_ch_',num2str(channels(chInd)),'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10)];
+                pathname=fullfile(rootFolder,'PL',analysisType,animal,subFolder,imagename);
+                printtext=sprintf('print -dpng %s.png',pathname);
+                set(gcf,'PaperPositionMode','auto')
+                eval(printtext);
+                figure(figROCconds);
+                imagename=['ROC_individual_conds_',area,'_ch_',num2str(channels(chInd)),'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10)];
+                pathname=fullfile(rootFolder,'PL',analysisType,animal,subFolder,imagename);
+                printtext=sprintf('print -dpng %s.png',pathname);
+                set(gcf,'PaperPositionMode','auto')
+                eval(printtext);
+                figure(figROCnew);
+                imagename=['bar_ROC_new_',area,'_ch_',num2str(channels(chInd)),'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10)];
+                pathname=fullfile(rootFolder,'PL',analysisType,animal,subFolder,imagename);
+                printtext=sprintf('print -dpng %s.png',pathname);
+                set(gcf,'PaperPositionMode','auto')
+                eval(printtext);
+            end
+        end
+    end
+end
