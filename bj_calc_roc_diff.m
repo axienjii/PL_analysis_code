@@ -12,6 +12,7 @@ else
 end
 animals=[{'blanco'} {'jack'}];
 areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
+areas=[{'v4_1'} {'v1_1'} {'v1_2'}];
 % areas=[{'v4_1'} {'v4_2'}];
 test_epochs={0 512 512*2 512*3};durSpon=150;
 for animalInd=1:length(animals)
@@ -47,10 +48,10 @@ for animalInd=1:length(animals)
                                 loadText=['load ',matPath,' ',analysisType,'mat'];
                                 eval(loadText);
                                 dataArrayNew=ROCmat;  
-                                if strcmp(area,'v4_1')||strcmp(area,'v1_1')
-                                    matName=[analysisType,'_Ch',num2str(channels(i)),'_',num2str(sampleContrast),'_1058_to_1587','.mat'];
-                                end
-                                matPath=fullfile('F:','PL','ROC_sglroc3',analysisType,animal,area,matName);
+%                                 if strcmp(area,'v4_1')||strcmp(area,'v1_1')
+%                                     matName=[analysisType,'_Ch',num2str(channels(i)),'_',num2str(sampleContrast),'_1058_to_1587','.mat'];
+%                                 end
+                                matPath=fullfile('F:','PL','ROC_sglroc3',animal,area,matName);
                                 loadText=['load ',matPath,' ',analysisType,'mat'];
                                 eval(loadText);
                                 dataArrayOld=ROCmat;
