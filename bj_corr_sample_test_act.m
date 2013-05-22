@@ -2,7 +2,7 @@ function bj_corr_sample_test_act(animals)
 %written by Xing 12/04/13
 %Calculates correlations in activity to sample and test
 
-saveSampleTestAct=1;
+saveSampleTestAct=0;
 comparisonType=1;
 switch(comparisonType)
     case(1)%all trials
@@ -16,13 +16,12 @@ if onExternalHD==1
 else
     rootFolder='F:';
 end
-plotDual=1;
-plotFigs=1;
-% animals=[{'blanco'} {'jack'}];
+plotDual=0;
+plotFigs=0;
+animals=[{'blanco'} {'jack'}];
 areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
 % areas=[{'v4_2'} {'v1_2'}];
 % areas=[{'v4_1'} {'v1_1'}];
-areas=[{'v1_2'}];
 test_epochs={0 512 512*2 512*3};durSpon=150;
 durSpon=150;%length of period prior to sample onset from which spontaneous rates are calculated. Can take on a value of up to 512 ms.
 minTrials=10;%set value of minumum number of trials for inclusion of session
@@ -114,6 +113,8 @@ for animalInd=1:length(animals)
                         diff=[];
                         for cond=1:size(matarray,1)
                             [r(i,cond),p(i,cond)]=corr(epoch2{cond,1}',epoch4{cond,1}');
+                            meanDiff(i,cond)=mean(epoch4{cond,1}-epoch2{cond,1});%test minus sample
+                            diffMeanAll(i,cond)=mean(epoch4{cond,1})-mean(epoch2{cond,1});%test minus sample
                         end
                         if plotDual==1&&plotFigs==1
                             subplot(ceil(length(sessionNums)/5),10,i*2);
@@ -124,6 +125,41 @@ for animalInd=1:length(animals)
                             xlim([0 15]);
                         end
                     end
+                end
+                if h==1
+                    figDiffsDiagonal=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+                    set(figDiffsDiagonal, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+                end
+                figure(figDiffsDiagonal)
+                for i=1:length(sessionNums)
+                    for cond=1:length(testContrast)
+                        plot(meanDiff(i,cond),diffMeanAll(i,cond),'Marker','o','LineStyle','none','Color',colmapText(cond,:));hold on
+                    end
+                end
+                if h==length(testContrast)
+                    axis square
+                    xlims=get(gca,'XLim');
+                    ylims=get(gca,'YLim');
+                    squarelims=[min([xlims(1) ylims(1)]) max([xlims(2) ylims(2)])];
+                    line([squarelims(1) squarelims(2)],[squarelims(1) squarelims(2)],'Color','k','LineStyle',':');
+                end
+                if h==1
+                    figDiffs=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+                    set(figDiffs, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+                end
+                figure(figDiffs)
+                diffDiffs=meanDiff-diffMeanAll;
+                for i=1:length(sessionNums)
+                    for cond=1:length(testContrast)
+                        plot(cond,diffDiffs(i,cond),'Marker','o','LineStyle','none','Color',colmapText(cond,:));hold on
+                    end
+                end
+                if h==length(testContrast)
+                    axis square
+                    xlims=get(gca,'XLim');
+                    ylims=get(gca,'YLim');
+                    squarelims=[min([xlims(1) ylims(1)]) max([xlims(2) ylims(2)])];
+                    line([0 14],[0 0],'Color','k','LineStyle',':');
                 end
                 if plotFigs==1
                     if plotDual==1
@@ -152,7 +188,7 @@ for animalInd=1:length(animals)
                     mkdir(matFolderName);
                 end
                 saveText=['save ',matPathName,' p r'];
-                eval(saveText);
+%                 eval(saveText);
                 if plotFigs==1
                     figure(figSess);
                     subplot(ceil(length(channels)/5),5,h);
