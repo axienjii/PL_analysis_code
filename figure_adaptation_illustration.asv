@@ -1,0 +1,87 @@
+function figuren_adaptation_illustration
+channel=10;
+session=77;
+sampleContrast=30;
+animal='jack';
+
+spikeDataName=[num2str(channel),'_',num2str(floor(session)),'_',num2str(sampleContrast)];
+spikeDataFolder=fullfile('F:','PL','spikeData',animal,spikeDataName);
+loadText=['load ',spikeDataFolder,'.mat matarray'];
+eval(loadText);
+
+numBins=100;
+binWidth=512/numBins;
+bins1=0:binWidth:512;
+midBins=bins1(2:end)-512/(numBins*2);
+sigma=5;
+mu=0;
+fit_val=(-3*sigma):1:(3*sigma);
+figSess=figure('Color',[1,1,1],'Units','Normalized','Position',[0.05, 0.1, 0.4, 0.2]); %
+set(figSess, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+spontan=zeros(1,50)+5;
+%Jack V4 & V1:
+ISI=[spontan spontan];
+for n=2:length(ISI)
+    ISI(n)=ISI(n-1)-0.02;
+end
+totalTrials=size(matarray{8,2},1)+size(matarray{9,2},1)+size(matarray{10,2},1);
+histo=zeros(totalTrials,length(bins1));
+cond=8;
+for n=1:size(matarray{cond,2},1)
+    spikeTimes=matarray{cond,2}{n};%sample
+    [N X]=histc(spikeTimes,bins1);%2nd input arg is bin edges
+    if size(N,2)==1
+        N=N';
+    end
+    histo(n,1:length(N))=histo(n,1:length(N))+N;
+end
+histostd=std(histo*1000/binWidth,0,1)/totalTrials;
+% histostd=std(histo*1000/binWidth,0,1);
+histo=sum(histo,1)/totalTrials*1000/binWidth;
+histo=histo*3;
+histo2=histo-5;
+y=ones(1,length(fit_val));
+y=(y*(1/(sigma*sqrt(2*pi))).*exp(-(((fit_val-mu).^2)/(2*sigma*sigma))));
+fitted_vector=filter2(y,histo);
+allAct=[spontan histo(1:end-1) ISI histo2(1:end-1) ISI];
+spontanBins=midBins(1:50)-256;
+ISIBins=midBins+512;
+ISI2Bins=midBins+512*3;
+histo2Bins=midBins+512*2;
+allBins=[spontanBins midBins ISIBins histo2Bins ISI2Bins];
+fit_val=(-3*sigma):1:(3*sigma);
+y=ones(1,length(fit_val));
+y=(y*(1/(sigma*sqrt(2*pi))).*exp(-(((fit_val-mu).^2)/(2*sigma*sigma))));
+fitted_vector=filter2(y,allAct);
+plot(allBins,fitted_vector,'b-','LineWidth',2);hold on
+
+%Blanco V4
+ISI=[spontan spontan];
+for n=2:length(ISI)
+    ISI(n)=ISI(n-1)+0.02;
+end
+histo2=histo-2;
+allAct=[spontan histo(1:end-1) ISI histo2(1:end-1) ISI];
+fit_val=(-3*sigma):1:(3*sigma);
+y=ones(1,length(fit_val));
+y=(y*(1/(sigma*sqrt(2*pi))).*exp(-(((fit_val-mu).^2)/(2*sigma*sigma))));
+fitted_vector=filter2(y,allAct);
+plot(allBins,fitted_vector,'r-','LineWidth',2);hold on
+
+%Blanco V1
+ISI=[spontan spontan];
+for n=2:length(ISI)
+    ISI(n)=ISI(n-1)+0.02;
+end
+allAct=[spontan histo(1:end-1) ISI histo(1:end-1) ISI];
+fit_val=(-3*sigma):1:(3*sigma);
+y=ones(1,length(fit_val));
+y=(y*(1/(sigma*sqrt(2*pi))).*exp(-(((fit_val-mu).^2)/(2*sigma*sigma))));
+fitted_vector=filter2(y,allAct);
+plot(allBins,fitted_vector,'LineStyle','-','LineWidth',2,'Color',[0.05 0.73 0.24]);hold on
+
+%all sample act:
+plot(allBins(1:170),fitted_vector(1:170),'k-','LineWidth',2);hold on
+
+set(gca,'XTick',[0 512 1024 1536],'XTickLabel',[0 512 1024 1536]);
+xlim([-200 2000]);
