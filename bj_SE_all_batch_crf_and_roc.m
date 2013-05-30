@@ -1,4 +1,4 @@
-function bj_SE_all_batch_crf_and_roc(animal,area,ROCmethod,sessionNums)
+function bj_SE_all_batch_crf_and_roc(animal,area,ROCmethod,sessionNums,useISI)
 %Written by Xing on 27/09/10
 %Modified from blanco_SE_all_batch_roc
 %
@@ -107,7 +107,7 @@ for h=1:length(channels)
                 end
                 valsText=['load ',matPath,' matarray'];
                 eval(valsText);
-                bj_SE_crf_and_roc(channels(h),sessionNums(i),cellEpochTimes,minusSpon,matarray,animal,area,sampleContrast,testContrast,ROCmethod)
+                bj_SE_crf_and_roc(channels(h),sessionNums(i),cellEpochTimes,minusSpon,matarray,animal,area,sampleContrast,testContrast,ROCmethod,useISI)
             end
         end
     end

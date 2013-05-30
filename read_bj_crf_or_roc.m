@@ -1,4 +1,4 @@
-function []=read_bj_crf_or_roc(datamat,chNum,psychoname,testContrast,sampleContrast,animal,area,startEndTime,analysisType,excludeSessHighSSE,excludeOutliers,rootFolder,plotLeastSquares,modifyMinMax)
+function []=read_bj_crf_or_roc(datamat,chNum,psychoname,testContrast,sampleContrast,animal,area,startEndTime,analysisType,excludeSessHighSSE,excludeOutliers,rootFolder,plotLeastSquares,modifyMinMax,useISI)
 %Modified from read_blanco_V1_crf
 %Written by Xing 06/03/13
 %
@@ -104,7 +104,7 @@ if excludeSessHighSSE==1
             numsessions=length(sessionSorted1);
             slopeNeuro=slopeNeuro(~ind);
             c50=c50(~ind);
-        elseif strcmp(analysisType,'NVP')
+        elseif strcmp(analysisType,'NVP_zero_one')
             loadText=['load ',slC50MatPathname,'.mat sessionSorted1 threshold82lower threshold82higher'];
             eval(loadText)            
             tLsigma=std(threshold82lower);
@@ -119,12 +119,23 @@ if excludeSessHighSSE==1
             numsessions=length(sessionSorted1);
             threshold82lower=threshold82lower(~ind);
             threshold82higher=threshold82higher(~ind);
+        elseif strcmp(analysisType,'NVP')
+            loadText=['load ',slC50MatPathname,'.mat sessionSorted1 threshold82higher'];
+            eval(loadText)            
+            tHsigma=std(threshold82higher);
+            tHoutliers=abs((threshold82higher-mean(threshold82higher)))>threshSigmaMultiple*tHsigma;
+            thHOutliersHighcut=threshold82higher>manual_cutoff;%manual exclusion for obvious outliers
+            ind=tHoutliers+thHOutliersHighcut;%find sessions where lower and/or higher contrast threshold values are outliers (union)
+            sessionSorted1=sessionSorted1(~ind);%keep sessions that do not have outliers
+            datamat=datamat(~ind,:);
+            numsessions=length(sessionSorted1);
+            threshold82higher=threshold82higher(~ind);
         end
     end
 end
 
 if plotFig==1&&~modifyMinMax
-    [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData,threshold82lower,threshold82higher]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,datamat,chNum,numsessions,sessionSorted1,sampleContrast,testContrast,calculateTangent,plotDiffC50_30,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,slC50MatPathname,slSigmaMultiple,c50SigmaMultiple,threshSigmaMultiple,rootFolder,plotLeastSquares);
+    [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData,threshold82lower,threshold82higher]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,datamat,chNum,numsessions,sessionSorted1,sampleContrast,testContrast,calculateTangent,plotDiffC50_30,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,slC50MatPathname,slSigmaMultiple,c50SigmaMultiple,threshSigmaMultiple,rootFolder,plotLeastSquares,useISI);
 end
 
 % allChROC=[allChROC;appendROC];
@@ -175,7 +186,7 @@ end
 if strcmp(analysisType,'ROC')||strcmp(analysisType,'CRF')
     example_ch_54=0;
     plot_neurometric_coefs(animal,area,chNum,appendText,startEndTime,slopeNeuro,c50,plotDiffC50_30,diffc50,minRate,maxRate,sessionSorted1,analysisType,example_ch_54,excludeSessHighSSE,excludeOutliers,writeCoefs,slSigmaMultiple,c50SigmaMultiple)
-elseif strcmp(analysisType,'NVP')
+elseif strcmp(analysisType,'NVP_zero_one')||strcmp(analysisType,'NVP')
     plot_nvp_threshold_coefs(animal,area,chNum,appendText,startEndTime,threshold82lower,threshold82higher,sessionSorted1,analysisType,excludeSessHighSSE,excludeOutliers,writeCoefs,threshSigmaMultiple)
 end
 % pause

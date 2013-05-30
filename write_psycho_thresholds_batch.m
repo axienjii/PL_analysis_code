@@ -1,4 +1,5 @@
-function write_psycho_thresholds_batch(roving,excludeSessHighSSE,excludeOutliers,analysisType)
+function write_psycho_thresholds_batch(roving,excludeSessHighSSE,excludeOutliers,analysisType,useISI)
+plotLeastSquares=0;
 onExternalHD=1;
 if onExternalHD==0
     rootFolder='G:\PL_backup_060413';
@@ -76,25 +77,33 @@ for animalInd=1:length(animals)
                 datamat=datamat(ind,:);
                 numsessions=length(sessionSorted1);
                 if excludeOutliers==1
-                    loadText=['load ',psychoThresholdMatPathname,' sessionSorted2 threshold82lower threshold82higher'];
+                    loadText=['load ',psychoThresholdMatPathname];
                     eval(loadText)
-                    tLsigma=std(threshold82lower);
                     tHsigma=std(threshold82higher);
-                    tLoutliers=abs((threshold82lower-mean(threshold82lower)))>threshSigmaMultiple*tLsigma;
                     tHoutliers=abs((threshold82higher-mean(threshold82higher)))>threshSigmaMultiple*tHsigma;
-                    thLOutliersHighcut=threshold82lower>manual_cutoff;%manual exclusion for obvious outliers (above 100%)
                     thHOutliersHighcut=threshold82higher>manual_cutoff;%manual exclusion for obvious outliers
-                    ind=tLoutliers+tHoutliers+thLOutliersHighcut+thHOutliersHighcut;%find sessions where lower and/or higher contrast threshold values are outliers (union)
+                    if strcmp(analysisType,'psycho_zero_one')||strcmp(analysisType,'psycho_param_zero_one')
+                        tLsigma=std(threshold82lower);
+                        tLoutliers=abs((threshold82lower-mean(threshold82lower)))>threshSigmaMultiple*tLsigma;
+                        thLOutliersHighcut=threshold82lower>manual_cutoff;%manual exclusion for obvious outliers (above 100%)
+                        ind=tLoutliers+tHoutliers+thLOutliersHighcut+thHOutliersHighcut;%find sessions where lower and/or higher contrast threshold values are outliers (union)
+                    else
+                        ind=tHoutliers+thHOutliersHighcut;%find sessions where lower and/or higher contrast threshold values are outliers (union)
+                    end
                     if sum(ind)>0
                         sessionSorted1=sessionSorted2(~ind);%keep sessions that do not have outliers
                         datamat=datamat(~ind,:);
                         numsessions=length(sessionSorted1);
-                        threshold82lower=threshold82lower(~ind);
+                        if strcmp(analysisType,'psycho_zero_one')||strcmp(analysisType,'psycho_param_zero_one')
+                            threshold82lower=threshold82lower(~ind);
+                        else
+                            threshold82lower=[];
+                        end
                         threshold82higher=threshold82higher(~ind);
                     end
                 end
             end
-            [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData,threshold82lower,threshold82higher]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,datamat,analysisType,numsessions,sessionSorted1,sampleContrast,testContrast,1,1,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,psychoThresholdMatPathname,[],[],threshSigmaMultiple,rootFolder);
+            [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,yLimData,threshold82lower,threshold82higher]=plot_CRF_or_ROC_across_sessions(animal,area,analysisType,datamat,analysisType,numsessions,sessionSorted1,sampleContrast,testContrast,1,1,excludeSessHighSSE,excludeOutliers,SSEMatPath,startEndTime,psychoThresholdMatPathname,[],[],threshSigmaMultiple,rootFolder,plotLeastSquares,useISI);
         end
     end
 end

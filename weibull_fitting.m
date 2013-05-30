@@ -1,9 +1,17 @@
-function [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE]=weibull_fitting(datavals,sampleContrast,testContrast,ROCanalysisType,i,slopeNeuro,chSSE,c50,minRate,maxRate,diffc50,plotDiffC50_30,calculateTangent)
+function [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,threshold82higher]=weibull_fitting(datavals,sampleContrast,testContrast,ROCanalysisType,i,slopeNeuro,chSSE,c50,minRate,maxRate,diffc50,plotDiffC50_30,calculateTangent,useISI,threshold82higher)
 xvals=testContrast(1):1:testContrast(end);
-if sum(datavals(1:3))<=sum(datavals(end-2:end))
-    X0=[2 30 0.2 0.1];
-elseif sum(datavals(1:3))>sum(datavals(end-2:end))
-    X0=[-2 30 0.2 0.1];
+if useISI==0
+    if sum(datavals(1:3))<=sum(datavals(end-2:end))
+        X0=[2 30 0.2 0.1];
+    elseif sum(datavals(1:3))>sum(datavals(end-2:end))
+        X0=[-2 30 0.2 0.1];
+    end
+elseif useISI==1
+    if sum(datavals(1:3))<=sum(datavals(end-2:end))
+        X0=[2 30 0.5 0];
+    elseif sum(datavals(1:3))>sum(datavals(end-2:end))
+        X0=[-2 30 0.5 0.5];
+    end
 end
 options = optimset('Display','off','MaxFunEvals',10^4,'MaxIter',10^4,'TolFun',1.0E-6,'TolX',1.0E-6);
 X1=fminsearch(@fit_weibull,X0,options,testContrast,datavals,[],'least_square',[1 1 1 0],[10 100 1 0],[1 1 0 0],[-20 0 0 0]);
@@ -38,7 +46,50 @@ if calculateTangent==0
 elseif calculateTangent==1
     slopeNeuro(1,i)=X(1)*X(3)*exp(-(sampleContrast/X(2))^X(1))*sampleContrast^(X(1)-1)*(1/X(2))^X(1);
 end
-c50(1,i)=real(X(2).*(-log((0.5-X(4))/X(3))).^(1/X(1)));
+
+yvals=1-X(4)-X(3).*exp(-(xvals./X(2)).^X(1));
+xvalsFine=testContrast(1):0.01:testContrast(end);
+yvalsFine=1-X(4)-X(3).*exp(-(xvalsFine./X(2)).^X(1));
+if useISI==0
+    if max(yvals)<0.5%out of range
+        c50(1,i)=100;
+    elseif min(yvals)>0.5
+        c50(1,i)=0;
+    else
+        diffTemp=yvalsFine-0.75;
+        [tempVal columnInd]=min(abs(diffTemp));
+        c50(1,i)=xvalsFine(columnInd);
+        %                 c50(1,i)=real(X(2).*(-log((0.5-X(4))/X(3))).^(1/X(1)));
+    end
+    threshold82higher=[];
+elseif useISI==1%read C50/PNE as being point where AUROC value is 0.75, instead of 0.5
+    if max(yvals)<0.75%out of range
+        c50(1,i)=100;
+    elseif min(yvals)>0.75
+        c50(1,i)=0;
+    else
+        diffTemp=yvalsFine-0.75;
+        [tempVal columnInd]=min(abs(diffTemp));
+        c50(1,i)=xvalsFine(columnInd);
+        %                 c50(1,i)=real(X(2).*(-log((0.5-X(4))/X(3))).^(1/X(1)));
+    end
+    diffTemp=[];
+    if slopeNeuro(1,i)>=0&&max(yvals)>=0.82%stimulus-evoked excitation
+        diffTemp=yvalsFine-0.82;%single neurometric threshold
+    elseif slopeNeuro(1,i)<0&&min(yvals)<=1-0.82%stimulus-evoked suppression
+        diffTemp=yvalsFine-(1-0.82);%single neurometric threshold
+    end
+    if ~isempty(diffTemp)
+        if max(yvals)>=0.82&&min(yvals)<=0.82||max(yvals)>=1-0.82&&min(yvals)<=1-0.82
+            [tempVal columnInd]=min(abs(diffTemp));
+            threshold82higher(1,i)=xvalsFine(columnInd);
+        else
+            threshold82higher(1,i)=NaN;
+        end
+    else
+        threshold82higher(1,i)=NaN;
+    end
+end
 hold on
 if plotDiffC50_30==1
     diffc50(1,i)=abs(c50(1,i)-30);
@@ -48,7 +99,11 @@ end
 if strcmp(ROCanalysisType,'old')
     line(c50(1,i),0:0.01:1,'Color','b');
 else
-    line(c50(1,i),0:0.01:1,'Color','r');
+    if useISI==0
+        line(c50(1,i),0:0.01:1,'Color','r');
+    elseif useISI==1
+        line(threshold82higher(1,i),0:0.01:1,'Color','r');
+    end
 end
 yvals=1-X(4)-X(3).*exp(-(xvals./X(2)).^X(1));
 %         yvals=(yvals-.005)/.99;

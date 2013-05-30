@@ -1,4 +1,4 @@
-function bj_SE_crf_and_roc(ch,session,test_epochs,minusSpon,matarray,animal,area,sampleContrast,testContrast,ROCmethod)
+function bj_SE_crf_and_roc(ch,session,test_epochs,minusSpon,matarray,animal,area,sampleContrast,testContrast,ROCmethod,useISI)
 %Writes CRF values to mat file:
 %session number, time epochs, CRF in spikes/s for each condition durnig
 %spontaneous period, during sample, during ISI, and during test.
@@ -72,9 +72,25 @@ if min(numTrials)>=minTrials
         for cond=1:size(matarray,1)
             %roc analysis:
             higherTest=0;
+            lowerTest=0;
             for rowInd=1:length(epoch4{cond,subPeriod})
-                if epoch4{cond,subPeriod}(1,rowInd)>epoch2{cond,subPeriod}(1,rowInd)
-                    higherTest=higherTest+1;
+                if useISI==0
+                    if epoch4{cond,subPeriod}(1,rowInd)>epoch2{cond,subPeriod}(1,rowInd)
+                        higherTest=higherTest+1;
+                    elseif epoch4{cond,subPeriod}(1,rowInd)<epoch2{cond,subPeriod}(1,rowInd)
+                        lowerTest=lowerTest+1;
+                    end
+                elseif useISI==1%calculate AUROCs based on test vs pre-test, instead of test vs sample
+                    temp3=matarray{cond,3}{rowInd}>test_epochs{3}-256;%activity during ISI
+                    spikes=matarray{cond,3}{rowInd}(temp3);
+                    temp3=spikes<test_epochs{3};
+                    spikes=spikes(temp3);
+                    actList3{cond,subPeriod}(1,rowInd)=length(spikes)/256*1000;%find rate during second half of ISI
+                    if epoch4{cond,subPeriod}(1,rowInd)>actList3{cond,subPeriod}(1,rowInd)
+                        higherTest=higherTest+1;
+                    elseif epoch4{cond,subPeriod}(1,rowInd)<actList3{cond,subPeriod}(1,rowInd)
+                        lowerTest=lowerTest+1;
+                    end
                 end
             end
             if strcmp(ROCmethod,'old')
@@ -82,7 +98,7 @@ if min(numTrials)>=minTrials
                 [roctemp]=sglroc3(epoch4{cond,subPeriod}(1,:),epoch2{cond,subPeriod}(1,:));
                 rocvals(cond)=roctemp;
             elseif strcmp(ROCmethod,'new')
-                roc=higherTest/length(epoch4{cond,subPeriod});
+                roc=higherTest/(higherTest+lowerTest);
                 rocvals(cond)=roc;
             end
         end

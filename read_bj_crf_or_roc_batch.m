@@ -1,4 +1,4 @@
-function read_bj_crf_or_roc_batch(animal,area,analysisType,excludeSessHighSSE,excludeOutliers,comparisonType,plotLeastSquares,modifyMinMax)
+function read_bj_crf_or_roc_batch(animal,area,analysisType,excludeSessHighSSE,excludeOutliers,comparisonType,plotLeastSquares,modifyMinMax,useISI)
 
 %Written by Xing 06/03/13
 %to calculate and write correlation coefficients
@@ -6,6 +6,8 @@ function read_bj_crf_or_roc_batch(animal,area,analysisType,excludeSessHighSSE,ex
 %excludeOutliers: set to 1 to exclude outlying data points 
 %modifyMinMax: set to 1 to read old minRate & maxRate values and calculate
 %correct ones, set to 0 if values in file are already orrect.
+%Set useISI=1 to read AUROC values that are calculated based on comparison of
+%test to pre-test (rather than on test to sample) activity.
 if strcmp(analysisType,'ROC_diff')
     switch(comparisonType)
         case(1)%compare ROC values between two methods, using all trials
@@ -97,7 +99,7 @@ for i=1:length(channels)
                         end
                     end
                     dataArray=dataArray(includeMatch,:);
-                    read_bj_crf_or_roc(dataArray,channels(i),psychoPathname,testContrast,sampleContrast,animal,area,startEndTime,analysisType,excludeSessHighSSE,excludeOutliers,rootFolder,plotLeastSquares,modifyMinMax)
+                    read_bj_crf_or_roc(dataArray,channels(i),psychoPathname,testContrast,sampleContrast,animal,area,startEndTime,analysisType,excludeSessHighSSE,excludeOutliers,rootFolder,plotLeastSquares,modifyMinMax,useISI)
                 end
             end
         end
