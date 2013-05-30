@@ -1,7 +1,11 @@
-function read_bj_plot_CRF_or_ROC_across_chs_batch(analysisType)
+function read_bj_plot_CRF_or_ROC_across_chs_batch(analysisType,inclusionType)
 %Written on 07/03/13.
 
-test_epochs={0 529 529*2 529*3};durSpon=150;
+%inclusionType: 1- include all data; 2- only sessions with good SSE; 3-
+%only with good SSE and excluding outliers
+
+% test_epochs={0 529 529*2 529*3};
+test_epochs={0 512 512*2 512*3};durSpon=150;
 allChCoefs=cell(1,6);
 saveImageAppendText={'_slope_vs_session' '_C50_vs_session' '_neuro_vs_psycho' '_diff_C50_vs_session' '_minRate_vs_session' '_maxRate_vs_session'};
 areas=[{'v4_1'} {'v1_1'}];
@@ -9,8 +13,8 @@ animals=[{'blanco'} {'jack'}];
 plotFig=1;
 figureHandles=[{'fighandle1'} {'fighandle2'} {'fighandle3'} {'fighandle4'} {'fighandle5'} {'fighandle6'}];
 totalSigChs=0;
-for animalInd=1:2
-    for areaInd=1:2
+for animalInd=1:length(animals)
+    for areaInd=1:length(areas)
         animal=animals{animalInd};
         area=areas{areaInd};
         if strcmp(animal,'jack')
@@ -66,7 +70,11 @@ for animalInd=1:2
                         for i=1:length(channels)
                             chNum=channels(i);
                             if strcmp(analysisType,'ROC')
-                                coefsFileName=[num2str(chNum),'_',num2str(sampleContrast),startEndTime,'_',analysisType,'_coefs_',area,'_goodSSE_no_outliers_sl3_C503'];%,'_goodSSE_no_outliers_sl3_C503','.mat'];
+                                if inclusionType==3
+                                    coefsFileName=[num2str(chNum),'_',num2str(sampleContrast),startEndTime,'_',analysisType,'_coefs_',area,'_goodSSE_no_outliers_sl3_C503'];%,'_goodSSE_no_outliers_sl3_C503','.mat'];
+                                elseif inclusionType==2
+                                    coefsFileName=[num2str(chNum),'_',num2str(sampleContrast),startEndTime,'_',analysisType,'_coefs_',area,'_goodSSE'];%,'_goodSSE_no_outliers_sl3_C503','.mat'];
+                                end
                             else
                                 coefsFileName=[num2str(chNum),'_',num2str(sampleContrast),startEndTime,'_',analysisType,'_coefs_',area];%,'_goodSSE_no_outliers_sl3_C503','.mat'];
                             end
