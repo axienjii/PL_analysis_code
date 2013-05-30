@@ -31,14 +31,26 @@ if example_ch_54==1
     if plotDiffC50_30==1
         subplot(2,3,4);
         plot(xvals,c50,'sb');
-        title('c50 vs time')
+        if strcmp(analysisTypeText,'ROC')
+            title('PNE vs time')
+        else
+            title('c50 vs time')
+        end
         subplot(2,2,5);
         plot(xvals,diffc50,'sb');
-        title('abs(c50-30) vs time')
+        if strcmp(analysisTypeText,'ROC')
+            title('abs(PNE-30) vs time')
+        else
+            title('abs(c50-30) vs time')
+        end
     else
         subplot(1,3,2);
         plot(xvals,c50,'sb');
-        title('c50 vs time')
+        if strcmp(analysisTypeText,'ROC')
+            title('PNE vs time')
+        else
+            title('c50 vs time')
+        end
     end
     if plotDiffC50_30==1
         subplot(2,2,2);
@@ -59,14 +71,26 @@ else
     if plotDiffC50_30==1
         subplot(2,3,4);
         plot(1:length(c50),c50,'ok');
-        title('c50 vs time')
+        if strcmp(analysisTypeText,'ROC')
+            title('PNE vs time')
+        else
+            title('c50 vs time')
+        end
         subplot(2,3,5);
         plot(1:length(sessionSorted1),diffc50,'ok');
-        title('abs(c50-30) vs time')
+        if strcmp(analysisTypeText,'ROC')
+            title('abs(PNE-30) vs time')
+        else
+            title('abs(c50-30) vs time')
+        end
     else
         subplot(1,3,2);
         plot(1:length(sessionSorted1),c50,'ok');
-        title('c50 vs time')
+        if strcmp(analysisTypeText,'ROC')
+            title('PNE vs time')
+        else
+            title('c50 vs time')
+        end
     end
     %     plot(sessionSorted1,c50,'ok');
     if plotDiffC50_30==1
@@ -147,12 +171,12 @@ if length(coefficients1)>1
         yLimVals=get(gca,'YLim');
         xLimVals=get(gca,'XLim');
         text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
-        subplot(2,3,3);
+        subplot(2,3,6);
         ptext=sprintf('r= %f  p= %f',coefficients(1,5),coefficients(2,5));
         yLimVals=get(gca,'YLim');
         xLimVals=get(gca,'XLim');
         text('Position',[xLimVals(1) yLimVals(1)-0.1*(yLimVals(2)-yLimVals(1))],'FontSize',9,'String',ptext);
-        subplot(2,3,6);
+        subplot(2,3,3);
         ptext=sprintf('r= %f  p= %f',coefficients(1,6),coefficients(2,6));
         yLimVals=get(gca,'YLim');
         xLimVals=get(gca,'XLim');
