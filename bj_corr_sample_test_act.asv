@@ -19,9 +19,7 @@ end
 plotDual=0;
 plotFigs=0;
 animals=[{'blanco'} {'jack'}];
-areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
-% areas=[{'v4_2'} {'v1_2'}];
-% areas=[{'v4_1'} {'v1_1'}];
+areas=[{'v4_1'} {'v1_1'} {'v1_2_1'} {'v1_2_2'} {'v1_2_3'}];
 test_epochs={0 512 512*2 512*3};durSpon=150;
 durSpon=150;%length of period prior to sample onset from which spontaneous rates are calculated. Can take on a value of up to 512 ms.
 minTrials=10;%set value of minumum number of trials for inclusion of session
@@ -64,7 +62,7 @@ for animalInd=1:length(animals)
                     if matExists==1
                         valsText=['load ',matPath,' matarray'];
                         eval(valsText);
-                        for cond=1:size(matarray,1)
+                        for cond=size(matarray,1)/2+1:size(matarray,1)/2+3
                             trials2=length(matarray{cond,2});
                             trials4=length(matarray{cond,4});
                             for epoch=[2 4]
@@ -81,22 +79,18 @@ for animalInd=1:length(animals)
                             end
                             if length(epoch2{cond,subPeriod})~=length(epoch4{cond,subPeriod})
                                 pauseHere=1;
-                            end
-                        end
-                        if saveSampleTestAct==1
-                            if comparisonType==1
+                            end                            
+                            figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+                            set(figSess, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+                            plot(epoch4{cond,subPeriod},epoch2{cond,subPeriod},'kx');
+                            if saveSampleTestAct==1
                                 saveFolderName=['F:\PL\sample_test_activity\',animal,'_',area];
-                            elseif comparisonType==2
-                                saveFolderName=['F:\PL\sample_test_activity\',animal,'_',area,'\plotRedArtifacts\correct_trials_only'];
+                                if ~exist(saveFolderName,'dir')
+                                    mkdir(saveFolderName);
+                                end
+                                saveText=['save F:\PL\sample_test_activity\',animal,'_',area,'\ch',num2str(channels(h)),'_',num2str(sessionNums(i)),'_example_sample_test_act.mat epoch2 epoch4'];
+                                eval(saveText);
                             end
-                            if ~exist(saveFolderName,'dir')
-                                mkdir(saveFolderName);
-                            end
-                            saveText=['save F:\PL\sample_test_activity\',animal,'_',area,'\ch',num2str(channels(h)),'_',num2str(sessionNums(i)),'_example_sample_test_act.mat epoch2 epoch4'];
-                            eval(saveText);
-                            matActName=['F:\PL\ch',num2str(channels(h)),'_',num2str(sessionNums(i)),'_example_sample_test_act.mat'];
-%                             txtActName=['F:\PL\ch',num2str(channels(h)),'_',num2str(sessionNums(i)),'_example_sample_test_act.txt'];
-%                             movefile(matActName,txtActName);
                         end
                         if plotFigs==1
                             figure(figCh);
@@ -126,27 +120,41 @@ for animalInd=1:length(animals)
                         end
                     end
                 end
-                figure;
+                if h==1
+                    figDiffsDiagonal=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+                    set(figDiffsDiagonal, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+                end
+                figure(figDiffsDiagonal)
                 for i=1:length(sessionNums)
                     for cond=1:length(testContrast)
                         plot(meanDiff(i,cond),diffMeanAll(i,cond),'Marker','o','LineStyle','none','Color',colmapText(cond,:));hold on
                     end
                 end
-                axis square
-                xlims=get(gca,'XLim');
-                ylims=get(gca,'YLim');
-                squarelims=[min([xlims(1) ylims(1)]) max([xlims(2) ylims(2)])];
-                line([squarelims(1) squarelims(2)],[squarelims(1) squarelims(2)],'Color','k','LineStyle',':');
-                figure;
+                if h==length(testContrast)
+                    axis square
+                    xlims=get(gca,'XLim');
+                    ylims=get(gca,'YLim');
+                    squarelims=[min([xlims(1) ylims(1)]) max([xlims(2) ylims(2)])];
+                    line([squarelims(1) squarelims(2)],[squarelims(1) squarelims(2)],'Color','k','LineStyle',':');
+                end
+                if h==1
+                    figDiffs=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+                    set(figDiffs, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+                end
+                figure(figDiffs)
                 diffDiffs=meanDiff-diffMeanAll;
                 for i=1:length(sessionNums)
-                    plot(1:length(testContrast),diffDiffs(i),'Marker','o','LineStyle','none','Color',colmapText(cond,:));hold on
+                    for cond=1:length(testContrast)
+                        plot(cond,diffDiffs(i,cond),'Marker','o','LineStyle','none','Color',colmapText(cond,:));hold on
+                    end
                 end
-                axis square
-                xlims=get(gca,'XLim');
-                ylims=get(gca,'YLim');
-                squarelims=[min([xlims(1) ylims(1)]) max([xlims(2) ylims(2)])];
-                line([squarelims(1) squarelims(2)],[squarelims(1) squarelims(2)],'Color','k','LineStyle',':');
+                if h==length(testContrast)
+                    axis square
+                    xlims=get(gca,'XLim');
+                    ylims=get(gca,'YLim');
+                    squarelims=[min([xlims(1) ylims(1)]) max([xlims(2) ylims(2)])];
+                    line([0 14],[0 0],'Color','k','LineStyle',':');
+                end
                 if plotFigs==1
                     if plotDual==1
                         imagename=['ch_',num2str(channel),'test_vs_sample_act_',area,'_splitPlots'];
@@ -174,7 +182,7 @@ for animalInd=1:length(animals)
                     mkdir(matFolderName);
                 end
                 saveText=['save ',matPathName,' p r'];
-                eval(saveText);
+%                 eval(saveText);
                 if plotFigs==1
                     figure(figSess);
                     subplot(ceil(length(channels)/5),5,h);
