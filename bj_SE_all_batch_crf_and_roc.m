@@ -1,6 +1,7 @@
-function bj_SE_all_batch_crf_and_roc(animal,area,ROCmethod,sessionNums,useISI)
+function bj_SE_all_batch_crf_and_roc(animal,area,ROCmethod,sessionNums,useISI,CRFonly)
 %Written by Xing on 27/09/10
 %Modified from blanco_SE_all_batch_roc
+%Set CRFonly to 1 if only need to calculate CRF data, not ROC data.
 %
 %Batch file for V1, V4_1 and V4_2 sessions.
 %Reads list of best epoch division times from representative sessions from file 'epoch_times_best3' in F:\blanco. 
@@ -17,6 +18,9 @@ function bj_SE_all_batch_crf_and_roc(animal,area,ROCmethod,sessionNums,useISI)
 
 % animal='blanco';
 % area='v4_1';
+if nargin<6||isempty(CRFonly)
+    CRFonly=0;
+end
 multipleTimes=0;
 minusSpon=0;
 if multipleTimes==1
@@ -107,7 +111,7 @@ for h=1:length(channels)
                 end
                 valsText=['load ',matPath,' matarray'];
                 eval(valsText);
-                bj_SE_crf_and_roc(channels(h),sessionNums(i),cellEpochTimes,minusSpon,matarray,animal,area,sampleContrast,testContrast,ROCmethod,useISI)
+                bj_SE_crf_and_roc(channels(h),sessionNums(i),cellEpochTimes,minusSpon,matarray,animal,area,sampleContrast,testContrast,ROCmethod,useISI,CRFonly)
             end
         end
     end
