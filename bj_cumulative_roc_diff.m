@@ -1,4 +1,4 @@
-function bj_cumulative_roc_diff(exampleFig,cutoff,animals,useISI)
+function bj_cumulative_roc_diff(exampleFig,cutoff,animals,useISI,areas,excludeSuppressed,normalize)
 %Written by Xing 17/05/13
 %Set useISI to 1: based on pre-test vs test, not on sample vs test.
 %Set useISI to 0: sample vs test.
@@ -11,12 +11,14 @@ function bj_cumulative_roc_diff(exampleFig,cutoff,animals,useISI)
 %Set exampleFig to 0 to plot ROC curves for new and old methods, set to 1
 %to only plot example figures of distributions of stimulus-evoked activity
 %and condition-dependent ROC curves.
+%Set excludeSuppressed to 1 to exclude channels with stimulus-evoked
+%suppression, i.e. blanco 13, 24, 42 and jack 49.
 if useISI==1
     analysisType='ROC';
 else
     analysisType='ROC_zero_one';
 end
-sglroc3IndividualChs=0;%set to 0 to read ROC values for individual channels and calculate mean ROC across channels; set to 1 to calculate ROCs based on pooled activity across channels
+sglroc3IndividualChs=1;%set to 0 to read ROC values for individual channels and calculate mean ROC across channels; set to 1 to calculate ROCs based on pooled activity across channels
 onExternalHD=0;
 if onExternalHD==1
     rootFolder='G:\PL_backup_060413';
@@ -29,21 +31,23 @@ if nargin<3||isempty(animals)
     animals=[{'blanco'} {'jack'}];
     % animals={'blanco'};
 end
-areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
-areas=[{'v4_1'} {'v1_1'} {'v1_2_1'} {'v1_2_2'} {'v1_2_3'}];
+if nargin<4||isempty(areas)
+    areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
+    areas=[{'v4_1'} {'v1_1'} {'v1_2_1'} {'v1_2_2'} {'v1_2_3'}];
+end
 if exampleFig==1
     animals={'jack'};
     areas={'v1_1'};
     sglroc3IndividualChs=1;
     figGauss=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
     set(figGauss, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
-    figROCconds=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
-    set(figROCconds, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
     figROCcondsExp=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
     set(figROCcondsExp, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
     figROCnew=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
     set(figROCnew, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
 end
+figROCconds=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+set(figROCconds, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
 for animalInd=1:length(animals)
     animal=animals{animalInd};
     for areaInd=1:length(areas)
@@ -68,36 +72,41 @@ for animalInd=1:length(animals)
             end
             loadText=['load ',pathname,' includeSessionsAll'];
             eval(loadText);
-            if exampleFig==1
-                colmapText=colormap(jet(size(testContrast,2)));
-                colmapText=[colmapText(1,:);132/255 22/255 216/255;202/255 65/255 223/255;colmapText(3:7,:);157/255 212/255 61/255;colmapText(10:12,:);178/255 111/255 12/255;colmapText(end,:)];
-            else
+            colmapText=colormap(jet(size(testContrast,2)));
+            colmapText=[colmapText(1,:);132/255 22/255 216/255;202/255 65/255 223/255;colmapText(3:7,:);157/255 212/255 61/255;colmapText(10:12,:);178/255 111/255 12/255;colmapText(end,:)];
+            if exampleFig==0
                 figROC=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
                 set(figROC, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
             end
-            rocvals_sglroc3=zeros(1,length(testContrast));
-            rocvals=zeros(1,length(testContrast));
             all_rocvals_sglroc3=[];
             all_rocvals=[];
             slopeNeuroNew=[];PNENew=[];diffPNENew=[];minRateNew=[];maxRateNew=[];chSSENew=[];
             slopeNeuroOld=[];PNEOld=[];diffPNEOld=[];minRateOld=[];maxRateOld=[];chSSEOld=[];
-            if useISI==1
+%             if useISI==1
                 threshold82higher=[];
-            end
+%             end
             sessionCounter=1;
             for i=1:length(sessionNums)
+                rocvals_sglroc3=zeros(1,length(testContrast));
+                rocvals=zeros(1,length(testContrast));
                 matFolder=['F:\PL\spikeData\',animal];
                 ROCmatChs=[];
                 for condInd=1:length(testContrast)
-                    higherTestAct=0;
-                    lowerTestAct=0;
                     if useISI==0
-                        allEpoch2=[];
+                        allEpoch2=[];%array to store summed up activity across channels 
                     elseif useISI==1
-                        allEpoch3=[];
+                        allEpoch3=[];%array to store summed up activity across channels
                     end
                     allEpoch4=[];
                     for chInd=1:length(channels)
+                        includeCh=1;
+                        if excludeSuppressed==1
+                            if strcmp(animal,'blanco')&&channels(chInd)==13||channels(chInd)==24||channels(chInd)==42
+                                includeCh=0;
+                            elseif strcmp(animal,'jack')&&channels(chInd)==49
+                                includeCh=0;
+                            end
+                        end
                         chStr=[num2str(channels(chInd)),'_',num2str(sessionNums(i)),'_',num2str(sampleContrast),'.mat'];
                         matPath=fullfile(matFolder,chStr);
                         matExists=0;
@@ -106,66 +115,102 @@ for animalInd=1:length(animals)
                         end
                         includeRows=includeSessionsAll(find(includeSessionsAll(:,1)==channels(chInd)),2);%include this session in analysis
                         includeRow=find(includeRows==sessionNums(i));
-                        if matExists==1&&~isempty(includeRow)
+                        if matExists==1&&~isempty(includeRow)&&includeCh
                             valsText=['load ',matPath,' matarray'];
                             eval(valsText);
                             if useISI==0
                                 if size(matarray{condInd,2},1)~=size(matarray{condInd,4},1)
                                     pause%if number of trials are not equal
                                 end
+                                if isempty(allEpoch2)
+                                    allEpoch2=zeros(size(matarray{condInd,4}));
+                                end
                             elseif useISI==1
                                 if size(matarray{condInd,3},1)~=size(matarray{condInd,4},1)
                                     pause%if number of trials are not equal
                                 end
+                                if isempty(allEpoch3)
+                                    allEpoch3=zeros(size(matarray{condInd,4}));
+                                end
+                            end
+                            if normalize==1
+                                maxAll=[];%find the highest firing rate across all conditions and trials, across both the sample and test presentation periods
+                                for n=1:size(matarray{condInd,4})
+                                    if useISI==0
+                                        maxAll=[maxAll length(matarray{condInd,2}{n})*1000/512 length(matarray{condInd,4}{n})*1000/512];
+                                    elseif useISI==1
+                                        maxAll=[maxAll length(matarray{condInd,2}{n})*1000/256 length(matarray{condInd,4}{n})*1000/512];
+                                    end
+                                end
+                                maxval=max(maxAll)/100;
+                            else
+                                maxval=1;
+                            end
+                            if isempty(allEpoch4)
+                                allEpoch4=zeros(size(matarray{condInd,4}));
                             end
                             for n=1:size(matarray{condInd,4})
-                                if useISI==0
-                                    if length(matarray{condInd,2}{n})<length(matarray{condInd,4}{n})
-                                        higherTestAct=higherTestAct+1;
-                                    elseif length(matarray{condInd,2}{n})>length(matarray{condInd,4}{n})
-                                        lowerTestAct=lowerTestAct+1;
-                                    elseif length(matarray{condInd,2}{n})==length(matarray{condInd,4}{n})
-                                    end
+                                if useISI==0                                    
+                                    allEpoch2(n)=allEpoch2(n)+(length(matarray{condInd,2}{n})*1000/512)/maxval;%sum up activity across channels
+                                    allEpoch4(n)=allEpoch4(n)+(length(matarray{condInd,4}{n})*1000/512)/maxval;
                                     if sglroc3IndividualChs==1
-                                        actList2(n)=length(matarray{condInd,2}{n})*1000/512;
-                                        actList4(n)=length(matarray{condInd,4}{n})*1000/512;
+                                        actList2(n)=(length(matarray{condInd,2}{n})*1000/512)/maxval;
+                                        actList4(n)=(length(matarray{condInd,4}{n})*1000/512)/maxval;
                                     end
                                 elseif useISI==1
                                     temp3=matarray{condInd,3}{n}>512*2-256;%activity during ISI
                                     spikes=matarray{condInd,3}{n}(temp3);
                                     temp3=spikes<512*2;
                                     spikes=spikes(temp3);
+                                    allEpoch3(n)=allEpoch3(n)+(length(spikes)/256*1000)/maxval;%sum up activity across channels
+                                    allEpoch4(n)=allEpoch4(n)+(length(matarray{condInd,4}{n})*1000/512)/maxval;
                                     if sglroc3IndividualChs==1
-                                        actList3(n)=length(spikes)/256*1000;%find rate during second half of ISI
-                                        actList4(n)=length(matarray{condInd,4}{n})*1000/512;
-                                    end
-                                    if length(matarray{condInd,4}{n})*1000/512>length(spikes)/256*1000
-                                        higherTestAct=higherTestAct+1;
-                                    elseif length(matarray{condInd,4}{n})*1000/512<length(spikes)/256*1000
-                                        lowerTestAct=lowerTestAct+1;
+                                        actList3(n)=(length(spikes)/256*1000)/maxval;%find rate during second half of ISI
+                                        actList4(n)=(length(matarray{condInd,4}{n})*1000/512)/maxval;
                                     end
                                 end
-                            end
+                            end                                    
                             if sglroc3IndividualChs==1
-                                if useISI==0
-                                    allEpoch2=[allEpoch2 actList2];
-                                elseif useISI==1
-                                    allEpoch3=[allEpoch3 actList3];
-                                end
-                                allEpoch4=[allEpoch4 actList4];
+%                                 if useISI==0
+%                                     allEpoch2=[allEpoch2 actList2];
+%                                 elseif useISI==1
+%                                     allEpoch3=[allEpoch3 actList3];
+%                                 end
+%                                 allEpoch4=[allEpoch4 actList4];
                             elseif sglroc3IndividualChs==0%read ROC values generated earlier for each channel
-                                if useISI==0
-                                    if condInd==1%only need to read ROC vals once, as they have been pre-calculated for all conditions
-                                        loadText=['load F:\PL\ROC_sglroc3\',animal,'\',area,'\ROC_Ch',num2str(channels(chInd)),'_',num2str(sampleContrast),'_1024_to_1536 ROCmat'];
-                                        eval(loadText);
-                                        sessionsList=[];
-                                        for j=1:size(ROCmat,1)
-                                            sessionsList=[sessionsList ROCmat{j,1}];
-                                        end
-                                        rowInd=find(sessionsList==sessionNums(i));
-                                        ROCmatChs=[ROCmatChs;ROCmat{rowInd,3}];
-                                    end
-                                end
+%                                 if useISI==0
+%                                     if condInd==1%only need to read ROC vals once, as they have been pre-calculated for all conditions
+%                                         loadText=['load F:\PL\ROC_sglroc3\',animal,'\',area,'\ROC_Ch',num2str(channels(chInd)),'_',num2str(sampleContrast),'_1024_to_1536 ROCmat'];
+%                                         eval(loadText);
+%                                         sessionsList=[];
+%                                         for j=1:size(ROCmat,1)
+%                                             sessionsList=[sessionsList ROCmat{j,1}];
+%                                         end
+%                                         rowInd=find(sessionsList==sessionNums(i));
+%                                         ROCmatChs=[ROCmatChs;ROCmat{rowInd,3}];
+%                                     end
+%                                 end
+                            end
+                        end
+                    end
+                    higherTestAct=0;
+                    lowerTestAct=0;
+                    for n=1:size(matarray{condInd,4})%calculate mean activity across channels
+                        if useISI==0
+                            allEpoch2(n)=allEpoch2(n)/length(channels);
+                            allEpoch4(n)=allEpoch4(n)/length(channels);
+                            if allEpoch2(n)<allEpoch4(n)
+                                higherTestAct=higherTestAct+1;
+                            elseif allEpoch2(n)>allEpoch4(n)
+                                lowerTestAct=lowerTestAct+1;
+                            end
+                        elseif useISI==1
+                            allEpoch3(n)=allEpoch3(n)/length(channels);
+                            allEpoch4(n)=allEpoch4(n)/length(channels);
+                            if allEpoch3(n)<allEpoch4(n)
+                                higherTestAct=higherTestAct+1;
+                            elseif allEpoch3(n)>allEpoch4(n)
+                                lowerTestAct=lowerTestAct+1;
                             end
                         end
                     end
@@ -178,7 +223,7 @@ for animalInd=1:length(animals)
                             cond14s=allEpoch2;
                         end
                     end
-                    if sglroc3IndividualChs==1
+                    if sglroc3IndividualChs==0
                         if useISI==0
                             if size(allEpoch2)~=size(allEpoch4)
                                 pause%if number of trials are not equal
@@ -199,9 +244,9 @@ for animalInd=1:length(animals)
                                 text('Position',[xLimVals(2)+0.25 yLimVals(1)+unitSpace*condInd*10-5],'FontSize',20,'String',[num2str(testContrast(condInd)),'%'],'Color',colmapText(condInd,:));
                             end
                             %bj_linearexpo_fitting(vec1',vec2',condInd,0,'NVP',0)
-                            rocvals_sglroc3(condInd)=sglroc3(allEpoch4,allEpoch2);%old method
                         end
                     end
+                    rocvals_sglroc3(condInd)=sglroc3(allEpoch4',allEpoch2');%old method
                     rocvals(condInd)=higherTestAct/(higherTestAct+lowerTestAct);%new method
                 end
                 if exampleFig==1
@@ -245,8 +290,16 @@ for animalInd=1:length(animals)
                             end
                         end
                         all_rocvals(sessionCounter,:)=[sessionNums(i) rocvals];
+%                         if sessionCounter==21
+%                             pause
+%                         end
                         [slopeNeuroNew,PNENew,diffPNENew,minRateNew,maxRateNew,chSSENew,threshold82higher]=weibull_fitting(rocvals,sampleContrast,testContrast,'new',sessionCounter,slopeNeuroNew,chSSENew,PNENew,minRateNew,maxRateNew,diffPNENew,plotDiffC50_30,calculateTangent,useISI,threshold82higher);
+                        if sessionCounter==1
+                            xlabel('contrast (%)');
+                            ylabel('AUROC');
+                        end
                         sessionCounter=sessionCounter+1;
+                        title(num2str(i),'FontSize',16);
                     end
                 end
             end
@@ -261,10 +314,17 @@ for animalInd=1:length(animals)
                 if sglroc3IndividualChs==1
                     subFolder='new_vs_old_sglroc3acrosschannels';
                 elseif sglroc3IndividualChs==0
-                if useISI==0
-                    subFolder='new_vs_old_sglrocmeanchannels';
-                elseif useISI==1
-                    subFolder='new_ROC_useISI_meanchannels';
+                    if useISI==0
+                        subFolder='new_vs_old_sglrocmeanchannels';
+                    elseif useISI==1
+                        subFolder='new_ROC_useISI_meanchannels';
+                    end
+                end
+                if excludeSuppressed
+                    subFolder=[subFolder,'_excludeSuppressed'];
+                end
+                if normalize
+                    subFolder=[subFolder,'_normalised'];
                 end
                 if useISI==0
                     imagename=['cumulative_ROCs_old_new_',area,'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10)];
@@ -286,7 +346,7 @@ for animalInd=1:length(animals)
                 end
                 pathname=fullfile(rootFolder,'PL',analysisType,animal,subFolder,matname);
                 if sglroc3IndividualChs==1
-                    saveText=['save ',pathname,'.mat all_rocvals_sglroc3 all_rocvals slopeNeuroNew PNENew diffPNENew minRateNew maxRateNew chSSENew slopeNeuroOld PNEOld diffPNEOld minRateOld maxRateOld chSSEOld'];
+                    saveText=['save ',pathname,'.mat all_rocvals_sglroc3 all_rocvals slopeNeuroNew PNENew diffPNENew minRateNew maxRateNew chSSENew slopeNeuroOld PNEOld diffPNEOld minRateOld maxRateOld chSSEOld hS pS ciS statsS hmin pmin cimin statsmin hP pP ciP statsP hmax pmax cimax statsmax'];
                 elseif sglroc3IndividualChs==0
                     if useISI==0
                         saveText=['save ',pathname,'.mat all_rocvals_sglroc3 all_rocvals slopeNeuroNew PNENew diffPNENew minRateNew maxRateNew chSSENew slopeNeuroOld PNEOld diffPNEOld minRateOld maxRateOld chSSEOld hS pS ciS statsS hmin pmin cimin statsmin hP pP ciP statsP hmax pmax cimax statsmax'];
@@ -319,7 +379,6 @@ for animalInd=1:length(animals)
                 printtext=sprintf('print -dpng %s.png',pathname);
                 set(gcf,'PaperPositionMode','auto')
                 eval(printtext);
-                end
             end
         end
     end
