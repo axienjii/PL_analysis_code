@@ -1,4 +1,4 @@
-function []=read_bj_crf_or_roc(datamat,chNum,psychoname,testContrast,sampleContrast,animal,area,startEndTime,analysisType,excludeSessHighSSE,excludeOutliers,rootFolder,plotLeastSquares,modifyMinMax,useISI)
+function []=read_bj_crf_or_roc(datamat,chNum,psychoname,testContrast,sampleContrast,animal,area,startEndTime,analysisType,excludeSessHighSSE,excludeOutliers,rootFolder,plotLeastSquares,modifyMinMax,useISI,calcPartial)
 %Modified from read_blanco_V1_crf
 %Written by Xing 06/03/13
 %
@@ -40,7 +40,7 @@ plotDiffC50_30=1;
             
 appendText=['_',num2str(sampleContrast)];
 
-if strcmp(analysisType,'ROC')||strcmp(analysisType,'NVP')||strcmp(analysisType,'ROC_diff2')
+if strcmp(analysisType,'ROC')||strcmp(analysisType,'NVP')||strcmp(analysisType,'ROC_diff2')||strcmp(analysisType,'ROC_zero_one')||strcmp(analysisType,'NVP_zero_one')
     manualCutoffMatText=['load F:\PL\ROC_mat_files\',animal,'\manual_cutoff.mat manualCutoff'];
     eval(manualCutoffMatText);
     if ~isempty(manualCutoff)
@@ -65,10 +65,10 @@ if ~exist(SSEMatFolder,'dir')
 end
 SSEMatPath=fullfile(SSEMatFolder,SSEMatFileName);
 
-if strcmp(analysisType,'ROC')||strcmp(analysisType,'CRF')||strcmp(analysisType,'ROC_diff2')||strcmp(analysisType,'ROC_diff')
+if strcmp(analysisType,'ROC')||strcmp(analysisType,'CRF')||strcmp(analysisType,'ROC_diff2')||strcmp(analysisType,'ROC_diff')||strcmp(analysisType,'ROC_zero_one')
     slC50Matname=[num2str(chNum),appendText,startEndTime,'_slC50_',area];
     slC50MatFolder=fullfile('F:','PL',analysisType,animal,'slope_C50_mat');
-elseif strcmp(analysisType,'NVP')
+elseif strcmp(analysisType,'NVP')||strcmp(analysisType,'NVP_zero_one')
     slC50Matname=[num2str(chNum),appendText,startEndTime,'_nvpThreshold_',area];
     slC50MatFolder=fullfile('F:','PL',analysisType,animal,'nvpThreshold_mat');
 end
@@ -85,7 +85,7 @@ if excludeSessHighSSE==1
     datamat=datamat(ind,:);
     numsessions=length(sessionSorted1);
     if excludeOutliers==1   %within reduced pool of sessions with good SSE, further examine slope and C50 values for outliers
-        if strcmp(analysisType,'ROC')||strcmp(analysisType,'CRF')
+        if strcmp(analysisType,'ROC')||strcmp(analysisType,'CRF')||strcmp(analysisType,'ROC_zero_one')
             loadText=['load ',slC50MatPathname,'.mat sessionSorted1 slopeNeuro c50'];
             eval(loadText)
             c50=real(c50);
@@ -183,11 +183,13 @@ if modifyMinMax==1
     maxRate=1-incorrectMinRate;
     minRate=1-incorrectMinRate-incorrectMaxRate;
 end
-if strcmp(analysisType,'ROC')||strcmp(analysisType,'CRF')
+if strcmp(analysisType,'ROC')||strcmp(analysisType,'CRF')||strcmp(analysisType,'ROC_zero_one')
     example_ch_54=0;
-    plot_neurometric_coefs(animal,area,chNum,appendText,startEndTime,slopeNeuro,c50,plotDiffC50_30,diffc50,minRate,maxRate,sessionSorted1,analysisType,example_ch_54,excludeSessHighSSE,excludeOutliers,writeCoefs,slSigmaMultiple,c50SigmaMultiple)
-elseif strcmp(analysisType,'NVP_zero_one')||strcmp(analysisType,'NVP')
-    plot_nvp_threshold_coefs(animal,area,chNum,appendText,startEndTime,threshold82lower,threshold82higher,sessionSorted1,analysisType,excludeSessHighSSE,excludeOutliers,writeCoefs,threshSigmaMultiple)
+    plot_neurometric_coefs(animal,area,chNum,appendText,startEndTime,slopeNeuro,c50,plotDiffC50_30,diffc50,minRate,maxRate,sessionSorted1,analysisType,example_ch_54,excludeSessHighSSE,excludeOutliers,writeCoefs,slSigmaMultiple,c50SigmaMultiple,calcPartial)
+elseif strcmp(analysisType,'NVP_zero_one')
+    plot_nvp_threshold_coefs(animal,area,chNum,appendText,startEndTime,threshold82lower,threshold82higher,sessionSorted1,analysisType,excludeSessHighSSE,excludeOutliers,writeCoefs,threshSigmaMultiple,useISI)
+elseif strcmp(analysisType,'NVP')
+    plot_nvp_threshold_coefs(animal,area,chNum,appendText,startEndTime,[],threshold82higher,sessionSorted1,analysisType,excludeSessHighSSE,excludeOutliers,writeCoefs,threshSigmaMultiple,useISI)
 end
 % pause
 if ~strcmp(analysisType,'ROC_diff2')
