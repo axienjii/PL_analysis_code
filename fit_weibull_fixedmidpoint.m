@@ -9,7 +9,7 @@ function [err] = fit_weibull_fixedmidpoint(p,conditions,response,standard_dev,er
 % var_min_limit= [1 1 0]
 % min_limit= [5 0.8 0]
 
-offset = response - ((1-(1-minMax(2))+minMax(1))-minMax(1).*exp(-(conditions./30).^p(1)));
+offset = response - (minMax(2)-minMax(1).*exp(-(conditions./30).^p(1)));
 
 % p(1) : slope
 % p(2) : max

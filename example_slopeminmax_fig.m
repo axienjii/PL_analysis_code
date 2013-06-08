@@ -19,8 +19,9 @@ figure
 subplotRemap=[3 4 2 6];
 subplotCol='krbm';
 for plotInd=1:4    
-    X=fminsearch(@fit_weibull_fixedmidpoint,X0,options,testContrast,y(plotInd,:),[],'least_square',[1],[10],[1],[-20],[y(plotInd,1) y(plotInd,end)]);
-    yvals(plotInd,:)=1-(1-y(plotInd,end))-y(plotInd,1).*exp(-(xvals./30).^X(1));
+    X=fminsearch(@fit_weibull_fixedmidpoint,X0,options,testContrast,y(plotInd,:),[],'least_square',[1],[10],[1],[-20],[y(plotInd,end)-y(plotInd,1) y(plotInd,end)]);
+    yvals(plotInd,:)=y(plotInd,end)-(y(plotInd,end)-y(plotInd,1)).*exp(-(xvals./30).^X(1));
+%     yvals(plotInd,:)=1-(1-y(plotInd,end))-y(plotInd,1).*exp(-(xvals./30).^X(1));
     Xall(plotInd,:)=X;
     subplot(3,2,subplotRemap(plotInd));
     plot(xvals,yvals(plotInd,:),'k-','Marker','none','LineWidth',2);

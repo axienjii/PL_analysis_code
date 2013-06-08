@@ -13,20 +13,22 @@ testContrast=[10 15 20 27 28 30 32 33 50 55 60];
 xvals=testContrast(1):1:testContrast(end);
 xvals=0:1:100;
 X0=[2 0.2 0.1];
+X0=2;
 options = optimset('Display','off','MaxFunEvals',10^4,'MaxIter',10^4,'TolFun',1.0E-6,'TolX',1.0E-6);
 figure
 subplotRemap=[3 4 2 6];
 subplotCol='krbm';
-for plotInd=1:4
-    X=fminsearch(@fit_weibull_fixedmidpoint,X0,options,testContrast,y(plotInd,:),[],'least_square',[1 1 1 0],[10 100 1 0],[1 1 0 1],[-20 0 0 0.5]);
-    yvals(plotInd,:)=1-y(plotInd,end)+y(plotInd,1)-X(2).*exp(-(xvals./30).^X(1));
+for plotInd=1:4    
+    X=fminsearch(@fit_weibull_fixedmidpoint,X0,options,testContrast,y(plotInd,:),[],'least_square',[1],[10],[1],[-20],[y(plotInd,end)-y(plotInd,1) y(plotInd,end)]);
+    yvals(plotInd,:)=y(plotInd,end)-(y(plotInd,end)-y(plotInd,1)).*exp(-(xvals./30).^X(1));
+%     yvals(plotInd,:)=1-(1-y(plotInd,end))-y(plotInd,1).*exp(-(xvals./30).^X(1));
     Xall(plotInd,:)=X;
     subplot(3,2,subplotRemap(plotInd));
     plot(xvals,yvals(plotInd,:),'k-','Marker','none','LineWidth',2);
     xlim([10 60]);
     xlim([0 100]);
     ylim([0 1]);
-    c50(plotInd,1)=real(30.*(-log((0.5-X(3))/X(2))).^(1/X(1)));
+    c50(plotInd,1)=real(30.*(-log((0.5-(1-y(plotInd,end)))/y(plotInd,1))).^(1/X(1)));
     line(c50(plotInd,1),0:0.01:1,'Color','r');
 end
 Xall
