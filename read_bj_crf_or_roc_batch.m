@@ -1,4 +1,4 @@
-function read_bj_crf_or_roc_batch(animal,area,analysisType,excludeSessHighSSE,excludeOutliers,comparisonType,plotLeastSquares,modifyMinMax,useISI)
+function read_bj_crf_or_roc_batch(animal,area,analysisType,excludeSessHighSSE,excludeOutliers,comparisonType,plotLeastSquares,modifyMinMax,useISI,calcPartial)
 
 %Written by Xing 06/03/13
 %to calculate and write correlation coefficients
@@ -8,6 +8,8 @@ function read_bj_crf_or_roc_batch(animal,area,analysisType,excludeSessHighSSE,ex
 %correct ones, set to 0 if values in file are already orrect.
 %Set useISI=1 to read AUROC values that are calculated based on comparison of
 %test to pre-test (rather than on test to sample) activity.
+%Set calcPartial to 1 to run partial correlation instead of regular
+%correlation analyses.
 if strcmp(analysisType,'ROC_diff')
     switch(comparisonType)
         case(1)%compare ROC values between two methods, using all trials
@@ -41,7 +43,7 @@ for i=1:length(channels)
         sampleContrast=sampleContrasts(sampleContrastsInd);
         testContrast=testContrasts(sampleContrastsInd,:);    
         for epoch=1:size(test_epochs,2)
-            if strcmp(analysisType,'CRF')||strcmp(analysisType,'ROC')&&epoch==4||strcmp(analysisType,'NVP')&&epoch==4||strcmp(analysisType,'ROC_diff')&&epoch==4
+            if strcmp(analysisType,'CRF')||strcmp(analysisType,'ROC')&&epoch==4||strcmp(analysisType,'NVP')&&epoch==4||strcmp(analysisType,'ROC_diff')&&epoch==4||strcmp(analysisType,'ROC_zero_one')&&epoch==4||strcmp(analysisType,'NVP_zero_one')&&epoch==4
                 if epoch==1
                     periods=[-durSpon 0];
                 else
@@ -73,6 +75,10 @@ for i=1:length(channels)
                         matName=[analysisType,'_Ch',num2str(channels(i)),'_',num2str(sampleContrast),startEndTime,'.mat'];
                         matPath=fullfile('F:','PL',analysisType,animal,area,matName);
                         loadText=['load ',matPath,' ',analysisType,'mat'];
+                    elseif strcmp(analysisType,'ROC_zero_one')
+                        matName=['ROC_Ch',num2str(channels(i)),'_',num2str(sampleContrast),startEndTime,'.mat'];
+                        matPath=fullfile('F:','PL',analysisType,'ROC',animal,area,matName);
+                        loadText=['load ',matPath,' ','ROCmat'];
                     elseif strcmp(analysisType,'ROC_diff')
                         matName=['ROC','_Ch',num2str(channels(i)),'_',num2str(sampleContrast),startEndTime,'.mat'];
                         matPath=fullfile('F:','PL',ROC2,animal,area,matName);
@@ -81,15 +87,19 @@ for i=1:length(channels)
                         matName=['ROC_Ch',num2str(channels(i)),'_',num2str(sampleContrast),startEndTime,'.mat'];
                         matPath=fullfile('F:','PL','ROC',animal,area,matName);
                         loadText=['load ',matPath,' ROCmat'];
+                    elseif strcmp(analysisType,'NVP')||strcmp(analysisType,'NVP_zero_one')
+                        matName=['ROC_Ch',num2str(channels(i)),'_',num2str(sampleContrast),startEndTime,'.mat'];
+                        matPath=fullfile('F:','PL','ROC_zero_one','ROC',animal,area,matName);
+                        loadText=['load ',matPath,' ROCmat'];
                     end
                     eval(loadText);
                     if strcmp(analysisType,'CRF')
                         dataArray=CRFmat;
-                    elseif strcmp(analysisType,'ROC')
+                    elseif strcmp(analysisType,'ROC')||strcmp(analysisType,'ROC_zero_one')
                         dataArray=ROCmat;
                     elseif strcmp(analysisType,'ROC_diff')
                         dataArray=ROCmat;
-                    elseif strcmp(analysisType,'NVP')
+                    elseif strcmp(analysisType,'NVP')||strcmp(analysisType,'NVP_zero_one')
                         dataArray=ROCmat;
                     end
                     includeMatch=[];
@@ -99,7 +109,7 @@ for i=1:length(channels)
                         end
                     end
                     dataArray=dataArray(includeMatch,:);
-                    read_bj_crf_or_roc(dataArray,channels(i),psychoPathname,testContrast,sampleContrast,animal,area,startEndTime,analysisType,excludeSessHighSSE,excludeOutliers,rootFolder,plotLeastSquares,modifyMinMax,useISI)
+                    read_bj_crf_or_roc(dataArray,channels(i),psychoPathname,testContrast,sampleContrast,animal,area,startEndTime,analysisType,excludeSessHighSSE,excludeOutliers,rootFolder,plotLeastSquares,modifyMinMax,useISI,calcPartial)
                 end
             end
         end
