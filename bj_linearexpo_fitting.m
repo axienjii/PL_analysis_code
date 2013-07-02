@@ -49,7 +49,7 @@ end
 if plotLinear==1
     xcurvevals=0:0.01:size(allMeanPerf,1);
     ycurvevals=coefperflinear(1)+coefperflinear(2)*xcurvevals;
-    plot(xcurvevals,ycurvevals);
+    plot(xcurvevals,ycurvevals,'Color',colmapText(j,:));
 end
 expected=coefperflinear(1)+allMeanPerf*coefperflinear(2);
 observed=allMeanPerf;

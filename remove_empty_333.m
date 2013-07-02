@@ -1,5 +1,6 @@
 function remove_empty_333
-%remove empty cells from session 333 and 311
+%remove empty cells from session 333 and 311 (every row from a certain
+%point onwards).
 animal='blanco';
 area='v4_1';
 sessions=[311 333];

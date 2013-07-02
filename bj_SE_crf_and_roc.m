@@ -78,7 +78,7 @@ if min(numTrials)>=minTrials
         end
     end
     
-    if CRFonly==0%if only need cRF calculation, can skip the ROC calculation
+    if CRFonly==0%if only need CRF calculation, can skip the ROC calculation
         for subPeriod=1:length(periods)-1
             for cond=1:size(matarray,1)
                 %roc analysis:
