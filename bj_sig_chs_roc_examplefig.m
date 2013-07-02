@@ -26,10 +26,11 @@ if plotSlopeFig==1
     animals=[{'blanco'} {'jack'} {'jack'} {'blanco'} {'jack'}];
     animals=[{'blanco'} {'jack'} {'jack'} {'blanco'}];
     allChannels=[{[12 36 51 52 53]} {[1 3 5 6 8 10 24 39 40 41 52 53 54 56]} {[18 19 21 51]} {[2 24 40 42 49]} {[28]}];
-    allChannels=[{[12 36 51 52 53]} {[5 6 8 10 24 39 40 41 52 53 54 56]} {[18 21 51]} {[2 24 40 42 49]}];
+    allChannels=[{[12 36 51 52 53]} {[5 6 8 10 24 39 40 41 52 53 54 56]} {[18 21 51]} {[2 24 40 42 49]}];%partial correlation results
+    allChannels=[{[12 36 50 51 52]} {[6 8 10 24 41 52 53]} {[18 21 30 51]} {[2 7 24 49]}];%partial correlation results
     areas=[{'v4_1'} {'v4_1'} {'v1_1'} {'v4_1'} {'v1_1'}];
     areas=[{'v4_1'} {'v4_1'} {'v1_1'} {'v4_1'}];
-    figSlope=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.6, 1]); %
+    figSlope=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.6, 0.8]); %
     set(figSlope, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
     sampleContrast=30;
     allChInd=0;
@@ -48,7 +49,7 @@ if plotSlopeFig==1
             loadText=['load ',pathname,'.mat'];
             eval(loadText)
             %         subplot(ceil(29/5),5,allChInd);
-            subplot(ceil(25/5),5,allChInd);
+            subplot(ceil(20/5),5,allChInd);
             xvals=testContrast(1):1:testContrast(end);
             for sessionInd=1:size(ROCmat,1)
                 datavals=ROCmat{sessionInd,3};
@@ -124,14 +125,17 @@ if plotSlopeFig==1
     pathname=fullfile(rootFolder,'PL',analysisType,imagename);
     printtext=sprintf('print -dpng %s.png',pathname);
     set(gcf,'PaperPositionMode','auto')
-    eval(printtext);
+%     eval(printtext);
 end
 
 %example figures for channels with significant changes in PNE:
 animals=[{'blanco'} {'jack'} {'blanco'} {'jack'}];
-allChannels=[{[24 22 36 50 51 52 60]} {[8 10 24 41 53]} {[26]} {[32 55 18 51]}];
+allChannels=[{[24 22 36 50 51 52 60]} {[8 10 24 41 53]} {[26]} {[32 55 18 51]}];%partial correlation results
 areas=[{'v4_1'} {'v4_1'} {'v1_1'} {'v1_1'}];
-figPNE=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0, 0.6, 1]); %
+animals=[{'blanco'} {'jack'} {'jack'} {'blanco'} {'jack'}];
+allChannels=[{[7 24 36 60]} {[8 10 24 41 53]} {[18]} {[26]} {[9 17 32 55]}];
+areas=[{'v4_1'} {'v4_1'} {'v1_1'} {'v1_1'} {'v1_1'}];
+figPNE=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0, 0.6, 0.6]); %
 set(figPNE, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
 sampleContrast=30;
 allChInd=0;
@@ -150,7 +154,7 @@ for animalInd=1:length(animals)
         loadText=['load ',pathname,'.mat'];
         eval(loadText)
         %         subplot(ceil(29/5),5,allChInd);
-        subplot(ceil(17/5),5,allChInd);
+        subplot(ceil(15/5),5,allChInd);
         xvals=testContrast(1):1:testContrast(end);
         for sessionInd=1:size(ROCmat,1)
             datavals=ROCmat{sessionInd,3};
@@ -226,4 +230,4 @@ imagename='example_sig_chs_change_PNE';
 pathname=fullfile(rootFolder,'PL',analysisType,imagename);
 printtext=sprintf('print -dpng %s.png',pathname);
 set(gcf,'PaperPositionMode','auto')
-eval(printtext);
+% eval(printtext);
