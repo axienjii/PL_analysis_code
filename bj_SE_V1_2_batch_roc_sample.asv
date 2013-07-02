@@ -3,7 +3,7 @@ function bj_SE_V1_2_batch_roc_sample
 %activity during sample presentation and calculate ROC values between
 %firing to 20 and 30% sample, and between 30 and 40% sample.
 
-animalTexts=[{'subject B'} {'subject J'}];
+animalTexts=[{'Monkey 1'} {'Monkey 2'}];
 animals=[{'blanco'} {'jack'}];
 areaText='V1 roving data';
 areas={'v1_2_1' 'v1_2_2' 'v1_2_3'};
@@ -14,6 +14,7 @@ for animalInd=1:length(animals)
     animal=animals{animalInd};
     for areaInd=1:length(areas)
         area=areas{areaInd};
+        sigList=[];
         if nargin<3 || isempty(channels)
             channels = main_channels(animal,area);
         end
@@ -73,17 +74,23 @@ for animalInd=1:length(animals)
                     end
                     allrocvals(j,:)=rocvals;
                 end
+                sigChFlag=0;
                 for comparisonInd=1:length(sampleContrasts)
                     a=[(1:size(allrocvals,1))' allrocvals(:,comparisonInd)];
                     [coefficients1 p1]=corrcoef(a);
                     coefficients(comparisonInd)=coefficients1(2);
                     ps(comparisonInd)=p1(2);
-                    if p1(2)<0.05
+                    if p1(2)<0.05/3
                         markerCol2='k';
+                        sigList=[sigList;channels(i) p1(2) coefficients1(2)];
+                        sigChFlag=1;
                     else
                         markerCol2='none';
                     end
                     plot(1:length(sessionNums),allrocvals(:,comparisonInd),'Color',markerCols(comparisonInd),'Marker','o','MarkerFaceColor',markerCol2,'LineStyle','none');hold on
+                end
+                if sigChFlag==1
+                    
                 end
                 if i==length(channels)
                     xlabel('session number');
@@ -150,7 +157,7 @@ for animalInd=1:length(animals)
             [coefficients1 p1]=corrcoef(d);
             coefficients(comparisonInd)=coefficients1(2);
             ps(comparisonInd)=p1(2);
-            if p1(2)<0.05
+            if p1(2)<0.05/3
                 markerCol2=markerCols(comparisonInd);
             else
                 markerCol2='none';
@@ -159,13 +166,20 @@ for animalInd=1:length(animals)
             hold on
             allMeanSampleROCs{comparisonInd}=meanSampleROCs;
         end
+        xlim([1 length(meanSampleROCs)]);
+        ylims=get(gca,'YLim');
+        set(gca,'YTick',[ylims(1) ylims(2)]);
+        set(gca,'YTickLabel',[ylims(1) ylims(2)]);
         if animalInd==1
-            xlabel('session');
             ylabel('ROC value');
-            text('Position',[-10 0.5],'FontSize',9,'String',areaTexts{areaInd});
+            if areaInd==2
+                text('Position',[-10 0.5],'FontSize',9,'String',areaTexts{areaInd});
+            end
         end
         if areaInd==1
             title(animalTexts{animalInd});
+        else
+            xlabel('session');
         end
         matMeanSampleName=[animal,'_',area,'_mean_ch_sample_ROC'];
         matMeanSampleFolder=fullfile('F:','PL','roving_sample_ROC',animal,subfolder);
@@ -177,6 +191,12 @@ for animalInd=1:length(animals)
         eval(saveText);
     end
 end
+subplot(2,2,1)
+set(gca,'YTick',[0.45 0.6]);
+ylim([0.45 0.6]);
+subplot(2,2,3)
+set(gca,'YTick',[0.45 0.55],'YTickLabel',[0.45 0.55]);
+ylim([0.45 0.6]);
 saveMeanImageName=[area,'_mean_ch_sample_ROC'];
 saveMeanImageFolder=fullfile('F:','PL','roving_sample_ROC');
 saveMeanImagePath=fullfile(saveMeanImageFolder,saveMeanImageName);

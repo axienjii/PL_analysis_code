@@ -144,7 +144,7 @@ if readData==1
                     end
                     for subplotMultiple=1:length(conds(sampleContrastsInd,:))%1:3
                         cond=conds(sampleContrastsInd,subplotMultiple);
-                        [coefficients(subplotMultiple,1,h) coefficients(subplotMultiple,2,h)]=corr(AUROC(cond,:)',[1:length(sessionNums)]');%r and h values
+                        [coefficients(subplotMultiple,1,h) coefficients(subplotMultiple,2,h)]=corr(AUROC(cond,:)',[1:length(sessionNums)]','type','Spearman');%r and h values
                     end
                     if plotFigs==1
                         close(figCh);
@@ -289,7 +289,7 @@ for animalInd=1:length(animals)
                     text('Position',[14 0.455+0.005*subplotMultiple],'FontSize',14,'String',ptext,'Color',condCol(subplotMultiple,:));
 %                     text('Position',[18 0.44+0.015*subplotMultiple],'FontSize',14,'String',ptext,'Color',condCol(subplotMultiple,:));
                 end
-                [r p]=corr([1:length(sessionNums)]',meanAUROC');
+                [r p]=corr([1:length(sessionNums)]',meanAUROC','type','Spearman');
                 allStats=[allStats;{animal} {area} testContrast(conds(subplotMultiple)) r p meanAUROC];
                 notPoint5=find(ps(subplotMultiple,:)<0.05);
                 numNotPoint5=length(notPoint5);

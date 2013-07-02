@@ -165,7 +165,7 @@ if readData
                             unequal=1;
                         end
                     end
-                    [coefficients(1,h) coefficients(2,h)]=corr(AUROC(h,:)',[1:length(sessionNums)]');%r and h values
+                    [coefficients(1,h) coefficients(2,h)]=corr(AUROC(h,:)',[1:length(sessionNums)]','type','Spearman');%r and h values
                     if plotFigs==1
                         if coefficients(2,h)<0.05
                             pCol='g';
@@ -281,7 +281,7 @@ for animalInd=1:length(animals)
             hold on
             xlim([0 length(sessionNums)+1]);
             plot([0 length(sessionNums)+1],[0.5 0.5],'k--');
-            [r p]=corr([1:length(sessionNums)]',meanAUROC');
+            [r p]=corr([1:length(sessionNums)]',meanAUROC','type','Spearman');
             allStats=[allStats;{animal} {area} r p meanAUROC];
         end
     end
