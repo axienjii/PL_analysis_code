@@ -1,0 +1,304 @@
+function bj_cumulative_crf_diff(exampleFig,cutoff,animals,useISI,areas,excludeSuppressed,normaliseCh,normaliseSpontan,plotErrorBars)
+%Written by Xing 08/06/13
+%Set useISI to 1: based on pre-test vs test, not on sample vs test.
+%Set useISI to 0: sample vs test.
+%Calculate CRF values based on cumulative spike data across channels, not
+%just on that from individual channels.
+%Normalise test-induced activity by either spon act or ISI act.
+%Set exampleFig to 0 to plot ROC curves for new and old methods, set to 1
+%to only plot example figures of distributions of stimulus-evoked activity
+%and condition-dependent ROC curves.
+%Set excludeSuppressed to 1 to exclude channels with stimulus-evoked
+%suppression, i.e. blanco 13, 24, 42 and jack 49.
+%Normalise data in a variety of ways: set normaliseCh to 1 to normalise
+%activity to max reocrded on individual channel before combing data across
+%channels; set normaliseSpontan to deduct spontaneous or ISI activity levels from
+%test response.
+analysisType='CRF';
+sglroc3IndividualChs=1;%set to 0 to read ROC values for individual channels and calculate mean ROC across channels; set to 1 to calculate ROCs based on pooled activity across channels
+onExternalHD=0;
+if onExternalHD==1
+    rootFolder='G:\PL_backup_060413';
+else
+    rootFolder='F:';
+end
+plotDiffC50_30=1;
+calculateTangent=1;
+if nargin<3||isempty(animals)
+    animals=[{'blanco'} {'jack'}];
+    % animals={'blanco'};
+end
+if nargin<4||isempty(areas)
+    areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
+    areas=[{'v4_1'} {'v1_1'} {'v1_2_1'} {'v1_2_2'} {'v1_2_3'}];
+end
+startEndTime='_1024_to_1536';
+if exampleFig==1
+    animals={'jack'};
+    areas={'v1_1'};
+    sglroc3IndividualChs=1;
+    figGauss=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+    set(figGauss, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+    figROCcondsExp=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+    set(figROCcondsExp, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+    figROCnew=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+    set(figROCnew, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+end
+figROCconds=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+set(figROCconds, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+for animalInd=1:length(animals)
+    animal=animals{animalInd};
+    for areaInd=1:length(areas)
+        area=areas{areaInd};
+        [sampleContrasts testContrasts]=area_metadata(area);
+        channels=main_channels(animal,area);
+        sessionNums=main_raw_sessions_final(animal,area,[],0);
+        if exampleFig==1
+            channels=51;
+%             sessionNums=307;
+        end
+        for sampleContrastsInd=1:length(sampleContrasts)
+            sampleContrast=sampleContrasts(sampleContrastsInd);
+            testContrast=testContrasts(sampleContrastsInd,:); 
+            %read in list of included channels
+            if cutoff~=1
+                matname=['good_SNR_',area,'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10),'.mat'];
+                pathname=fullfile(rootFolder,'PL','SNR',animal,matname);
+            else
+                matname=['good_SNR_',area,'_',num2str(sampleContrast),'.mat'];
+                pathname=fullfile(rootFolder,'PL','SNR',animal,'cutoff_SNR_1',matname);
+            end
+            loadText=['load ',pathname,' includeSessionsAll'];
+            eval(loadText);
+            colmapText=colormap(jet(size(testContrast,2)));
+            colmapText=[colmapText(1,:);132/255 22/255 216/255;202/255 65/255 223/255;colmapText(3:7,:);157/255 212/255 61/255;colmapText(10:12,:);178/255 111/255 12/255;colmapText(end,:)];
+            if exampleFig==0
+                figROC=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+                set(figROC, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+            end
+            all_rocvals=[];
+            slopeNeuroNew=[];PNENew=[];diffPNENew=[];minRateNew=[];maxRateNew=[];chSSENew=[];
+            threshold82higher=[];
+            allMeanEpoch1AcrossTrials=[];
+            allMeanEpoch3AcrossTrials=[];
+            allMeanEpoch4AcrossTrials=[];
+            sessionCounter=1;
+            for i=1:length(sessionNums)
+                rocvals=zeros(1,length(testContrast));
+                matFolder=['F:\PL\spikeData\',animal];
+                ROCmatChs=[];
+                meanEpoch1AcrossTrials=[];
+                meanEpoch3AcrossTrials=[];
+                meanEpoch4AcrossTrials=[];
+                stdEpoch4AcrossTrials=[];
+                for condInd=1:length(testContrast)
+                    if useISI==0
+                        allEpoch1=[];%array to store spontaneous activity across channels 
+                    elseif useISI==1
+                        allEpoch3=[];%array to store summed up ISI activity across channels
+                    end
+                    allEpoch4=[];
+                    for chInd=1:length(channels)
+                        includeCh=1;
+                        if excludeSuppressed==1
+                            if strcmp(animal,'blanco')&&channels(chInd)==13||channels(chInd)==24||channels(chInd)==42
+                                includeCh=0;
+                            elseif strcmp(animal,'jack')&&channels(chInd)==49
+                                includeCh=0;
+                            end
+                        end
+                        chStr=[num2str(channels(chInd)),'_',num2str(sessionNums(i)),'_',num2str(sampleContrast),'.mat'];
+                        matPath=fullfile(matFolder,chStr);
+                        matExists=0;
+                        if exist(matPath,'file')
+                            matExists=1;
+                        end
+                        includeRows=includeSessionsAll(find(includeSessionsAll(:,1)==channels(chInd)),2);%include this session in analysis
+                        includeRow=find(includeRows==sessionNums(i));
+                        if matExists==1&&~isempty(includeRow)&&includeCh
+                            valsText=['load ',matPath,' matarray'];
+                            eval(valsText);
+                            if useISI==0
+                                if size(matarray{condInd,1},1)~=size(matarray{condInd,4},1)
+                                    pause%if number of trials are not equal
+                                end
+                                if isempty(allEpoch1)
+                                    allEpoch1=zeros(size(matarray{condInd,4}));
+                                end
+                            elseif useISI==1
+                                if size(matarray{condInd,3},1)~=size(matarray{condInd,4},1)
+                                    pause%if number of trials are not equal
+                                end
+                                if isempty(allEpoch3)
+                                    allEpoch3=zeros(size(matarray{condInd,4}));
+                                end
+                            end
+                            if normaliseCh==1
+                                maxAll=[];%find the highest firing rate across all conditions and trials, across both the sample and test presentation periods
+                                for n=1:size(matarray{condInd,4})
+                                    if useISI==0
+                                        maxAll=[maxAll length(matarray{condInd,1}{n})*1000/512 length(matarray{condInd,4}{n})*1000/512];
+                                    elseif useISI==1
+                                        temp3=matarray{condInd,3}{n}>512*2-256;%activity during ISI
+                                        spikes=matarray{condInd,3}{n}(temp3);
+                                        temp3=spikes<512*2;
+                                        spikes=spikes(temp3);
+                                        maxAll=[maxAll length(spikes)*1000/256 length(matarray{condInd,4}{n})*1000/512];
+                                    end
+                                end
+                                maxval=max(maxAll)/100;
+                            else
+                                maxval=1;
+                            end
+                            if isempty(allEpoch4)
+                                allEpoch4=zeros(size(matarray{condInd,4}));
+                            end
+                            for n=1:size(matarray{condInd,4})
+                                if useISI==0                                    
+                                    allEpoch1(n)=allEpoch1(n)+(length(matarray{condInd,1}{n})*1000/512)/maxval;%sum up activity across channels
+                                    allEpoch4(n)=allEpoch4(n)+(length(matarray{condInd,4}{n})*1000/512)/maxval;
+                                    if sglroc3IndividualChs==1
+                                        actList1(n)=(length(matarray{condInd,1}{n})*1000/512)/maxval;
+                                        actList4(n)=(length(matarray{condInd,4}{n})*1000/512)/maxval;
+                                    end
+                                elseif useISI==1
+                                    temp3=matarray{condInd,3}{n}>512*2-256;%activity during ISI
+                                    spikes=matarray{condInd,3}{n}(temp3);
+                                    temp3=spikes<512*2;
+                                    spikes=spikes(temp3);
+                                    allEpoch3(n)=allEpoch3(n)+(length(spikes)/256*1000)/maxval;%sum up activity across channels
+                                    allEpoch4(n)=allEpoch4(n)+(length(matarray{condInd,4}{n})*1000/512)/maxval;
+                                    if sglroc3IndividualChs==1
+                                        actList3(n)=(length(spikes)/256*1000)/maxval;%find rate during second half of ISI
+                                        actList4(n)=(length(matarray{condInd,4}{n})*1000/512)/maxval;
+                                    end
+                                end
+                            end 
+                        end
+                    end
+                    higherTestAct=0;
+                    lowerTestAct=0;
+                    for n=1:size(matarray{condInd,4})%calculate mean activity across channels
+                        if useISI==0
+                            allEpoch1(n)=allEpoch1(n)/length(channels);
+                        elseif useISI==1
+                            allEpoch3(n)=allEpoch3(n)/length(channels);
+                        end
+                        allEpoch4(n)=allEpoch4(n)/length(channels);
+                    end
+                    meanEpoch4AcrossTrials(condInd)=mean(allEpoch4);%mean across trials
+                    stdEpoch4AcrossTrials(condInd)=std(allEpoch4);%std across trials
+                    if useISI==0
+                        if normaliseSpontan
+                            meanEpoch1AcrossTrials(condInd)=mean(allEpoch1);%mean across channels AND trials
+                            meanEpoch4AcrossTrials(condInd)=meanEpoch4AcrossTrials(condInd)-meanEpoch1AcrossTrials(condInd);%subtract spontan act
+                        end
+                    elseif useISI==1
+                        if normaliseSpontan
+                            meanEpoch3AcrossTrials(condInd)=mean(allEpoch3);%mean across channels AND trials
+                            meanEpoch4AcrossTrials(condInd)=meanEpoch4AcrossTrials(condInd)-meanEpoch3AcrossTrials(condInd);%subtract ISI act
+                        end
+                    end
+                end
+                if exampleFig==0
+                    if ~isnan(meanEpoch4AcrossTrials)
+                        figure(figROC);
+                        subplot(ceil(length(sessionNums)/5),5,sessionCounter);
+                        if plotErrorBars==1
+                            errorbar(testContrast,meanEpoch4AcrossTrials,stdEpoch4AcrossTrials,'k','LineStyle','none');%errorbar(X,Y,E) plots Y versus X with symmetric error bars 2*E(i) long
+                            hold on
+                        end
+                        plot(testContrast,meanEpoch4AcrossTrials,'ok');
+                        xlim([0 max(testContrast)+10]);
+                        allMeanEpoch4AcrossTrials(sessionCounter,:)=[sessionNums(i) meanEpoch4AcrossTrials];
+                        if sessionCounter==8||sessionCounter==11||sessionCounter==18
+%                             pause
+                        end
+                        if normaliseCh==0&&normaliseSpontan==0
+                            [slopeNeuroNew,PNENew,diffPNENew,minRateNew,maxRateNew,chSSENew]=nr_fitting(meanEpoch4AcrossTrials,sampleContrast,testContrast,sessionCounter,slopeNeuroNew,chSSENew,PNENew,minRateNew,maxRateNew,diffPNENew,plotDiffC50_30,calculateTangent,startEndTime,animal,area);
+                        end
+                        if sessionCounter==1
+                            xlabel('contrast (%)');
+                            ylabel('firing rate (spikes/s)');
+                        end
+                        sessionCounter=sessionCounter+1;
+                        title(num2str(i),'FontSize',16);
+                    end
+                end
+            end
+            if exampleFig==0
+                figure(figROC);
+                subFolder='crf_meanchannels';
+                if normaliseCh
+                    subFolder=[subFolder,'_normCh'];
+                end
+                if normaliseSpontan
+                    if useISI==0
+                        subFolder=[subFolder,'_normSpontan'];
+                    elseif useISI==1
+                        subFolder=[subFolder,'_normISI'];
+                    end
+                end
+                if excludeSuppressed
+                    subFolder=[subFolder,'_excludeSuppressed'];
+                end
+                if useISI==0
+                    imagename=['cumulative_CRFs_old_new_',area,'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10)];
+                elseif useISI==1
+                    imagename=['cumulative_CRFs_new_',area,'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10)];
+                end
+                if plotErrorBars==1
+                    imagename=[imagename,'_errorbar'];
+                end
+                folderpathname=fullfile(rootFolder,'PL',analysisType,animal,subFolder);
+                if ~exist(folderpathname,'dir')
+                    mkdir(folderpathname);
+                end
+                pathname=fullfile(rootFolder,'PL',analysisType,animal,subFolder,imagename);
+                printtext=sprintf('print -dpng %s.png',pathname);
+                set(gcf,'PaperPositionMode','auto')
+                eval(printtext);
+                if useISI==0
+                    matname=['cumulative_CRFs_old_new_',area,'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10)];
+                elseif useISI==1
+                    matname=['cumulative_CRFs_new_',area,'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10)];
+                end
+                pathname=fullfile(rootFolder,'PL',analysisType,animal,subFolder,matname);
+                if sglroc3IndividualChs==1
+                    saveText=['save ',pathname,'.mat allMeanEpoch4AcrossTrials slopeNeuroNew PNENew diffPNENew minRateNew maxRateNew chSSENew'];
+                elseif sglroc3IndividualChs==0
+                    if useISI==0
+                        saveText=['save ',pathname,'.mat allMeanEpoch4AcrossTrials slopeNeuroNew PNENew diffPNENew minRateNew maxRateNew chSSENew'];
+                    elseif useISI==1
+                        saveText=['save ',pathname,'.mat allMeanEpoch4AcrossTrials slopeNeuroNew PNENew diffPNENew minRateNew maxRateNew chSSENew'];
+                    end
+                end
+                eval(saveText);
+            elseif exampleFig==1
+%                 figure(figGauss);
+%                 if sglroc3IndividualChs==1
+%                     subFolder='new_vs_old_sglroc3acrosschannels';
+%                 elseif sglroc3IndividualChs==0
+%                     subFolder='new_vs_old_sglrocmeanchannels';
+%                 end
+%                 imagename=['gauss_sample_test_act_',area,'_ch_',num2str(channels(chInd)),'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10)];
+%                 pathname=fullfile(rootFolder,'PL',analysisType,animal,subFolder,imagename);
+%                 printtext=sprintf('print -dpng %s.png',pathname);
+%                 set(gcf,'PaperPositionMode','auto')
+%                 eval(printtext);
+%                 figure(figROCconds);
+%                 imagename=['ROC_individual_conds_',area,'_ch_',num2str(channels(chInd)),'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10)];
+%                 pathname=fullfile(rootFolder,'PL',analysisType,animal,subFolder,imagename);
+%                 printtext=sprintf('print -dpng %s.png',pathname);
+%                 set(gcf,'PaperPositionMode','auto')
+%                 eval(printtext);
+%                 figure(figROCnew);
+%                 imagename=['bar_ROC_new_',area,'_ch_',num2str(channels(chInd)),'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10)];
+%                 pathname=fullfile(rootFolder,'PL',analysisType,animal,subFolder,imagename);
+%                 printtext=sprintf('print -dpng %s.png',pathname);
+%                 set(gcf,'PaperPositionMode','auto')
+%                 eval(printtext);
+            end
+        end
+    end
+end

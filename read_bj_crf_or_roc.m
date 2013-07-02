@@ -173,9 +173,9 @@ if modifyMinMax==1
         mkdir(coefMatFolder)
     end
     if plotDiffC50_30==1
-        loadText=['load ',coefMatPathname,'.mat coefficients sessionSorted1 slopeNeuro sessionSorted2 slopePsycho matchPsycho c50 diffc50 minRate maxRate'];
+        loadText=['load ',coefMatPathname,'.mat coefficients sessionSorted1 slopeNeuro sessionSorted2 slopePsycho matchPsycho c50 diffc50 minRate maxRate sessionSorted1 threshold82higher'];
     else
-        loadText=['load ',coefMatPathname,'.mat coefficients sessionSorted1 slopeNeuro sessionSorted2 slopePsycho matchPsycho c50 minRate maxRate'];
+        loadText=['load ',coefMatPathname,'.mat coefficients sessionSorted1 slopeNeuro sessionSorted2 slopePsycho matchPsycho c50 minRate maxRate sessionSorted1 threshold82higher'];
     end
     eval(loadText)
     incorrectMaxRate=maxRate;
@@ -185,7 +185,7 @@ if modifyMinMax==1
 end
 if strcmp(analysisType,'ROC')||strcmp(analysisType,'CRF')||strcmp(analysisType,'ROC_zero_one')
     example_ch_54=0;
-    plot_neurometric_coefs(animal,area,chNum,appendText,startEndTime,slopeNeuro,c50,plotDiffC50_30,diffc50,minRate,maxRate,sessionSorted1,analysisType,example_ch_54,excludeSessHighSSE,excludeOutliers,writeCoefs,slSigmaMultiple,c50SigmaMultiple,calcPartial)
+    plot_neurometric_coefs(animal,area,chNum,appendText,startEndTime,slopeNeuro,c50,plotDiffC50_30,diffc50,minRate,maxRate,sessionSorted1,analysisType,example_ch_54,excludeSessHighSSE,excludeOutliers,writeCoefs,slSigmaMultiple,c50SigmaMultiple,calcPartial,threshold82higher,threshold82lower)
 elseif strcmp(analysisType,'NVP_zero_one')
     plot_nvp_threshold_coefs(animal,area,chNum,appendText,startEndTime,threshold82lower,threshold82higher,sessionSorted1,analysisType,excludeSessHighSSE,excludeOutliers,writeCoefs,threshSigmaMultiple,useISI)
 elseif strcmp(analysisType,'NVP')
@@ -193,5 +193,5 @@ elseif strcmp(analysisType,'NVP')
 end
 % pause
 if ~strcmp(analysisType,'ROC_diff2')
-close all
+    close all
 end

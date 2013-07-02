@@ -1,4 +1,4 @@
-function [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,threshold82higher]=weibull_fitting(datavals,sampleContrast,testContrast,ROCanalysisType,i,slopeNeuro,chSSE,c50,minRate,maxRate,diffc50,plotDiffC50_30,calculateTangent,useISI,threshold82higher)
+function [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,threshold82higher,threshold82lower]=weibull_fitting(datavals,sampleContrast,testContrast,ROCanalysisType,i,slopeNeuro,chSSE,c50,minRate,maxRate,diffc50,plotDiffC50_30,calculateTangent,useISI,threshold82higher,threshold82lower)
 alex_fit=0;
 xvals=testContrast(1):1:testContrast(end);
 if useISI==0
@@ -121,7 +121,38 @@ else
             c50(1,i)=xvalsFine(columnInd);
             %                 c50(1,i)=real(X(2).*(-log((0.5-X(4))/X(3))).^(1/X(1)));
         end
-        threshold82higher=[];
+        diffTemp=[];
+        if slopeNeuro(1,i)>=0&&max(yvals)>=0.82%stimulus-evoked excitation
+            diffTemp=yvalsFine-0.82;%single neurometric threshold
+        elseif slopeNeuro(1,i)<0&&min(yvals)<=1-0.82%stimulus-evoked suppression
+            diffTemp=yvalsFine-(1-0.82);%single neurometric threshold
+        end
+        if ~isempty(diffTemp)
+            if max(yvals)>=0.82&&min(yvals)<=0.82%||max(yvals)>=1-0.82&&min(yvals)<=1-0.82
+                [tempVal columnInd]=min(abs(diffTemp));
+                threshold82higher(1,i)=xvalsFine(columnInd);
+            else
+                threshold82higher(1,i)=NaN;
+            end
+        else
+            threshold82higher(1,i)=NaN;
+        end
+        diffTemp=[];
+        if slopeNeuro(1,i)>=0&&min(yvals)<=0.18%stimulus-evoked excitation
+            diffTemp=yvalsFine-0.18;%single neurometric threshold
+        elseif slopeNeuro(1,i)<0&&max(yvals)>=0.82%stimulus-evoked suppression
+            diffTemp=yvalsFine-0.82;%single neurometric threshold
+        end
+        if ~isempty(diffTemp)
+            if max(yvals)>=0.18&&min(yvals)<=0.18
+                [tempVal columnInd]=min(abs(diffTemp));
+                threshold82lower(1,i)=xvalsFine(columnInd);
+            else
+                threshold82lower(1,i)=NaN;
+            end
+        else
+            threshold82lower(1,i)=NaN;
+        end
     elseif useISI==1%read C50/PNE as being point where AUROC value is 0.75, instead of 0.5
         if max(yvals)<0.75%out of range
             c50(1,i)=100;
@@ -140,7 +171,7 @@ else
             diffTemp=yvalsFine-(1-0.82);%single neurometric threshold
         end
         if ~isempty(diffTemp)
-            if max(yvals)>=0.82&&min(yvals)<=0.82||max(yvals)>=1-0.82&&min(yvals)<=1-0.82
+            if max(yvals)>=0.82&&min(yvals)<=0.82%||max(yvals)>=1-0.82&&min(yvals)<=1-0.82
                 [tempVal columnInd]=min(abs(diffTemp));
                 threshold82higher(1,i)=xvalsFine(columnInd);
             else
@@ -148,6 +179,22 @@ else
             end
         else
             threshold82higher(1,i)=NaN;
+        end
+        diffTemp=[];
+        if slopeNeuro(1,i)>=0&&min(yvals)<=0.18%stimulus-evoked excitation
+            diffTemp=yvalsFine-0.18;%single neurometric threshold
+        elseif slopeNeuro(1,i)<0&&max(yvals)>=0.82%stimulus-evoked suppression
+            diffTemp=yvalsFine-0.82;%single neurometric threshold
+        end
+        if ~isempty(diffTemp)
+            if max(yvals)>=0.18&&min(yvals)<=0.18
+                [tempVal columnInd]=min(abs(diffTemp));
+                threshold82lower(1,i)=xvalsFine(columnInd);
+            else
+                threshold82lower(1,i)=NaN;
+            end
+        else
+            threshold82lower(1,i)=NaN;
         end
     end
 end

@@ -84,6 +84,7 @@ for animalInd=1:length(animals)
             slopeNeuroOld=[];PNEOld=[];diffPNEOld=[];minRateOld=[];maxRateOld=[];chSSEOld=[];
 %             if useISI==1
                 threshold82higher=[];
+                threshold82lower=[];
 %             end
             sessionCounter=1;
             for i=1:length(sessionNums)
@@ -139,7 +140,11 @@ for animalInd=1:length(animals)
                                     if useISI==0
                                         maxAll=[maxAll length(matarray{condInd,2}{n})*1000/512 length(matarray{condInd,4}{n})*1000/512];
                                     elseif useISI==1
-                                        maxAll=[maxAll length(matarray{condInd,2}{n})*1000/256 length(matarray{condInd,4}{n})*1000/512];
+                                        temp3=matarray{condInd,3}{n}>512*2-256;%activity during second half of ISI
+                                        spikes=matarray{condInd,3}{n}(temp3);
+                                        temp3=spikes<512*2;
+                                        spikes=spikes(temp3);
+                                        maxAll=[maxAll length(spikes)*1000/256 length(matarray{condInd,4}{n})*1000/512];
                                     end
                                 end
                                 maxval=max(maxAll)/100;
@@ -293,7 +298,7 @@ for animalInd=1:length(animals)
 %                         if sessionCounter==21
 %                             pause
 %                         end
-                        [slopeNeuroNew,PNENew,diffPNENew,minRateNew,maxRateNew,chSSENew,threshold82higher]=weibull_fitting(rocvals,sampleContrast,testContrast,'new',sessionCounter,slopeNeuroNew,chSSENew,PNENew,minRateNew,maxRateNew,diffPNENew,plotDiffC50_30,calculateTangent,useISI,threshold82higher);
+                        [slopeNeuroNew,PNENew,diffPNENew,minRateNew,maxRateNew,chSSENew,threshold82higher,threshold82lower]=weibull_fitting(rocvals,sampleContrast,testContrast,'new',sessionCounter,slopeNeuroNew,chSSENew,PNENew,minRateNew,maxRateNew,diffPNENew,plotDiffC50_30,calculateTangent,useISI,threshold82higher,threshold82lower);
                         if sessionCounter==1
                             xlabel('contrast (%)');
                             ylabel('AUROC');
@@ -346,12 +351,12 @@ for animalInd=1:length(animals)
                 end
                 pathname=fullfile(rootFolder,'PL',analysisType,animal,subFolder,matname);
                 if sglroc3IndividualChs==1
-                    saveText=['save ',pathname,'.mat all_rocvals_sglroc3 all_rocvals slopeNeuroNew PNENew diffPNENew minRateNew maxRateNew chSSENew slopeNeuroOld PNEOld diffPNEOld minRateOld maxRateOld chSSEOld hS pS ciS statsS hmin pmin cimin statsmin hP pP ciP statsP hmax pmax cimax statsmax'];
+                    saveText=['save ',pathname,'.mat all_rocvals_sglroc3 all_rocvals slopeNeuroNew PNENew diffPNENew minRateNew maxRateNew chSSENew slopeNeuroOld PNEOld diffPNEOld minRateOld maxRateOld chSSEOld hS pS ciS statsS hmin pmin cimin statsmin hP pP ciP statsP hmax pmax cimax statsmax threshold82higher threshold82lower'];
                 elseif sglroc3IndividualChs==0
                     if useISI==0
-                        saveText=['save ',pathname,'.mat all_rocvals_sglroc3 all_rocvals slopeNeuroNew PNENew diffPNENew minRateNew maxRateNew chSSENew slopeNeuroOld PNEOld diffPNEOld minRateOld maxRateOld chSSEOld hS pS ciS statsS hmin pmin cimin statsmin hP pP ciP statsP hmax pmax cimax statsmax'];
+                        saveText=['save ',pathname,'.mat all_rocvals_sglroc3 all_rocvals slopeNeuroNew PNENew diffPNENew minRateNew maxRateNew chSSENew slopeNeuroOld PNEOld diffPNEOld minRateOld maxRateOld chSSEOld hS pS ciS statsS hmin pmin cimin statsmin hP pP ciP statsP hmax pmax cimax statsmax threshold82higher threshold82lower'];
                     elseif useISI==1
-                        saveText=['save ',pathname,'.mat all_rocvals_sglroc3 all_rocvals slopeNeuroNew PNENew diffPNENew minRateNew maxRateNew chSSENew threshold82higher'];
+                        saveText=['save ',pathname,'.mat all_rocvals_sglroc3 all_rocvals slopeNeuroNew PNENew diffPNENew minRateNew maxRateNew chSSENew threshold82higher threshold82lower'];
                     end
                 end
                 eval(saveText);
