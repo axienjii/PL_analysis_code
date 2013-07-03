@@ -1,0 +1,143 @@
+function bj_write_trial_resp(animal,channel,session,verbose,plotRedArtifacts,area)
+%Written by Xing 01/07/2013.
+%Reads vals array, checks trial inclusion criterion that was used for
+%spikes, writes list of whether response on each included trial was
+%correct, saves to file for subsequent use in plotting activity across all
+%trials from all sessions, colour-coded by correctness of response.
+artifactTrialsName=[num2str(session),'_corrtrialartifact.mat'];
+artifactTrialsPath=fullfile('F:','PL','pl_corr_art_trials',animal,artifactTrialsName);
+loadText=['load ',artifactTrialsPath,' rlist removeTrialsTimestamps'];
+eval(loadText);%removeTrialsTimestamps column 1: NLX_TRIAL_START; column 21: NLX_TRIAL_END
+% removeTrialsTimestamps=[0 0];
+writeROC=0;
+if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the same time- when .1 is processed.
+    splitSess=1;
+    [file_of_int,testContrasts,sampleContrasts]=session_metadata(session,animal);
+    if length(sampleContrasts)==36
+        sampleContrasts=[30 20 40];
+        testContrasts=[testContrasts(1:12);testContrasts(13:24);testContrasts(25:36)];
+        allConditions=[13:24;1:12;25:36];
+    elseif length(sampleContrasts)==14
+        sampleContrasts=30;
+        roving=0;
+        allConditions=1:14;
+    end    
+    
+    nseName=['SpikeCh_',num2str(channel),'_.nse'];
+    if sum(session==[355.1 405.1 435.1])%combine data from split sessions
+        sessionName=[num2str(floor(session)),'.1'];
+        nsePath=fullfile('I:','pl_spnorm_nse',animal,sessionName,nseName);
+        [SE_TimeStamps,missing]=open_nse_file(nsePath);
+        sessionName=[num2str(floor(session)),'.2'];
+        nsePath=fullfile('I:','pl_spnorm_nse',animal,sessionName,nseName);
+        [SE_TimeStamps2,missing2]=open_nse_file(nsePath);
+        missing=max([missing missing2]);
+        splitSess=2;
+    else
+        nsePath=fullfile('I:','pl_spnorm_nse',animal,num2str(session),nseName);
+        [SE_TimeStamps,missing]=open_nse_file(nsePath);
+    end
+    if missing==0
+        for k=1:length(sampleContrasts)
+            sampleContrast=sampleContrasts(k);
+            testContrast=testContrasts(k,:);
+            conditions=allConditions(k,:);
+            numconds=length(testContrast);
+            numTrialsCond=zeros(1,numconds);
+            rocvals=[];%for roc analysis
+            for h=1:length(conditions)
+                matRowCount=0;
+                correct=0;
+                incorrect=0;
+                stopHere=0;
+                for sessHalf=1:splitSess
+                    if splitSess==2
+                        sessionName=[num2str(floor(session)),'.',num2str(sessHalf)];
+                        nsePath=fullfile('I:','pl_spnorm_nse',animal,sessionName,nseName);
+                        [SE_TimeStamps,dummy]=open_nse_file(nsePath);
+                        valsFileName=['vals_',num2str(floor(session)),'.',num2str(sessHalf),'.mat'];
+                        valsFolder=fullfile('F:','PL','vals_perf',animal); %#ok<NASGU>
+                        valsPath=fullfile('F:','PL','vals_perf',animal,valsFileName);
+                        load(valsPath);
+                        removeTrialsTimestamps1=removeTrialsTimestamps;
+                        artifactTrialsName=[num2str(floor(session)),'.',num2str(sessHalf),'_corrtrialartifact.mat'];
+                        artifactTrialsPath=fullfile('F:','PL','pl_corr_art_trials',animal,artifactTrialsName);
+                        loadText=['load ',artifactTrialsPath,' rlist removeTrialsTimestamps'];
+                        eval(loadText);%removeTrialsTimestamps column 1: NLX_TRIAL_START; column 21: NLX_TRIAL_END
+                        removeTrialsTimestamps=[removeTrialsTimestamps1;removeTrialsTimestamps];
+                    elseif splitSess==1
+                        nsePath=fullfile('I:','pl_spnorm_nse',animal,num2str(session),nseName);
+                        [SE_TimeStamps,dummy]=open_nse_file(nsePath);
+                        valsFileName=['vals_',num2str(session),'.mat'];
+                        valsFolder=fullfile('F:','PL','vals_perf',animal); %#ok<NASGU>
+                        valsPath=fullfile('F:','PL','vals_perf',animal,valsFileName);
+                        load(valsPath);
+                    end
+                    if ~exist('vals','var')
+                        channel
+                        session
+                    end
+                    if length(sampleContrasts)==3
+                        if sampleContrast==30
+                            vals=vals{1};
+                        elseif sampleContrast==20
+                            vals=vals{2};
+                        elseif sampleContrast==40
+                            vals=vals{3};
+                        end
+                    end
+%                     if session==451
+%                         a=find(vals(:,:)>=SE_TimeStamps(1));
+%                         vals=vals(a(1):end,:);
+%                     end
+                    for i=1:size(vals,1)
+                        not_artifact_trial=isempty(find(vals(i,1)==removeTrialsTimestamps(:,1), 1))&&isempty(find(vals(i,21)==removeTrialsTimestamps(:,2), 1));
+                        if not_artifact_trial
+                            plotTrial=1;
+                        elseif ~not_artifact_trial%this trial contains movement-induced artifacts
+                            if plotRedArtifacts==1
+                                plotTrial=1;
+                            elseif plotRedArtifacts==0
+                                plotTrial=0;
+                            end
+                        end
+                        if plotTrial
+                            if vals(i,4)==conditions(h)%check condition number
+                                %     for j=1:size(vals,2)
+                                %     SE_EV_TimeStamps(j)=find(SE_TimeStamps<vals(i,j+1)&&SE_TimeStamps>=vals(i,j));
+                                %     spikes(j)=DataPoints(:,:,SE_EV_TimeStamps(j));
+                                %     end
+                                if (vals(i,22)>-1)||(vals(i,23)>-1)%correct OR incorrect
+                                    matRowCount=matRowCount+1;
+                                    numTrialsCond(1,h)=numTrialsCond(1,h)+1;%tally number of trials per condition                                    
+                                    if vals(i,22)>-1%correct
+                                        respArray{h,1,:}(matRowCount,1)=1;
+                                        correct=correct+1;
+                                    elseif vals(i,23)>-1%incorrect
+                                        respArray{h,1,:}(matRowCount,1)=-1;
+                                        incorrect=incorrect+1;
+                                    end
+                                end
+                            end
+                        else
+                            stopHere=stopHere+1;
+                        end
+                    end
+                end
+            end
+            
+            respName=[area,'_',num2str(session),'_',num2str(sampleContrast)];
+            respDataFolder=fullfile('F:','PL','TAS',animal);
+            if ~exist(respDataFolder,'dir')
+                mkdir(respDataFolder);
+            end
+            if plotRedArtifacts==1
+                respDataFolder=fullfile(respDataFolder,'plotRedArtifacts',respName);
+            else
+                respDataFolder=fullfile(respDataFolder,respName);
+            end
+            saveText=['save ',respDataFolder,'.mat respArray'];
+            eval(saveText);              
+        end
+    end
+end
