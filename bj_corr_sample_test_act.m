@@ -2,7 +2,7 @@ function bj_corr_sample_test_act(animals)
 %written by Xing 12/04/13
 %Calculates correlations in activity to sample and test
 
-saveSampleTestAct=0;
+saveSampleTestAct=1;
 comparisonType=1;
 switch(comparisonType)
     case(1)%all trials
@@ -18,7 +18,10 @@ else
 end
 plotDual=0;
 plotFigs=0;
-animals=[{'blanco'} {'jack'}];
+plotFigs2=0;
+if nargin<1||isempty(animals)
+    animals=[{'blanco'} {'jack'}];
+end
 areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
 % areas=[{'v4_2'} {'v1_2'}];
 % areas=[{'v4_1'} {'v1_1'}];
@@ -126,40 +129,42 @@ for animalInd=1:length(animals)
                         end
                     end
                 end
-                if h==1
-                    figDiffsDiagonal=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
-                    set(figDiffsDiagonal, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
-                end
-                figure(figDiffsDiagonal)
-                for i=1:length(sessionNums)
-                    for cond=1:length(testContrast)
-                        plot(meanDiff(i,cond),diffMeanAll(i,cond),'Marker','o','LineStyle','none','Color',colmapText(cond,:));hold on
+                if plotFigs2==1
+                    if h==1
+                        figDiffsDiagonal=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+                        set(figDiffsDiagonal, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
                     end
-                end
-                if h==length(testContrast)
-                    axis square
-                    xlims=get(gca,'XLim');
-                    ylims=get(gca,'YLim');
-                    squarelims=[min([xlims(1) ylims(1)]) max([xlims(2) ylims(2)])];
-                    line([squarelims(1) squarelims(2)],[squarelims(1) squarelims(2)],'Color','k','LineStyle',':');
-                end
-                if h==1
-                    figDiffs=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
-                    set(figDiffs, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
-                end
-                figure(figDiffs)
-                diffDiffs=meanDiff-diffMeanAll;
-                for i=1:length(sessionNums)
-                    for cond=1:length(testContrast)
-                        plot(cond,diffDiffs(i,cond),'Marker','o','LineStyle','none','Color',colmapText(cond,:));hold on
+                    figure(figDiffsDiagonal)
+                    for i=1:length(sessionNums)
+                        for cond=1:length(testContrast)
+                            plot(meanDiff(i,cond),diffMeanAll(i,cond),'Marker','o','LineStyle','none','Color',colmapText(cond,:));hold on
+                        end
                     end
-                end
-                if h==length(testContrast)
-                    axis square
-                    xlims=get(gca,'XLim');
-                    ylims=get(gca,'YLim');
-                    squarelims=[min([xlims(1) ylims(1)]) max([xlims(2) ylims(2)])];
-                    line([0 14],[0 0],'Color','k','LineStyle',':');
+                    if h==length(testContrast)
+                        axis square
+                        xlims=get(gca,'XLim');
+                        ylims=get(gca,'YLim');
+                        squarelims=[min([xlims(1) ylims(1)]) max([xlims(2) ylims(2)])];
+                        line([squarelims(1) squarelims(2)],[squarelims(1) squarelims(2)],'Color','k','LineStyle',':');
+                    end
+                    if h==1
+                        figDiffs=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+                        set(figDiffs, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+                    end
+                    figure(figDiffs)
+                    diffDiffs=meanDiff-diffMeanAll;
+                    for i=1:length(sessionNums)
+                        for cond=1:length(testContrast)
+                            plot(cond,diffDiffs(i,cond),'Marker','o','LineStyle','none','Color',colmapText(cond,:));hold on
+                        end
+                    end
+                    if h==length(testContrast)
+                        axis square
+                        xlims=get(gca,'XLim');
+                        ylims=get(gca,'YLim');
+                        squarelims=[min([xlims(1) ylims(1)]) max([xlims(2) ylims(2)])];
+                        line([0 14],[0 0],'Color','k','LineStyle',':');
+                    end
                 end
                 if plotFigs==1
                     if plotDual==1
