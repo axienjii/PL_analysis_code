@@ -13,7 +13,7 @@ if nargin<1||isempty(animals)
 end
 if nargin<2||isempty(areas)
     areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
-    areas=[{'v4_1'} {'v1_1'} {'v1_2_1'} {'v1_2_2'} {'v1_2_3'}];
+    areas=[{'v1_2_1'} {'v1_2_2'}];
 end
 for animalInd=1:length(animals)
     animal=animals{animalInd};
@@ -26,6 +26,18 @@ for animalInd=1:length(animals)
             ind=find(sessions==355);
             sessions(ind)=355.1;
             sessions=[sessions(1:ind) 355.2 sessions(ind+1:end)];
+        end
+        if strcmp(animal,'blanco')&&strncmp(area,'v1_2',4)
+            ind=find(sessions==405);
+            if ~isempty(ind)
+                sessions(ind)=405.1;
+                sessions=[sessions(1:ind) 405.2 sessions(ind+1:end)];
+            end
+            ind=find(sessions==435);
+            if ~isempty(ind)
+                sessions(ind)=435.1;
+                sessions=[sessions(1:ind) 435.2 sessions(ind+1:end)];
+            end
         end
         if nargin<5 || isempty(icopy)
             icopy = 1;
@@ -75,7 +87,7 @@ end
 
 if nargin<2||isempty(areas)
     areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
-    areas=[{'v4_1'} {'v1_1'} {'v1_2_1'} {'v1_2_2'} {'v1_2_3'}];
+    areas=[{'v1_2_1'} {'v1_2_2'} {'v1_2_3'}];
 end
 if checkLengths==1%compare number of trials between activity and response arrays, truncate arrays for sessions with large numbers of empty trials
     notEqual=[];
@@ -100,9 +112,9 @@ if checkLengths==1%compare number of trials between activity and response arrays
                         eval(loadBehavText);%read list of incorrect and correct trials
                         for h=1:length(channels)
                             if strncmp(area,'v1_2',4)
-                                loadText=['load F:\PL\sample_test_activity\',animal,'_v1_2\ch',num2str(channels(h)),'_',num2str(sessionNums(i)),'_example_sample_test_act.mat epoch2 epoch4'];
+                                loadText=['load F:\PL\sample_test_activity\',animal,'_v1_2\ch',num2str(channels(h)),'_',num2str(sessionNums(i)),'_',num2str(sampleContrast),'_example_sample_test_act.mat epoch2 epoch4'];
                             else
-                                loadText=['load F:\PL\sample_test_activity\',animal,'_',area,'\ch',num2str(channels(h)),'_',num2str(sessionNums(i)),'_example_sample_test_act.mat epoch2 epoch4'];
+                                loadText=['load F:\PL\sample_test_activity\',animal,'_',area,'\ch',num2str(channels(h)),'_',num2str(sessionNums(i)),'_',num2str(sampleContrast),'_example_sample_test_act.mat epoch2 epoch4'];
                             end
                             eval(loadText);%load channel activity
                             for condInd=1:length(testContrast)
@@ -127,78 +139,3 @@ if checkLengths==1%compare number of trials between activity and response arrays
         end
     end
 end
-% if drawFigs==1
-%     formats=[{'eps'} {'png'}];
-%     formatsCommand=[{'epsc'} {'png'}];
-%     for iter = icopy:(length(channels)*length(sessions))
-%         if iter<istart
-%             continue;
-%         end
-%         isess = ceil(iter/length(channels));
-%         ichan = mod(iter-1,length(channels))+1;
-%         
-%         session = sessions(isess);
-%         channel = channels(ichan);
-%         if strcmp(area,'v1_2')
-%             sampleContrasts=[20 30 40];
-%         else
-%             sampleContrasts=30;
-%         end
-%         for i=1:length(sampleContrasts)
-%             %if ~exist(printFileName,'file')
-%             %         info=imfinfo(printFileName);
-%             %         modDate=info.FileModDate;
-%             %         if ~strcmp(modDate(4:6),'Mar')||str2double(modDate(1:2))<17||str2double(modDate(1:2))==17&&str2double(modDate(13:14))<0&&str2double(modDate(16:17))<24
-%             figFileName=['F:\PL\PSTHs\',plotRedArtifactsText,animal,'\',num2str(channel),'\fig\',num2str(channel),'_',num2str(session),'_',num2str(sampleContrasts(i)),'.fig'];
-%             try
-%                 uiopen(figFileName,1)
-%                 for j=1:2
-%                     folderName=['F:\PL\PSTHs\',plotRedArtifactsText,animal,'\',num2str(channel),'\',formats{j}];
-%                     if ~exist(folderName,'dir')
-%                         mkdir(folderName)
-%                     end
-%                     printFileName=['F:\PL\PSTHs\',plotRedArtifactsText,animal,'\',num2str(channel),'\',formats{j},'\',num2str(channel),'_',num2str(session),'_',num2str(sampleContrasts(i)),'.',formats{j}];
-%                     print(sprintf('-d%s',formatsCommand{j}),'-r300',printFileName)
-%                 end
-%             catch ME
-%                 disp(ME)
-%                 loadText=['load F:\PL\PSTHs\',plotRedArtifactsText,'missingFigSessions.mat missingSessions'];
-%                 eval(loadText)
-%                 missingSessions=[missingSessions;{animal} {channel} {session} {ME}];
-%                 saveText=['save F:\PL\PSTHs\',plotRedArtifactsText,'missingFigSessions.mat missingSessions'];
-%                 eval(saveText)
-%             end
-%             %         end
-%             close all
-%         end
-%     end
-% end
-% 
-% checkImages=0;
-% if checkImages==1
-%     %check that new images have been drawn:
-%     for iter = icopy:(length(channels)*length(sessions))
-%         if iter<istart
-%             continue;
-%         end
-%         isess = ceil(iter/length(channels));
-%         ichan = mod(iter-1,length(channels))+1;
-%         
-%         session = sessions(isess);
-%         channel = channels(ichan);
-%         if strcmp(area,'v1_2')
-%             sampleContrasts=[20 30 40];
-%         else
-%             sampleContrasts=30;
-%         end
-%         for i=1:length(sampleContrasts)
-%             printFileName=['F:\PL\PSTHs\',animal,'\',num2str(channel),'\png\',num2str(channel),'_',num2str(session),'_',num2str(sampleContrasts(i)),'.png'];
-%             %if ~exist(printFileName,'file')
-%             info=imfinfo(printFileName);
-%             modDate=info.FileModDate;
-%             if ~strcmp(modDate(4:6),'Mar')||str2double(modDate(1:2))<17||str2double(modDate(1:2))==17&&str2double(modDate(13:14))<0&&str2double(modDate(16:17))<24
-%                 printFileName
-%             end
-%         end
-%     end
-% end
