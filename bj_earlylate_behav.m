@@ -6,7 +6,7 @@ function bj_earlylate_behav(psychoOnly)
 %Rows 1, 2 & 3: proportion correct, slope, PSE.
 onExternalHD=0;
 plotRTerr=1;
-roving=0;
+roving=2;
 plotStage3=1;
 animals=[{'blanco'} {'jack'}];
 if roving==0
@@ -80,11 +80,16 @@ for sampleContrastInd=1:length(sampleContrasts)
         pses1h=allMeanPerf(end,3+numconds);bpses1l=allMeanPerf(end-numN:end-1,3+numconds);
         rts1h=allMeanPerf(end,7+numconds)/1000;brts1l=allMeanPerf(end-numN:end-1,7+numconds)/1000;
         rterrs1h=allMeanPerf(end,23+numconds*3)/1000;brterrs1l=allMeanPerf(end-numN:end-1,23+numconds*3)/1000;
-        p1elAll(1,1+monkeyMultiple*5:5+monkeyMultiple*5)=[mean(bpc(grouping==0)*100),var(bpc(grouping==0)*100),mean(bpcs1l*100),var(bpcs1l*100),anovan(bpc(1:end),grouping(1:end))];%exclude session with horizontal Gabor
-        p1elAll(2,1+monkeyMultiple*5:5+monkeyMultiple*5)=[mean(bsl(grouping==0)),var(bsl(grouping==0)),mean(bsls1l),var(bsls1l),anovan(bsl(1:end),grouping(1:end))];
-        p1elAll(3,1+monkeyMultiple*5:5+monkeyMultiple*5)=[mean(bpse(grouping==0)),var(bpse(grouping==0)),mean(bpses1l),var(bpses1l),anovan(bpse(1:end),grouping(1:end))];
-        p1elAll(4,1+monkeyMultiple*5:5+monkeyMultiple*5)=[mean(brt(grouping==0)),var(brt(grouping==0)),mean(brts1l),var(brts1l),anovan(brt(1:end),grouping(1:end))];
-        p1elAll(5,1+monkeyMultiple*5:5+monkeyMultiple*5)=[mean(brterr(grouping==0)),var(brterr(grouping==0)),mean(brterrs1l),var(brterrs1l),anovan(brterr(1:end),grouping(1:end))];
+        [p,t,stats,terms]=anovan(bpc(1:end),grouping(1:end));
+        p1elAll(1,1+monkeyMultiple*8:8+monkeyMultiple*8)=[mean(bpc(grouping==0)*100),var(bpc(grouping==0)*100),mean(bpcs1l*100),var(bpcs1l*100),t{2,3},t{3,3},t{2,6},p];%exclude session with horizontal Gabor
+        [p,t,stats,terms]=anovan(bsl(1:end),grouping(1:end));
+        p1elAll(2,1+monkeyMultiple*8:8+monkeyMultiple*8)=[mean(bsl(grouping==0)),var(bsl(grouping==0)),mean(bsls1l),var(bsls1l),t{2,3},t{3,3},t{2,6},p];
+        [p,t,stats,terms]=anovan(bpse(1:end),grouping(1:end));
+        p1elAll(3,1+monkeyMultiple*8:8+monkeyMultiple*8)=[mean(bpse(grouping==0)),var(bpse(grouping==0)),mean(bpses1l),var(bpses1l),t{2,3},t{3,3},t{2,6},p];
+        [p,t,stats,terms]=anovan(brt(1:end),grouping(1:end));
+        p1elAll(4,1+monkeyMultiple*8:8+monkeyMultiple*8)=[mean(brt(grouping==0)),var(brt(grouping==0)),mean(brts1l),var(brts1l),t{2,3},t{3,3},t{2,6},p];
+        [p,t,stats,terms]=anovan(brterr(1:end),grouping(1:end));
+        p1elAll(5,1+monkeyMultiple*8:8+monkeyMultiple*8)=[mean(brterr(grouping==0)),var(brterr(grouping==0)),mean(brterrs1l),var(brterrs1l),t{2,3},t{3,3},t{2,6},p];
         [h p1e1(1+monkeyMultiple) CI stats1e1(1+monkeyMultiple)]=ttest(bpc(1:numN),bpc(end-numN+1:end));
         [h p1e1(1+monkeyMultiple) CI stats1e1(3+monkeyMultiple)]=ttest(bsl(1:numN),bsl(end-numN+1:end));
         [h p1e1(1+monkeyMultiple) CI stats1e1(5+monkeyMultiple)]=ttest(bpse(1:numN),bpse(end-numN+1:end));
@@ -245,11 +250,16 @@ for sampleContrastInd=1:length(sampleContrasts)
         %     p1el(11+monkeyMultiple)=anovan(bpse,grouping);
         %     p1el(15+monkeyMultiple)=anovan(brt,grouping);
         %     p1el(19+monkeyMultiple)=anovan(brterr,grouping);
-        p1elAll(1,11+monkeyMultiple*5:15+monkeyMultiple*5)=[mean(bpc(grouping==0)*100),var(bpc(grouping==0)*100),mean(bpc(grouping==1)*100),var(bpc(grouping==1)*100),anovan(bpc,grouping)];%exclude session with horizontal Gabor
-        p1elAll(2,11+monkeyMultiple*5:15+monkeyMultiple*5)=[mean(bsl(grouping==0)),var(bsl(grouping==0)),mean(bsl(grouping==1)),var(bsl(grouping==1)),anovan(bsl,grouping)];
-        p1elAll(3,11+monkeyMultiple*5:15+monkeyMultiple*5)=[mean(bpse(grouping==0)),var(bpse(grouping==0)),mean(bpse(grouping==1)),var(bpse(grouping==1)),anovan(bpse,grouping)];
-        p1elAll(4,11+monkeyMultiple*5:15+monkeyMultiple*5)=[mean(brt(grouping==0)),var(brt(grouping==0)),mean(brt(grouping==1)),var(brt(grouping==1)),anovan(brt,grouping)];
-        p1elAll(5,11+monkeyMultiple*5:15+monkeyMultiple*5)=[mean(brterr(grouping==0)),var(brterr(grouping==0)),mean(brterr(grouping==1)),var(brterr(grouping==1)),anovan(brterr,grouping)];
+        [p,t,stats,terms]=anovan(bpc,grouping);
+        p1elAll(1,17+monkeyMultiple*8:24+monkeyMultiple*8)=[mean(bpc(grouping==0)*100),var(bpc(grouping==0)*100),mean(bpc(grouping==1)*100),var(bpc(grouping==1)*100),t{2,3},t{3,3},t{2,6},p];%exclude session with horizontal Gabor
+        [p,t,stats,terms]=anovan(bsl,grouping);
+        p1elAll(2,17+monkeyMultiple*8:24+monkeyMultiple*8)=[mean(bsl(grouping==0)),var(bsl(grouping==0)),mean(bsl(grouping==1)),var(bsl(grouping==1)),t{2,3},t{3,3},t{2,6},p];
+        [p,t,stats,terms]=anovan(bpse,grouping);
+        p1elAll(3,17+monkeyMultiple*8:24+monkeyMultiple*8)=[mean(bpse(grouping==0)),var(bpse(grouping==0)),mean(bpse(grouping==1)),var(bpse(grouping==1)),t{2,3},t{3,3},t{2,6},p];
+        [p,t,stats,terms]=anovan(brt,grouping);
+        p1elAll(4,17+monkeyMultiple*8:24+monkeyMultiple*8)=[mean(brt(grouping==0)),var(brt(grouping==0)),mean(brt(grouping==1)),var(brt(grouping==1)),t{2,3},t{3,3},t{2,6},p];
+        [p,t,stats,terms]=anovan(brterr,grouping);
+        p1elAll(5,17+monkeyMultiple*8:24+monkeyMultiple*8)=[mean(brterr(grouping==0)),var(brterr(grouping==0)),mean(brterr(grouping==1)),var(brterr(grouping==1)),t{2,3},t{3,3},t{2,6},p];
         [h p1e1(1+monkeyMultiple) CI stats1e1(2,1+monkeyMultiple)]=ttest(bpc(1:numN),bpc(end-numN+1:end));
         [h p1e1(1+monkeyMultiple) CI stats1e1(2,3+monkeyMultiple)]=ttest(bsl(1:numN),bsl(end-numN+1:end));
         [h p1e1(1+monkeyMultiple) CI stats1e1(2,5+monkeyMultiple)]=ttest(bpse(1:numN),bpse(end-numN+1:end));
@@ -263,11 +273,16 @@ for sampleContrastInd=1:length(sampleContrasts)
             bpses1ls21=[bpses1l;bpse(grouping==1)];
             brts1ls21=[brts1l;brt(grouping==1)];
             brterrs1ls21=[brterrs1l;brterr(grouping==1)];
-            p1l2lAll{sampleContrastInd,monkeyMultiple+1}(1,:)=[mean(bpcs1l*100),var(bpcs1l*100),mean(bpc(grouping==1)*100),var(bpc(grouping==1)*100),anovan(bpcs1ls21,groupings1ls2l)];%exclude session with horizontal Gabor
-            p1l2lAll{sampleContrastInd,monkeyMultiple+1}(2,:)=[mean(bsls1l),var(bsls1l),mean(bsl(grouping==1)),var(bsl(grouping==1)),anovan(bsls1ls21,groupings1ls2l)];
-            p1l2lAll{sampleContrastInd,monkeyMultiple+1}(3,:)=[mean(bpses1l),var(bpses1l),mean(bpse(grouping==1)),var(bpse(grouping==1)),anovan(bpses1ls21,groupings1ls2l)];
-            p1l2lAll{sampleContrastInd,monkeyMultiple+1}(4,:)=[mean(brts1l),var(brts1l),mean(brt(grouping==1)),var(brt(grouping==1)),anovan(brts1ls21,groupings1ls2l)];
-            p1l2lAll{sampleContrastInd,monkeyMultiple+1}(5,:)=[mean(brterrs1l),var(brterrs1l),mean(brterr(grouping==1)),var(brterr(grouping==1)),anovan(brterrs1ls21,groupings1ls2l)];
+            [p,t,stats,terms]=anovan(bpcs1ls21,groupings1ls2l);
+            p1l2lAll{sampleContrastInd,monkeyMultiple+1}(1,:)=[mean(bpcs1l*100),var(bpcs1l*100),mean(bpc(grouping==1)*100),var(bpc(grouping==1)*100),t{2,3},t{3,3},t{2,6},p];%exclude session with horizontal Gabor
+            [p,t,stats,terms]=anovan(bsls1ls21,groupings1ls2l);
+            p1l2lAll{sampleContrastInd,monkeyMultiple+1}(2,:)=[mean(bsls1l),var(bsls1l),mean(bsl(grouping==1)),var(bsl(grouping==1)),t{2,3},t{3,3},t{2,6},p];
+            [p,t,stats,terms]=anovan(bpses1ls21,groupings1ls2l);
+            p1l2lAll{sampleContrastInd,monkeyMultiple+1}(3,:)=[mean(bpses1l),var(bpses1l),mean(bpse(grouping==1)),var(bpse(grouping==1)),t{2,3},t{3,3},t{2,6},p];
+            [p,t,stats,terms]=anovan(brts1ls21,groupings1ls2l);
+            p1l2lAll{sampleContrastInd,monkeyMultiple+1}(4,:)=[mean(brts1l),var(brts1l),mean(brt(grouping==1)),var(brt(grouping==1)),t{2,3},t{3,3},t{2,6},p];
+            [p,t,stats,terms]=anovan(brterrs1ls21,groupings1ls2l);
+            p1l2lAll{sampleContrastInd,monkeyMultiple+1}(5,:)=[mean(brterrs1l),var(brterrs1l),mean(brterr(grouping==1)),var(brterr(grouping==1)),t{2,3},t{3,3},t{2,6},p];
             subplot(rows,length(sampleContrasts),sampleContrastInd);
             boxplot(bpcs1ls21,groupings1ls2l);
             [yAxis]=get(gca,'yLim');
