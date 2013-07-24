@@ -6,9 +6,9 @@ area='v4_1';
 sessions=[311 333];
 sessions=[ 333];
 minTrials=[50 60];
-% area='v1_2';
+area='v1_2';
 % sessions=[398 451];
-% sessions=[ 451];
+sessions=[ 451];
 if strcmp(area,'v1_2')
     numconds=12;
 else

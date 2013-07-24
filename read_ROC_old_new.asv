@@ -2,7 +2,7 @@ function read_ROC_old_new(cutoff,excludeSuppressed,normalised,roving)
 analysisType='ROC';
 analysisType='ROC_zero_one';
 %Written by Xing 19/05/13
-%Compare psychometric function parameters between new and old methods of
+%Compare neurometric function parameters between new and old methods of
 %ROC/AUROC value generation
 onExternalHD=0;
 if onExternalHD==1

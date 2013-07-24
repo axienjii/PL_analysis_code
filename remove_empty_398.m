@@ -1,4 +1,4 @@
-function remove_empty_333
+function remove_empty_398
 %remove empty cells from session 333 and 311
 animal='blanco';
 % area='v4_1';

@@ -74,7 +74,7 @@ if min(numTrials)>=minTrials
                 end
             end
             saveText=['save ',CRFmatPath,' CRFmat'];
-            eval(saveText);
+%             eval(saveText);
         end
     end
     
