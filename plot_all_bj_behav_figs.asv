@@ -201,6 +201,8 @@ for animalInd=1:length(animals)
                 ylim([65 95]);
                 xlim([0 24]);
             end
+            yAxis=get(gca,'yLim');
+            set(gca,'YTick',[yAxis(1) yAxis(2)],'YTickLabel',[yAxis(1)/100 yAxis(2)/100]);
             hold on
             if strcmp(area,'v4_1')%horizontal Gabor session
                 animalMarkerFaceColors={'none' 'b'};
@@ -234,7 +236,8 @@ for animalInd=1:length(animals)
                 plot(3+max(maxV4_1):max(maxV4_1)+7,allMeanPerf(:,34+numconds*6),'Marker','o','Color','r','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
             else
                 plot(1:size(allMeanPerf,1),allMeanPerf(:,34+numconds*6),'Marker','o','Color','r','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
-                [hperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),1),pperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),1)]=ttest(allMeanPerf(:,27+numconds*5),allMeanPerf(:,34+numconds*6));
+                [hperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),1),pperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),1) CI stats]=ttest(allMeanPerf(:,27+numconds*5),allMeanPerf(:,34+numconds*6));
+                statsperfIndpair{plotAreaInd+length(areaTexts)*(animalInd-1),1}=stats;
             end
             
             % index of difference in simple proportion correct without error bars,
@@ -529,6 +532,7 @@ for animalInd=1:length(animals)
                     line([0 35],[0 0],'LineStyle',':');
                 end
                [h,pRTind(animalInd+2*(plotAreaInd-1)),ciRTind(animalInd+2*(plotAreaInd-1),:),stats] = ttest(allMeanPerf(:,32+6*length(testContrast)),allMeanPerf(:,39+7*length(testContrast)))
+               statsRTind{animalInd+2*(plotAreaInd-1)}=stats;
             end
             
             %proportion of trials monkey reported that test was higher contrast,
@@ -730,32 +734,34 @@ for animalInd=1:length(animals)
             subplot(length(areaTexts),3,2+(plotAreaInd-1)*3);
             animalMarkerFaceColors={'none' 'k'};
             if strcmp(area,'v4_2')
-                plot(3+maxV4_1(animalInd):size(allMeanPerf,1)+maxV4_1(animalInd)+2,allMeanPerf(:,29+numconds*6),'Marker','o','Color','k','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
+                plot(3+max(maxV4_1):max(maxV4_1)+7,allMeanPerf(:,29+numconds*6),'Marker','o','Color','k','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
             else
                 plot(1:size(allMeanPerf,1),allMeanPerf(:,29+numconds*6),'Marker','o','Color','k','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
             end
             hold on
             animalMarkerFaceColors={'none' 'r'};
             if strcmp(area,'v4_2')
-                plot(3+maxV4_1(animalInd):size(allMeanPerf,1)+maxV4_1(animalInd)+2,allMeanPerf(:,36+numconds*7),'Marker','o','Color','r','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
+                plot(3+max(maxV4_1):max(maxV4_1)+7,allMeanPerf(:,36+numconds*7),'Marker','o','Color','r','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
             else
                 plot(1:size(allMeanPerf,1),allMeanPerf(:,36+numconds*7),'Marker','o','Color','r','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
-                [hperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),2),pperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),2)]=ttest(allMeanPerf(:,29+numconds*6),allMeanPerf(:,36+numconds*7));
+                [hperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),2),pperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),2) CI stats]=ttest(allMeanPerf(:,29+numconds*6),allMeanPerf(:,36+numconds*7));
+                statsperfIndpair{plotAreaInd+length(areaTexts)*(animalInd-1),2}=stats;
             end
             subplot(length(areaTexts),3,3+(plotAreaInd-1)*3);
             animalMarkerFaceColors={'none' 'k'};
             if strcmp(area,'v4_2')
-                plot(3+maxV4_1(animalInd):size(allMeanPerf,1)+maxV4_1(animalInd)+2,allMeanPerf(:,28+numconds*6),'Marker','o','Color','k','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
+                plot(3+max(maxV4_1):max(maxV4_1)+7,allMeanPerf(:,28+numconds*6),'Marker','o','Color','k','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
             else
                 plot(1:size(allMeanPerf,1),allMeanPerf(:,28+numconds*6),'Marker','o','Color','k','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
             end
             hold on
             animalMarkerFaceColors={'none' 'r'};
             if strcmp(area,'v4_2')
-                plot(3+maxV4_1(animalInd):size(allMeanPerf,1)+maxV4_1(animalInd)+2,allMeanPerf(:,35+numconds*7),'Marker','o','Color','r','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
+                plot(3+max(maxV4_1):max(maxV4_1)+7,allMeanPerf(:,35+numconds*7),'Marker','o','Color','r','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
             else
                 plot(1:size(allMeanPerf,1),allMeanPerf(:,35+numconds*7),'Marker','o','Color','r','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
-                [hperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),3),pperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),3)]=ttest(allMeanPerf(:,28+numconds*6),allMeanPerf(:,35+numconds*7));
+                [hperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),3),pperfIndpair(plotAreaInd+length(areaTexts)*(animalInd-1),3) CI stats]=ttest(allMeanPerf(:,28+numconds*6),allMeanPerf(:,35+numconds*7));
+                statsperfIndpair{plotAreaInd+length(areaTexts)*(animalInd-1),3}=stats;
             end
             
             % index of difference in slope and PSE,
@@ -1024,20 +1030,42 @@ elseif roving==1
 %     ylim([60 95]);
 %     % ylim([0.65 0.95]);
 %     xlim([0 24]);
+    subplot(length(areaTexts),3,1);
+    xlabel('session number');
+    ylabel('20 %');
+    title('proportion correct');
+%     ylim([0.5 0.9]);
+%     xlim([0 38]);
+    subplot(length(areaTexts),3,2);
+    title('slope');
+    subplot(length(areaTexts),3,3);
+    title('PSE');
+    subplot(length(areaTexts),3,4);
+    ylabel('30 %');
+    subplot(length(areaTexts),3,5);
+    subplot(length(areaTexts),3,7);
+    ylim([76 86]);
+    ylabel('40 %');
     
     % %proportion correct, slope, PSE: first and last 30% of trials within each
     % session
     figure(pcpsesl30Fig)
-%     subplot(length(areaTexts),3,1);
+    subplot(length(areaTexts),3,1);
+    xlabel('session number');
+    ylabel('20 %');
+    title('proportion correct');
 %     ylim([0.5 0.9]);
 %     xlim([0 38]);
     subplot(length(areaTexts),3,2);
     ylim([0 8]);
 %     xlim([0 38]);
+    title('slope');
     subplot(length(areaTexts),3,3);
     ylim([20 35]);
 %     xlim([0 38]);
-%     subplot(length(areaTexts),3,4);
+    title('PSE');
+    subplot(length(areaTexts),3,4);
+    ylabel('30 %');
 %     ylim([0.65 0.95]);
 %     xlim([0 24]);
     subplot(length(areaTexts),3,5);
@@ -1046,6 +1074,8 @@ elseif roving==1
 %     subplot(length(areaTexts),3,6);
 %     ylim([16 36]);
 %     xlim([0 24]);
+    subplot(length(areaTexts),3,7);
+    ylabel('40 %');
     subplot(length(areaTexts),3,8);
     ylim([0 10]);
     subplot(length(areaTexts),3,9);
@@ -1255,7 +1285,23 @@ elseif roving==1
     subplot(length(areaTexts),3,8);
     xlim([0 24]);
     subplot(length(areaTexts),3,9);
-    xlim([0 24]);
+    xlim([0 24]); 
+    
+    subplot(length(areaTexts),3,1);
+    xlabel('session number');
+    ylabel('20 %');
+    title('proportion correct');
+%     ylim([0.5 0.9]);
+%     xlim([0 38]);
+    subplot(length(areaTexts),3,2);
+    title('slope');
+    subplot(length(areaTexts),3,3);
+    title('PSE');
+    subplot(length(areaTexts),3,4);
+    ylabel('30 %');
+    subplot(length(areaTexts),3,5);
+    subplot(length(areaTexts),3,7);
+    ylabel('40 %');
     
     % %proportion correct, slope, PSE: first and last 30% of trials within each
     % session
@@ -1353,6 +1399,18 @@ elseif roving==1
     xlim([0 23]);
     ylim([-5 105]);
     
+    subplot(length(areaTexts),2,1);
+    xlabel('session number');
+    ylabel('20 %');
+    title('Monkey 1');
+%     ylim([0.5 0.9]);
+%     xlim([0 38]);
+    subplot(length(areaTexts),2,2);
+    title('Monkey 2');
+    subplot(length(areaTexts),2,3);
+    ylabel('30%');
+    subplot(length(areaTexts),2,5);
+    ylabel('40 %');
    
     figure(pc_condcoefFig)
 %     subplot(length(areaTexts),2,1);

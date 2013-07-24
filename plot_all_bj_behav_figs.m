@@ -201,6 +201,8 @@ for animalInd=1:length(animals)
                 ylim([65 95]);
                 xlim([0 24]);
             end
+            yAxis=get(gca,'yLim');
+            set(gca,'YTick',[yAxis(1) yAxis(2)],'YTickLabel',[yAxis(1)/100 yAxis(2)/100]);
             hold on
             if strcmp(area,'v4_1')%horizontal Gabor session
                 animalMarkerFaceColors={'none' 'b'};
@@ -1028,20 +1030,42 @@ elseif roving==1
 %     ylim([60 95]);
 %     % ylim([0.65 0.95]);
 %     xlim([0 24]);
+    subplot(length(areaTexts),3,1);
+    xlabel('session number');
+    ylabel('20 %');
+    title('proportion correct');
+%     ylim([0.5 0.9]);
+%     xlim([0 38]);
+    subplot(length(areaTexts),3,2);
+    title('slope');
+    subplot(length(areaTexts),3,3);
+    title('PSE');
+    subplot(length(areaTexts),3,4);
+    ylabel('30 %');
+    subplot(length(areaTexts),3,5);
+    subplot(length(areaTexts),3,7);
+    ylim([76 86]);
+    ylabel('40 %');
     
     % %proportion correct, slope, PSE: first and last 30% of trials within each
     % session
     figure(pcpsesl30Fig)
-%     subplot(length(areaTexts),3,1);
+    subplot(length(areaTexts),3,1);
+    xlabel('session number');
+    ylabel('20 %');
+    title('proportion correct');
 %     ylim([0.5 0.9]);
 %     xlim([0 38]);
     subplot(length(areaTexts),3,2);
     ylim([0 8]);
 %     xlim([0 38]);
+    title('slope');
     subplot(length(areaTexts),3,3);
     ylim([20 35]);
 %     xlim([0 38]);
-%     subplot(length(areaTexts),3,4);
+    title('PSE');
+    subplot(length(areaTexts),3,4);
+    ylabel('30 %');
 %     ylim([0.65 0.95]);
 %     xlim([0 24]);
     subplot(length(areaTexts),3,5);
@@ -1050,6 +1074,8 @@ elseif roving==1
 %     subplot(length(areaTexts),3,6);
 %     ylim([16 36]);
 %     xlim([0 24]);
+    subplot(length(areaTexts),3,7);
+    ylabel('40 %');
     subplot(length(areaTexts),3,8);
     ylim([0 10]);
     subplot(length(areaTexts),3,9);
@@ -1259,7 +1285,23 @@ elseif roving==1
     subplot(length(areaTexts),3,8);
     xlim([0 24]);
     subplot(length(areaTexts),3,9);
-    xlim([0 24]);
+    xlim([0 24]); 
+    
+    subplot(length(areaTexts),3,1);
+    xlabel('session number');
+    ylabel('20 %');
+    title('proportion correct');
+%     ylim([0.5 0.9]);
+%     xlim([0 38]);
+    subplot(length(areaTexts),3,2);
+    title('slope');
+    subplot(length(areaTexts),3,3);
+    title('PSE');
+    subplot(length(areaTexts),3,4);
+    ylabel('30 %');
+    subplot(length(areaTexts),3,5);
+    subplot(length(areaTexts),3,7);
+    ylabel('40 %');
     
     % %proportion correct, slope, PSE: first and last 30% of trials within each
     % session
@@ -1357,6 +1399,18 @@ elseif roving==1
     xlim([0 23]);
     ylim([-5 105]);
     
+    subplot(length(areaTexts),2,1);
+    xlabel('session number');
+    ylabel('20 %');
+    title('Monkey 1');
+%     ylim([0.5 0.9]);
+%     xlim([0 38]);
+    subplot(length(areaTexts),2,2);
+    title('Monkey 2');
+    subplot(length(areaTexts),2,3);
+    ylabel('30%');
+    subplot(length(areaTexts),2,5);
+    ylabel('40 %');
    
     figure(pc_condcoefFig)
 %     subplot(length(areaTexts),2,1);
