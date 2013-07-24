@@ -24,7 +24,7 @@ if nargin<1||isempty(animals)
 end
 areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
 % areas=[{'v4_2'} {'v1_2'}];
-% areas=[{'v4_1'} {'v1_1'}];
+areas=[{'v1_2'} {'v1_2_1'} {'v1_2_2'}];
 test_epochs={0 512 512*2 512*3};durSpon=150;
 durSpon=150;%length of period prior to sample onset from which spontaneous rates are calculated. Can take on a value of up to 512 ms.
 minTrials=10;%set value of minumum number of trials for inclusion of session
@@ -95,7 +95,7 @@ for animalInd=1:length(animals)
                             if ~exist(saveFolderName,'dir')
                                 mkdir(saveFolderName);
                             end
-                            saveText=['save F:\PL\sample_test_activity\',animal,'_',area,'\ch',num2str(channels(h)),'_',num2str(sessionNums(i)),'_example_sample_test_act.mat epoch2 epoch4'];
+                            saveText=['save F:\PL\sample_test_activity\',animal,'_',area,'\ch',num2str(channels(h)),'_',num2str(sessionNums(i)),'_',num2str(sampleContrast),'_example_sample_test_act.mat epoch2 epoch4'];
                             eval(saveText);
                             matActName=['F:\PL\ch',num2str(channels(h)),'_',num2str(sessionNums(i)),'_example_sample_test_act.mat'];
 %                             txtActName=['F:\PL\ch',num2str(channels(h)),'_',num2str(sessionNums(i)),'_example_sample_test_act.txt'];
@@ -168,9 +168,9 @@ for animalInd=1:length(animals)
                 end
                 if plotFigs==1
                     if plotDual==1
-                        imagename=['ch_',num2str(channel),'test_vs_sample_act_',area,'_splitPlots'];
+                        imagename=['ch_',num2str(channel),'test_vs_sample_act_',area,'_',num2str(sampleContrast),'_splitPlots'];
                     else
-                        imagename=['ch_',num2str(channel),'test_vs_sample_act_',area];
+                        imagename=['ch_',num2str(channel),'test_vs_sample_act_',area,'_',num2str(sampleContrast)];
                     end
                     pathname=fullfile(rootFolder,'PL',analysisType,animal,'ROC_diff',imagename);
                     foldername=fullfile(rootFolder,'PL',analysisType,animal,'ROC_diff');
@@ -186,14 +186,14 @@ for animalInd=1:length(animals)
                 percPs(h)=smallPs/(length(sessionNums)*size(matarray,1));
                 posRs=sum(sum(r(:,:)>0));
                 percRs(h)=posRs/(length(sessionNums)*size(matarray,1));
-                matName=[num2str(channel),'_Rp_ROCdiff_',area];
+                matName=[num2str(channel),'_',num2str(sampleContrast),'_Rp_ROCdiff_',area];
                 matPathName=fullfile(rootFolder,'PL',analysisType,animal,'ROC_diff',matName);
                 matFolderName=fullfile(rootFolder,'PL',analysisType,animal,'ROC_diff');
                 if ~exist(matFolderName,'dir')
                     mkdir(matFolderName);
                 end
                 saveText=['save ',matPathName,' p r'];
-%                 eval(saveText);
+                eval(saveText);
                 if plotFigs==1
                     figure(figSess);
                     subplot(ceil(length(channels)/5),5,h);
@@ -212,7 +212,7 @@ for animalInd=1:length(animals)
             end
         end
         if plotFigs==1
-            imagename=['Rs_test_vs_sample_',area];
+            imagename=['Rs_test_vs_sample_',area,'_',num2str(sampleContrast)];
             pathname=fullfile(rootFolder,'PL',analysisType,animal,'ROC_diff',imagename);
             printtext=sprintf('print -dpng %s.png',pathname);
             set(gcf,'PaperPositionMode','auto')
