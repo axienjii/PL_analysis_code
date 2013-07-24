@@ -152,11 +152,12 @@ for sampleContrastsInd=1:length(sampleContrasts)
     sigChDirMin=cell(2,1);
     sigChDirMax=cell(2,1);
     for paramInd=1:size(chCoefficients,2)
-%         if calcPartial==0
+        if calcPartial==0
 %             sigInd=find(chps(:,paramInd)<0.05/size(chps,1));
-%         elseif calcPartial==1
+            sigInd=find(chps(:,paramInd)<0.05/4);%4 comparisons for slope, PNE, min and max
+        elseif calcPartial==1
             sigInd=find(chps(:,paramInd)<0.05);
-%         end
+        end
         sigChNames(paramInd,1)={includedChannels(sigInd)};%compile list of channel numbers
         sigChs(paramInd,1)=length(sigInd);
         sigCoefs=chCoefficients(sigInd,paramInd);

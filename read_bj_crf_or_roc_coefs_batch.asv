@@ -1,5 +1,5 @@
 function read_bj_crf_or_roc_coefs_batch(animal,area,analysisType,excludeSessHighSSE,excludeOutliers,comparisonType,plotLeastSquares,modifyMinMax,useISI,calcPartial)
-
+ 
 %Written by Xing 13/06/13
 %Just read correlation coefficients and calculate stats.
 %excludeSessHighSSE: set to 1 to exclude sessions with poor Weibull fit
@@ -88,6 +88,7 @@ for sampleContrastsInd=1:length(sampleContrasts)
     appendText=['_',num2str(sampleContrast)];
     chCoefficients=[];
     chps=[];%p-vals
+    includedChannels=[];
     c50s={[]};%the number of sessions incuded for each channel varies- as long as at least 80% of sessions have good slopes and PNE, channel is included
     slopes={[]};
     mins={[]};
@@ -128,6 +129,7 @@ for sampleContrastsInd=1:length(sampleContrasts)
                         chRowCouht=chRowCouht+1;
                         chCoefficients=[chCoefficients;coefficients(1,:)];
                         chps=[chps;coefficients(2,:)];
+                        includedChannels=[includedChannels channels(i)];
                         c50s{chRowCouht}=c50;%record C50 values, will need to tally number of channels where C50 shifts towards or away from 30%
                         slopes{chRowCouht}=slopeNeuro;%record slope values, will need to tally number of channels where slope becomes steeper or shallower
                         mins{chRowCouht}=minRate;%record slope values, will need to tally number of channels where slope becomes steeper or shallower
@@ -150,12 +152,13 @@ for sampleContrastsInd=1:length(sampleContrasts)
     sigChDirMin=cell(2,1);
     sigChDirMax=cell(2,1);
     for paramInd=1:size(chCoefficients,2)
-%         if calcPartial==0
+        if calcPartial==0
 %             sigInd=find(chps(:,paramInd)<0.05/size(chps,1));
-%         elseif calcPartial==1
+            sigInd=find(chps(:,paramInd)<0.05/4);%4 comparisons for slope, PNE, min and max
+        elseif calcPartial==1
             sigInd=find(chps(:,paramInd)<0.05);
-%         end
-        sigChNames(paramInd,1)={channels(sigInd)};%compile list of channel numbers
+        end
+        sigChNames(paramInd,1)={includedChannels(sigInd)};%compile list of channel numbers
         sigChs(paramInd,1)=length(sigInd);
         sigCoefs=chCoefficients(sigInd,paramInd);
         sigDirection=[sigDirection;sum(sigCoefs>0);sum(sigCoefs<0)];%number of positive & negative changes
@@ -168,52 +171,52 @@ for sampleContrastsInd=1:length(sampleContrasts)
                     lengthThird=floor(size(sigSlopes,2)/3);
                     if abs(mean(sigSlopes))>0&&mean(sigSlopes(1:lengthThird))<mean(sigSlopes(end-lengthThird+1:end))||abs(mean(sigSlopes))<0&&mean(sigSlopes(1:lengthThird))>mean(sigSlopes(end-lengthThird+1:end))
                         dirSlope(1,1)=dirSlope(1)+1;%steeper
-                        sigChDirSlope{1,1}=[sigChDirSlope{1,1} sigChNames{paramInd,1}];
+                        sigChDirSlope{1,1}=[sigChDirSlope{1,1} sigChNames{paramInd,1}(chRowInd)];
                     elseif abs(mean(sigSlopes))>0&&mean(sigSlopes(1:lengthThird))>mean(sigSlopes(end-lengthThird+1:end))||abs(mean(sigSlopes))<0&&mean(sigSlopes(1:lengthThird))<mean(sigSlopes(end-lengthThird+1:end))
                         dirSlope(2,1)=dirSlope(2)+1;%shallower
-                        sigChDirSlope{2,1}=[sigChDirSlope{2,1} sigChNames{paramInd,1}];
+                        sigChDirSlope{2,1}=[sigChDirSlope{2,1} sigChNames{paramInd,1}(chRowInd)];
                     elseif mean(sigSlopes(1:lengthThird))<0&&mean(sigSlopes(end-lengthThird+1:end))>0||mean(sigSlopes(1:lengthThird))>0&&mean(sigSlopes(end-lengthThird+1:end))<0
                         dirSlope(3,1)=dirSlope(3)+1;
-                        sigChDirSlope{3,1}=[sigChDirSlope{3,1} sigChNames{paramInd,1}];%switch from one polarity to another (i.e. +ve to -ve or -ve to +ve)
+                        sigChDirSlope{3,1}=[sigChDirSlope{3,1} sigChNames{paramInd,1}(chRowInd)];%switch from one polarity to another (i.e. +ve to -ve or -ve to +ve)
                     end
                 end
             elseif paramInd==2%sig change in C50
-                sigchC50s=c50s{sigInd};
-                lengthThird=floor(size(sigchC50s,2)/3);
-                for rowInd=1:size(sigchC50s,1)
-                    if mean(sigchC50s(rowInd,1:lengthThird))<30&&mean(sigchC50s(rowInd,1:lengthThird))<mean(sigchC50s(rowInd,end-lengthThird+1:end))||mean(sigchC50s(rowInd,1:lengthThird))>30&&mean(sigchC50s(rowInd,1:lengthThird))>mean(sigchC50s(rowInd,end-lengthThird+1:end))
+                for chRowInd=1:length(sigInd)
+                    sigchC50s=c50s{sigInd};
+                    lengthThird=floor(size(sigchC50s,2)/3);
+                    if mean(sigchC50s(1:lengthThird))<30&&mean(sigchC50s(1:lengthThird))<mean(sigchC50s(end-lengthThird+1:end))||mean(sigchC50s(1:lengthThird))>30&&mean(sigchC50s(1:lengthThird))>mean(sigchC50s(end-lengthThird+1:end))
                         dir30(1,1)=dir30(1)+1;%towards 30%
-                        sigChDir30{1,1}=[sigChDir30{1,1} sigChNames{paramInd,1}(rowInd)];
+                        sigChDir30{1,1}=[sigChDir30{1,1} sigChNames{paramInd,1}(chRowInd)];
                     end
-                    if mean(sigchC50s(rowInd,1:lengthThird))<30&&mean(sigchC50s(rowInd,1:lengthThird))>mean(sigchC50s(rowInd,end-lengthThird+1:end))||mean(sigchC50s(rowInd,1:lengthThird))>30&&mean(sigchC50s(rowInd,1:lengthThird))<mean(sigchC50s(rowInd,end-lengthThird+1:end))
+                    if mean(sigchC50s(1:lengthThird))<30&&mean(sigchC50s(1:lengthThird))>mean(sigchC50s(end-lengthThird+1:end))||mean(sigchC50s(1:lengthThird))>30&&mean(sigchC50s(1:lengthThird))<mean(sigchC50s(end-lengthThird+1:end))
                         dir30(2,1)=dir30(2)+1;%away from 30%
-                        sigChDir30{2,1}=[sigChDir30{2,1} sigChNames{paramInd,1}(rowInd)];
+                        sigChDir30{2,1}=[sigChDir30{2,1} sigChNames{paramInd,1}(chRowInd)];
                     end
                 end
             elseif paramInd==3%sig change in min
-                sigchMins=mins{sigInd};
-                lengthThird=floor(size(sigchMins,2)/3);
-                for rowInd=1:size(sigchMins,1)
-                    if mean(sigchMins(rowInd,1:lengthThird))<mean(sigchMins(rowInd,end-lengthThird+1:end))
+                for chRowInd=1:length(sigInd)
+                    sigchMins=mins{sigInd};
+                    lengthThird=floor(size(sigchMins,2)/3);
+                    if mean(sigchMins(1:lengthThird))<mean(sigchMins(end-lengthThird+1:end))
                         dirMin(1,1)=dirMin(1)+1;
-                        sigChDirMin{1,1}=[sigChDirMin{1,1} sigChNames{paramInd,1}(rowInd)];%increase
+                        sigChDirMin{1,1}=[sigChDirMin{1,1} sigChNames{paramInd,1}(chRowInd)];%increase
                     end
-                    if mean(sigchMins(rowInd,1:lengthThird))>mean(sigchMins(rowInd,end-lengthThird+1:end))
+                    if mean(sigchMins(1:lengthThird))>mean(sigchMins(end-lengthThird+1:end))
                         dirMin(2,1)=dirMin(2)+1;
-                        sigChDirMin{2,1}=[sigChDirMin{2,1} sigChNames{paramInd,1}(rowInd)];%decrease
+                        sigChDirMin{2,1}=[sigChDirMin{2,1} sigChNames{paramInd,1}(chRowInd)];%decrease
                     end
                 end
             elseif paramInd==4%sig change in max
-                sigchMaxs=maxs{sigInd};
-                lengthThird=floor(size(sigchMaxs,2)/3);
-                for rowInd=1:size(sigchMaxs,1)
-                    if mean(sigchMaxs(rowInd,1:lengthThird))<mean(sigchMaxs(rowInd,end-lengthThird+1:end))
+                for chRowInd=1:length(sigInd)
+                    sigchMaxs=maxs{sigInd};
+                    lengthThird=floor(size(sigchMaxs,2)/3);
+                    if mean(sigchMaxs(1:lengthThird))<mean(sigchMaxs(end-lengthThird+1:end))
                         dirMax(1,1)=dirMax(1)+1;
-                        sigChDirMax{1,1}=[sigChDirMax{1,1} sigChNames{paramInd,1}(rowInd)];%increase
+                        sigChDirMax{1,1}=[sigChDirMax{1,1} sigChNames{paramInd,1}(chRowInd)];%increase
                     end
-                    if mean(sigchMaxs(rowInd,1:lengthThird))>mean(sigchMaxs(rowInd,end-lengthThird+1:end))
+                    if mean(sigchMaxs(1:lengthThird))>mean(sigchMaxs(end-lengthThird+1:end))
                         dirMax(2,1)=dirMax(2)+1;
-                        sigChDirMax{2,1}=[sigChDirMax{2,1} sigChNames{paramInd,1}(rowInd)];%decrease
+                        sigChDirMax{2,1}=[sigChDirMax{2,1} sigChNames{paramInd,1}(chRowInd)];%decrease
                     end
                 end
             end
@@ -224,7 +227,7 @@ for sampleContrastsInd=1:length(sampleContrasts)
     dir30
     formattedTable=[sigDirection(1:2);dirSlope;sigDirection(3:4);dir30;dirMin;dirMax;sigDirection(end-1:end)];
     formattedChsTable=[sigChNamesDir(1:2);sigChDirSlope;sigChNamesDir(3:4);sigChDir30;sigChDirMin;sigChDirMax;sigChNamesDir(end-1:end)];
-    tallyMatname=['tallySigCoefs_',area];
+    tallyMatname=['tallySigCoefs_',area,appendText];
     if strcmp(analysisType,'CRF')
         %                     if calcPartial==0
         subFolderName=[analysisType,'_coef_mat'];
