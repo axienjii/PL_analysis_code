@@ -11,6 +11,8 @@ function bj_sig_chs_roc_examplefig
 %Set exampleFig to 0 to plot ROC curves for new and old methods, set to 1
 %to only plot example figures of distributions of stimulus-evoked activity
 %and condition-dependent ROC curves.
+excludeSessHighSSE=0;
+useColMap=1;
 analysisType='ROC_zero_one';
 sglroc3IndividualChs=1;%set to 0 to read ROC values for individual channels and calculate mean ROC across channels; set to 1 to calculate ROCs based on pooled activity across channels
 onExternalHD=0;
@@ -20,7 +22,7 @@ else
     rootFolder='F:';
 end
 calculateTangent=1;
-plotSlopeFig=1;
+plotSlopeFig=0;
 if plotSlopeFig==1
     %example figures for channels with significant changes in slope at 30%:
     animals=[{'blanco'} {'jack'} {'jack'} {'blanco'} {'jack'}];
@@ -30,6 +32,11 @@ if plotSlopeFig==1
     allChannels=[{[12 36 50 51 52]} {[6 8 10 24 41 52 53]} {[18 21 30 51]} {[2 7 24 49]}];%partial correlation results
     areas=[{'v4_1'} {'v4_1'} {'v1_1'} {'v4_1'} {'v1_1'}];
     areas=[{'v4_1'} {'v4_1'} {'v1_1'} {'v4_1'}];
+    if excludeSessHighSSE==0
+        animals=[{'blanco'} {'jack'} {'jack'} {'blanco'} {'jack'}];
+        allChannels=[{[36 51 52]} {[6 8 10 24 41 52 53]} {[18 19 21 51]} {[24 49]} {[21 26]}];%Spearman's correlation results, Bonferroni corrected
+        areas=[{'v4_1'} {'v4_1'} {'v1_1'} {'v4_1'} {'v1_1'}];
+    end
     figSlope=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.6, 0.8]); %
     set(figSlope, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
     sampleContrast=30;
@@ -51,6 +58,17 @@ if plotSlopeFig==1
             %         subplot(ceil(29/5),5,allChInd);
             subplot(ceil(20/5),5,allChInd);
             xvals=testContrast(1):1:testContrast(end);
+%             copperCols=colormap(copper(size(ROCmat,1)));
+%             copperCols=colormap(cool(size(ROCmat,1)+ceil(size(ROCmat,1)*0.25)));
+            copperCols1=[];
+            copperCols2=[];
+            for colMapInd=1:ceil(size(ROCmat,1)/2)
+                copperCols1(colMapInd,:)=[1 0 (colMapInd-1)/ceil((size(ROCmat,1))/2)];
+            end
+            for colMapInd=1:size(ROCmat,1)-size(ROCmat,1)/2
+                copperCols2(colMapInd,:)=[1-colMapInd/floor((size(ROCmat,1))/2) 0 1];
+            end
+            copperCols=[copperCols1;copperCols2];
             for sessionInd=1:size(ROCmat,1)
                 datavals=ROCmat{sessionInd,3};
                 if sum(datavals(1:3))<=sum(datavals(end-2:end))
@@ -103,9 +121,14 @@ if plotSlopeFig==1
                     c50(1,chInd)=xvalsFine(columnInd);
                 end
                 hold on
-                line(c50(1,chInd),0:0.01:1,'Color',[1-sessionInd/size(ROCmat,1) 0 sessionInd/size(ROCmat,1)]);
                 yvals=1-X(4)-X(3).*exp(-(xvals./X(2)).^X(1));
-                plot(xvals,yvals,'Color',[1-sessionInd/size(ROCmat,1) 0 sessionInd/size(ROCmat,1)]);
+                if useColMap==1
+                    plot(xvals,yvals,'Color',copperCols(sessionInd,:));
+                    line(c50(1,chInd),0:0.01:1,'Color',copperCols(sessionInd,:));
+                else
+                    plot(xvals,yvals,'Color',[1-sessionInd/size(ROCmat,1) 0 sessionInd/size(ROCmat,1)]);
+                    line(c50(1,chInd),0:0.01:1,'Color',[1-sessionInd/size(ROCmat,1) 0 sessionInd/size(ROCmat,1)]);
+                end
                 hold on
                 if strcmp(area,'v4_1')
                     xlim([10 60]);
@@ -122,10 +145,17 @@ if plotSlopeFig==1
         end
     end
     imagename='example_sig_chs_change_slope';
+    if excludeSessHighSSE==0
+        imagename=[imagename,'_allSess'];
+    end
+    if useColMap==1
+        imagename=[imagename,'_copper'];
+        imagename=[imagename,'_cool'];
+    end
     pathname=fullfile(rootFolder,'PL',analysisType,imagename);
     printtext=sprintf('print -dpng %s.png',pathname);
     set(gcf,'PaperPositionMode','auto')
-%     eval(printtext);
+    eval(printtext);
 end
 
 %example figures for channels with significant changes in PNE:
@@ -135,6 +165,11 @@ areas=[{'v4_1'} {'v4_1'} {'v1_1'} {'v1_1'}];
 animals=[{'blanco'} {'jack'} {'jack'} {'blanco'} {'jack'}];
 allChannels=[{[7 24 36 60]} {[8 10 24 41 53]} {[18]} {[26]} {[9 17 32 55]}];
 areas=[{'v4_1'} {'v4_1'} {'v1_1'} {'v1_1'} {'v1_1'}];
+if excludeSessHighSSE==0
+    animals=[{'blanco'} {'jack'} {'blanco'} {'blanco'} {'jack'}];
+    allChannels=[{[7 36 51 60]} {[8 10 41 53]} {24} {26} {[9 17 32 55]}];
+    areas=[{'v4_1'} {'v4_1'} {'v4_1'} {'v1_1'} {'v1_1'}];
+end
 figPNE=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0, 0.6, 0.6]); %
 set(figPNE, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
 sampleContrast=30;
@@ -156,6 +191,17 @@ for animalInd=1:length(animals)
         %         subplot(ceil(29/5),5,allChInd);
         subplot(ceil(15/5),5,allChInd);
         xvals=testContrast(1):1:testContrast(end);
+%         copperCols=colormap(copper(size(ROCmat,1)));
+%         copperCols=[colormap(cool(ceil(size(ROCmat,1)/2)));colormap(spring(floor(size(ROCmat,1)/2)))];
+        copperCols1=[];
+        copperCols2=[];
+        for colMapInd=1:ceil(size(ROCmat,1)/2)
+            copperCols1(colMapInd,:)=[1 0 (colMapInd-1)/ceil((size(ROCmat,1))/2)];
+        end
+        for colMapInd=1:size(ROCmat,1)-size(ROCmat,1)/2
+            copperCols2(colMapInd,:)=[1-colMapInd/floor((size(ROCmat,1))/2) 0 1];
+        end
+        copperCols=[copperCols1;copperCols2];
         for sessionInd=1:size(ROCmat,1)
             datavals=ROCmat{sessionInd,3};
             if sum(datavals(1:3))<=sum(datavals(end-2:end))
@@ -208,9 +254,19 @@ for animalInd=1:length(animals)
                 c50(1,chInd)=xvalsFine(columnInd);
             end
             hold on
-            plot([c50(1,chInd) c50(1,chInd)],[0 1],'Color',[1-sessionInd/size(ROCmat,1) 0 sessionInd/size(ROCmat,1)]);
+            if useColMap==1
+                plot([c50(1,chInd) c50(1,chInd)],[0 1],'Color',copperCols(sessionInd,:));
+            else
+                plot([c50(1,chInd) c50(1,chInd)],[0 1],'Color',[1-sessionInd/size(ROCmat,1) 0 sessionInd/size(ROCmat,1)]);
+            end
             yvals=1-X(4)-X(3).*exp(-(xvals./X(2)).^X(1));
-            plot(xvals,yvals,'Color',[1-sessionInd/size(ROCmat,1) 0 sessionInd/size(ROCmat,1)]);
+            if useColMap==1
+                plot(xvals,yvals,'Color',copperCols(sessionInd,:));
+                line(c50(1,chInd),0:0.01:1,'Color',copperCols(sessionInd,:));
+            else
+                plot(xvals,yvals,'Color',[1-sessionInd/size(ROCmat,1) 0 sessionInd/size(ROCmat,1)]);
+                line(c50(1,chInd),0:0.01:1,'Color',[1-sessionInd/size(ROCmat,1) 0 sessionInd/size(ROCmat,1)]);
+            end
             hold on
             if strcmp(area,'v4_1')
                 xlim([10 60]);
@@ -227,7 +283,14 @@ for animalInd=1:length(animals)
     end
 end
 imagename='example_sig_chs_change_PNE';
+if excludeSessHighSSE==0
+    imagename=[imagename,'_allSess'];
+end
+if useColMap==1
+    imagename=[imagename,'_copper'];
+    imagename=[imagename,'_cool'];
+end
 pathname=fullfile(rootFolder,'PL',analysisType,imagename);
 printtext=sprintf('print -dpng %s.png',pathname);
 set(gcf,'PaperPositionMode','auto')
-% eval(printtext);
+eval(printtext);
