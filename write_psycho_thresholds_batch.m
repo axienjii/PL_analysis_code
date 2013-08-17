@@ -8,6 +8,7 @@ else
 end
 % analysisType='psycho';
 % analysisType='psycho_param';
+dualThresholds=1;
 startEndTime='wholetrial';
 animalTexts=[{'subject B'} {'subject J'}];
 animals=[{'blanco'} {'jack'}];
@@ -62,6 +63,9 @@ for animalInd=1:length(animals)
             end
             SSEMatPath=fullfile(SSEMatFolder,SSEMatFileName);
             psychoThresholdMatName=[area,appendText,'wholetrial_psyThreshold'];
+            if dualThresholds==1
+                psychoThresholdMatName=[psychoThresholdMatName,'_dualThresholds'];
+            end
             psychoThresholdMatFolder=fullfile(rootFolder,'PL',analysisType,animal,'psyThreshold_mat');
             if ~exist(psychoThresholdMatFolder,'dir')
                 mkdir(psychoThresholdMatFolder);
