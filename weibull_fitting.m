@@ -5,13 +5,13 @@ if useISI==0
     if sum(datavals(1:3))<=sum(datavals(end-2:end))
         X0=[5 30 0.5 0.1];
     elseif sum(datavals(1:3))>sum(datavals(end-2:end))
-        X0=[-2 30 0.5 0.1];
+        X0=[-3 30 0.5 0.1];
     end
 elseif useISI==1
     if sum(datavals(1:3))<=sum(datavals(end-2:end))
-        X0=[2 30 0.5 0];
+        X0=[5 30 0.5 0];
     elseif sum(datavals(1:3))>sum(datavals(end-2:end))
-        X0=[-2 30 0.5 0.5];
+        X0=[-3 30 0.5 0.5];
     end
 end
 options = optimset('Display','off','MaxFunEvals',10^4,'MaxIter',10^4,'TolFun',1.0E-6,'TolX',1.0E-6);
@@ -205,12 +205,15 @@ else
     diffc50=[];
 end
 if strcmp(ROCanalysisType,'old')
-    line(c50(1,i),0:0.01:1,'Color','b');
+%     line(c50(1,i),0:0.01:1,'Color','b');
+    plot([c50(1,i) c50(1,i)],[0 1],'Color','b');
 else
     if useISI==0
         line(c50(1,i),0:0.01:1,'Color','r');
+        plot([c50(1,i) c50(1,i)],[0 1],'Color','r');
     elseif useISI==1
-        line(threshold82higher(1,i),0:0.01:1,'Color','r');
+%         line(threshold82higher(1,i),0:0.01:1,'Color','r');
+        plot([threshold82higher(1,i) threshold82higher(1,i)],[0 1],'Color','r');
     end
 end
 if alex_fit==1
@@ -227,3 +230,4 @@ elseif strcmp(ROCanalysisType,'new')
 else
     plot(xvals,yvals,'Color','k');
 end
+xlim([0 testContrast(end)+10]);
