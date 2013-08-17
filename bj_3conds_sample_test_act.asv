@@ -2,6 +2,7 @@ function bj_3conds_sample_test_act(animals,readData)
 %written by Xing 12/04/13
 %Calculates correlations in activity to sample and test
 
+plotAct=1;%set to 0 to plot PROBMAT values, set to 1 to simply plot spike activity
 saveSampleTestAct=1;
 comparisonType=1;
 analysisType='adaptation';
@@ -15,6 +16,7 @@ plotDual=0;
 plotFigs=0;
 animals=[{'blanco'} {'jack'}];
 areas=[{'v4_1'} {'v1_1'} {'v1_2_1'} {'v1_2_2'} {'v1_2_3'}];
+areas=[{'v4_1'} {'v1_1'}];
 test_epochs={0 512 512*2 512*3};durSpon=150;
 durSpon=150;%length of period prior to sample onset from which spontaneous rates are calculated. Can take on a value of up to 512 ms.
 minTrials=10;%set value of minumum number of trials for inclusion of session
@@ -50,13 +52,31 @@ if readData==1
                 end
                 if length(conds)==1
                     allAUROC={[]};
+                    allAct2={[]};
+                    allAct4={[]};
+                    allstdAct2={[]};
+                    allstdAct4={[]};
                     cis={[]};
                     stats={[]};
+                    allChtStatsAct={[]};
+                    allChsSessTrialAct4={[]};
+                    allChsSessTrialAct2={[]};
+                    allChstStatsAct={[]};
                 elseif length(conds)==3
                     allAUROC=[{[]};{[]};{[]}];
+                    allAct2=[{[]};{[]};{[]}];
+                    allAct4=[{[]};{[]};{[]}];
+                    allstdAct2=[{[]};{[]};{[]}];
+                    allstdAct4=[{[]};{[]};{[]}];
                     cis=[{[]};{[]};{[]}];
                     stats=[{[]};{[]};{[]}];
+                    allChtStatsAct=[{[]};{[]};{[]}];
+                    allChsSessTrialAct4=[{[]};{[]};{[]}];
+                    allChsSessTrialAct2=[{[]};{[]};{[]}];
+                    allChstStatsAct=[{[]};{[]};{[]}];
                 end
+                allSessTrialAct2=cell(length(channels),length(conds));%compile trial-wise act across sessions for each channel
+                allSessTrialAct4=cell(length(channels),length(conds));
                 for h=1:length(channels)
                     channel=channels(h);
                     AUROC=[];
@@ -64,6 +84,10 @@ if readData==1
                         figCh=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
                         set(figCh, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
                     end
+                    meanAct2=[];
+                    stdAct2=[];
+                    meanAct4=[];
+                    stdAct4=[];
                     for i=1:length(sessionNums)
                         if comparisonType==1
                             matFolder=['F:\PL\spikeData\',animal];
@@ -79,7 +103,8 @@ if readData==1
                         if matExists==1
                             valsText=['load ',matPath,' matarray'];
                             eval(valsText);
-                            for subplotMultiple=1:length(conds(sampleContrastsInd,:))%1:3
+                            tempEpoch2={[]};
+                            for subplotMultiple=1:length(conds(sampleContrastsInd,:))%1:3 for V4, 1 for V1
                                 cond=conds(sampleContrastsInd,subplotMultiple);
                                 trials2=length(matarray{cond,2});
                                 trials4=length(matarray{cond,4});
@@ -91,8 +116,10 @@ if readData==1
                                     end
                                     if epoch==2
                                         epoch2{cond,subPeriod}=actList;%store activity levels from each subperiod for ROC calculation
+                                        allSessTrialAct2{h,subplotMultiple}=[allSessTrialAct2{h,subplotMultiple} actList];%combine across sessions, for each channel
                                     elseif epoch==4
                                         epoch4{cond,subPeriod}=actList;%store activity levels from each subperiod for ROC calculation
+                                        allSessTrialAct4{h,subplotMultiple}=[allSessTrialAct4{h,subplotMultiple} actList];%combine across sessions
                                     end
                                 end
                                 if length(epoch2{cond,subPeriod})~=length(epoch4{cond,subPeriod})
@@ -108,6 +135,8 @@ if readData==1
                                     end
                                 end
                                 AUROC(cond,i)=higherTest/(higherTest+lowerTest);
+                                meanAct4(cond,i)=mean(epoch4{cond,subPeriod});
+                                stdAct4(cond,i)=std(epoch4{cond,subPeriod});
                                 subplot(ceil(length(sessionNums)/5),5*length(conds(sampleContrastsInd,:)),(i-1)*length(conds(sampleContrastsInd,:))+subplotMultiple);
                                 plot(epoch2{cond,subPeriod},epoch4{cond,subPeriod},'x','Color',colmapText(subplotMultiple,:));hold on%test act against sample act
                                 if (i-1)*3+subplotMultiple==1
@@ -124,7 +153,10 @@ if readData==1
                                 if subplotMultiple==2
                                     title(sessionNums(i));
                                 end
+                                tempEpoch2{1,subPeriod}=[tempEpoch2{1,subPeriod} epoch2{cond,subPeriod}];%compile act across all conds, for sample
                             end
+                            meanAct2(cond,i)=mean(tempEpoch2{1,subPeriod});%find mean and SD
+                            stdAct2(cond,i)=std(tempEpoch2{1,subPeriod});
                         end
                     end
                     if saveSampleTestAct==1
@@ -144,7 +176,7 @@ if readData==1
                     end
                     for subplotMultiple=1:length(conds(sampleContrastsInd,:))%1:3
                         cond=conds(sampleContrastsInd,subplotMultiple);
-                        [coefficients(subplotMultiple,1,h) coefficients(subplotMultiple,2,h)]=corr(AUROC(cond,:)',[1:length(sessionNums)]');%r and h values
+                        [coefficients(subplotMultiple,1,h) coefficients(subplotMultiple,2,h)]=corr(AUROC(cond,:)',[1:length(sessionNums)]','type','Spearman');%r and h values
                     end
                     if plotFigs==1
                         close(figCh);
@@ -181,10 +213,31 @@ if readData==1
                     for subplotMultiple=1:length(conds(sampleContrastsInd,:))%1:3
                         allCondAUROC=[allCondAUROC AUROC(conds(subplotMultiple),:)];
                         allAUROC{subplotMultiple}=[allAUROC{subplotMultiple};AUROC(conds(subplotMultiple),:)];%store AUROC values across channels
+                        allAct2{subplotMultiple}=[allAct2{subplotMultiple};meanAct2(conds(subplotMultiple),:)];%store mean sample act values across channels
+                        allAct4{subplotMultiple}=[allAct4{subplotMultiple};meanAct4(conds(subplotMultiple),:)];%store mean test act values across channels
+                        allstdAct2{subplotMultiple}=[allstdAct2{subplotMultiple};stdAct2(conds(subplotMultiple),:)];%store mean sample act values across channels
+                        allstdAct4{subplotMultiple}=[allstdAct4{subplotMultiple};stdAct4(conds(subplotMultiple),:)];%store mean test act values across channels
                         [hs(subplotMultiple,h) ps(subplotMultiple,h) ci stat]=ttest(allCondAUROC,0.5);
                         cis{subplotMultiple}=[cis{subplotMultiple};ci];
                         stats{subplotMultiple}=[stats{subplotMultiple};stat];
                     end
+                end
+                %calculate stats based on act compiled across trials and
+                %sessions for each channel:
+                for h=1:length(channels)
+                    for subplotMultiple=1:length(conds(sampleContrastsInd,:))
+                        [h1 p1 ci1 stat1]=ttest(allSessTrialAct4{h,subplotMultiple},allSessTrialAct2{h,subplotMultiple});
+                        allChtStatsAct{subplotMultiple}=[allChtStatsAct{subplotMultiple};channels(h) testContrast(conds(subplotMultiple)) stat1.df stat1.tstat p1];%based on direct comparisons of activity
+                    end
+                end
+                %calculate stats based on activity combined across channels
+                for subplotMultiple=1:length(conds(sampleContrastsInd,:))
+                    for h=1:length(channels)
+                        allChsSessTrialAct4{subplotMultiple}=[allChsSessTrialAct4{subplotMultiple} allSessTrialAct4{h,subplotMultiple}];
+                        allChsSessTrialAct2{subplotMultiple}=[allChsSessTrialAct2{subplotMultiple} allSessTrialAct2{h,subplotMultiple}];
+                    end
+                    [h2 p2 ci2 stat2]=ttest(allChsSessTrialAct4{subplotMultiple},allChsSessTrialAct2{subplotMultiple});
+                    allChstStatsAct{subplotMultiple}=[allChstStatsAct{subplotMultiple};testContrast(conds(subplotMultiple)) stat2.df stat2.tstat p2];
                 end
                 matName=['all_ch_sample_test_3conds_ROCs_',area];
                 matPathName=fullfile(rootFolder,'PL',analysisType,animal,'coef_mat',matName);
@@ -192,7 +245,7 @@ if readData==1
                 if ~exist(matFolderName,'dir')
                     mkdir(matFolderName);
                 end
-                saveText=['save ',matPathName,' hs ps cis stats coefficients allAUROC'];
+                saveText=['save ',matPathName,' hs ps cis stats coefficients allAUROC allAct2 allAct4 allstdAct2 allstdAct4 allChtStatsAct allChstStatsAct'];
                 eval(saveText);
                 
                 if plotFigs==1
@@ -243,48 +296,132 @@ for animalInd=1:length(animals)
             matFolderName=fullfile(rootFolder,'PL',analysisType,animal,'coef_mat');
             loadText=['load ',matPathName];
             eval(loadText);
-            for subplotMultiple=1:length(conds(sampleContrastsInd,:))%1:3
-                if animalInd==1&&areaInd==1
-                    figChs=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
-                    set(figChs,'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
-                    figInd(subplotMultiple)=figChs;
-                else
-                    figure(figInd(subplotMultiple));
+            if length(conds)==1
+                adaptationInd={[]};
+            elseif length(conds)==3
+                adaptationInd=[{[]} {[]} {[]}];
+            end
+            for subplotMultiple=1:length(conds(sampleContrastsInd,:))
+                if plotAct==0
+                    if animalInd==1&&areaInd==1
+                        figChs=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+                        set(figChs,'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+                        figInd(subplotMultiple)=figChs;
+                    else
+                        figure(figInd(subplotMultiple));
+                    end
+                    subplot(2,2,animalInd+(areaInd-1)*2);
+                    for chInd=1:length(channels)
+                        chCol=[1-(chInd)/length(channels) 0 (chInd)/length(channels)];
+                        plot(1:length(sessionNums),allAUROC{subplotMultiple}(chInd,:),'Marker','o','MarkerFaceColor',chCol,'LineStyle','none','Color',chCol);
+                        hold on
+                    end
+                    xlim([0 length(sessionNums)+1]);
+                    plot([0 length(sessionNums)+1],[0.5 0.5],'k--');
+                    title(sprintf('%s %s %d',animal,area,conds(subplotMultiple)));
+                elseif plotAct==1
+                    if strcmp(area,'v4_1')
+                        condCol=[1 0 0;0.05 0.73 0.24;0 0 1];
+                        allAct2{1}=allAct2{3};%for V4, sample act is contained in 3rd cell, first 2 cells are empty (note that for test act array, all 3 cells are used)
+                    else
+                        condCol=[0.05 0.73 0.24];
+                    end
+                    if subplotMultiple==1
+                        figChs=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+                        set(figChs,'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+                        figInd=figChs;
+                    else
+                        figure(figInd);
+                    end
+                    for chInd=1:length(channels)
+                        subplot(ceil(length(channels)/5),5,chInd);
+                        plot(1:length(sessionNums),allAct2{1}(chInd,:),'Color','k','LineStyle','none','Marker','o','MarkerFaceColor','none','MarkerEdgeColor','k','MarkerSize',3);hold on%'MarkerFaceColor',[1/i 1/i 1/i],
+                        plot(1:length(sessionNums),allAct4{subplotMultiple}(chInd,:),'Color',condCol(subplotMultiple,:),'LineStyle','none','Marker','o','MarkerFaceColor','none','MarkerEdgeColor',condCol(subplotMultiple,:),'MarkerSize',3);hold on%'MarkerFaceColor',[1/i 1/i 1/i],
+%                         errorbar(1:length(sessionNums),allAct2{subplotMultiple}(chInd,:),allstdAct2{subplotMultiple}(chInd,:),'Color','k','LineStyle','none','Marker','o','MarkerFaceColor','none','MarkerEdgeColor','k','MarkerSize',3);hold on%'MarkerFaceColor',[1/i 1/i 1/i],
+%                         errorbar(1:length(sessionNums),allAct4{subplotMultiple}(chInd,:),allstdAct4{subplotMultiple}(chInd,:),'Color',condCol(subplotMultiple,:),'LineStyle','none','Marker','o','MarkerFaceColor','none','MarkerEdgeColor',condCol(subplotMultiple,:),'MarkerSize',3);hold on%'MarkerFaceColor',[1/i 1/i 1/i],
+                    end
                 end
-                subplot(2,2,animalInd+(areaInd-1)*2);
-                for chInd=1:length(channels)
-                    chCol=[1-(chInd)/length(channels) 0 (chInd)/length(channels)];
-                    plot(1:length(sessionNums),allAUROC{subplotMultiple}(chInd,:),'Marker','o','MarkerFaceColor',chCol,'LineStyle','none','Color',chCol);
-                    hold on
-                end
-                xlim([0 length(sessionNums)+1]);
-                plot([0 length(sessionNums)+1],[0.5 0.5],'k--');
-                title(sprintf('%s %s %d',animal,area,conds(subplotMultiple)));
-                %plot mean AUROC (Averaged across channels) against time:
+                %plot mean AUROC (averaged across channels) against time:
                 meanAUROC=mean(allAUROC{subplotMultiple}(:,:));
+                meanAllAct2={mean(allAct2{1}(:,:))};
+                meanAllAct4{subplotMultiple}=mean(allAct4{subplotMultiple}(:,:));
+                stdAllAct2={std(allAct2{1}(:,:))};
+                stdAllAct4{subplotMultiple}=std(allAct4{subplotMultiple}(:,:));
                 if animalInd==1&&areaInd==1&&subplotMultiple==1
-                    figMeanChs=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+%                     figMeanChs=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+                    figMeanChs=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.5, 0.4]); %
                     set(figMeanChs,'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
                 else
                     figure(figMeanChs);
                 end
 %                 subplot(2,2,animalInd+(areaInd-1)*2);
-                subplot(1,2,areaInd);
                 if strcmp(area,'v4_1')
                     condCol=[1 0 0;0.05 0.73 0.24;0 0 1];
                 else
                     condCol=[0.05 0.73 0.24];
                 end
-                animalMarkerFill=[{'none'} {condCol(subplotMultiple,:)}];
-                plot(1:length(sessionNums),meanAUROC,'Marker','o','MarkerFaceColor',animalMarkerFill{animalInd},'LineStyle','none','Color',condCol(subplotMultiple,:));
+                animalMarkerFillTest=[{'none'} {condCol(subplotMultiple,:)}];
+                animalMarkerFillSample=[{'none'} {'k'}];
+                if plotAct==0
+                    subplot(1,2,areaInd);
+                    plot(1:length(sessionNums),meanAUROC,'Marker','o','MarkerFaceColor',animalMarkerFillTest{animalInd},'LineStyle','none','Color',condCol(subplotMultiple,:));
+                    xlim([0 length(sessionNums)+1]);
+                    plot([0 length(sessionNums)+1],[0.5 0.5],'k--');
+                    %if animalInd+(areaInd-1)*2==2
+                    if animalInd+(areaInd-1)*2==1
+                        subplot(1,2,2);
+                        hold on
+                        ptext=sprintf('- %d%% test',testContrast(conds(subplotMultiple)));
+                        text('Position',[14 0.455+0.005*subplotMultiple],'FontSize',14,'String',ptext,'Color',condCol(subplotMultiple,:));
+                        %text('Position',[18 0.44+0.015*subplotMultiple],'FontSize',14,'String',ptext,'Color',condCol(subplotMultiple,:));
+                    end
+                elseif plotAct==1
+                    subplot(2,2,animalInd+(areaInd-1)*2);
+                    plot(1:length(sessionNums),meanAllAct2{1},'Color','k','LineStyle','none','Marker','o','MarkerFaceColor','k','MarkerEdgeColor','k','MarkerSize',5);hold on%'MarkerFaceColor',[1/i 1/i 1/i],
+                    plot(1:length(sessionNums),meanAllAct4{subplotMultiple},'Color',condCol(subplotMultiple,:),'LineStyle','none','Marker','o','MarkerFaceColor',condCol(subplotMultiple,:),'MarkerEdgeColor',condCol(subplotMultiple,:),'MarkerSize',5);hold on%'MarkerFaceColor',[1/i 1/i 1/i],
+%                     plot(1:length(sessionNums),meanAllAct2{1},'Color','k','LineStyle','none','Marker','o','MarkerFaceColor',animalMarkerFillSample{animalInd},'MarkerEdgeColor','k','MarkerSize',5);hold on%'MarkerFaceColor',[1/i 1/i 1/i],
+%                     plot(1:length(sessionNums),meanAllAct4{subplotMultiple},'Color',condCol(subplotMultiple,:),'LineStyle','none','Marker','o','MarkerFaceColor',animalMarkerFillTest{animalInd},'MarkerEdgeColor',condCol(subplotMultiple,:),'MarkerSize',5);hold on%'MarkerFaceColor',[1/i 1/i 1/i],
+%                     errorbar(1:length(sessionNums),meanAllAct2{subplotMultiple},stdAllAct2{subplotMultiple},'Color','k','LineStyle','none','Marker','o','MarkerFaceColor','k','MarkerEdgeColor','k','MarkerSize',5);hold on%'MarkerFaceColor',[1/i 1/i 1/i],
+%                     errorbar(1:length(sessionNums),meanAllAct4{subplotMultiple},stdAllAct4{subplotMultiple},'Color',condCol(subplotMultiple,:),'LineStyle','none','Marker','o','MarkerFaceColor',condCol(subplotMultiple,:),'MarkerEdgeColor',condCol(subplotMultiple,:),'MarkerSize',5);hold on%'MarkerFaceColor',[1/i 1/i 1/i],
+                    if animalInd+(areaInd-1)*2==2
+                        subplot(2,2,2);
+                        hold on
+                        ptext=sprintf('%d%% test',testContrast(conds(subplotMultiple)));
+                        yLimVals=get(gca,'ylim');
+                        text('Position',[26.5 yLimVals(2)-(subplotMultiple+1)*(yLimVals(2)-yLimVals(1))/6],'FontSize',11,'String',ptext,'Color',condCol(subplotMultiple,:));
+                    end
+                    xlim([0 length(sessionNums)+1]);
+                    adaptationInd{subplotMultiple}=(meanAllAct4{subplotMultiple}-meanAllAct2{1})./meanAllAct2{1};
+                end
                 hold on
-                xlim([0 length(sessionNums)+1]);
-                plot([0 length(sessionNums)+1],[0.5 0.5],'k--');
-%                 if animalInd+(areaInd-1)*2==2
-%                     ptext=sprintf('- %d%% test',testContrast(conds(subplotMultiple)));
-%                     text('Position',[18 0.44+0.015*subplotMultiple],'FontSize',14,'String',ptext,'Color',condCol(subplotMultiple,:));
-%                 end
-                [r p]=corr([1:length(sessionNums)]',meanAUROC');
+                if plotAct==1
+                    if animalInd==1&&areaInd==1&&subplotMultiple==1
+                        %                     figMeanChs=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+                        figDiff=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.5, 0.4]); %
+                        set(figDiff,'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+                    else
+                        figure(figDiff);
+                    end
+                    subplot(2,2,animalInd+(areaInd-1)*2);
+                    plot(1:length(sessionNums),adaptationInd{subplotMultiple},'Color',condCol(subplotMultiple,:),'LineStyle','none','Marker','o','MarkerFaceColor',condCol(subplotMultiple,:),'MarkerEdgeColor',condCol(subplotMultiple,:),'MarkerSize',5);
+                    hold on
+                    xlim([0 length(sessionNums)+1]);
+                    plot([0 length(sessionNums)+1],[0 0],'k--');
+                    if animalInd==2
+                        if areaInd==1
+                            ylim([-0.3 0.05]);
+                        elseif areaInd==2
+                            ylim([-0.15 0.05]);
+                        end
+                        yLimVals=get(gca,'ylim');
+                        ptext=sprintf('%d%% test',testContrast(conds(subplotMultiple)));
+                        text('Position',[length(sessionNums)+1.5 yLimVals(2)-(subplotMultiple+1)*(yLimVals(2)-yLimVals(1))/6],'FontSize',11,'String',ptext,'Color',condCol(subplotMultiple,:));
+                    end
+                    %check for changes in adaptation index with time:
+                    [r p]=corr([1:length(sessionNums)]',meanAUROC','type','Spearman');
+                    allStats=[allStats;{animal} {area} testContrast(conds(subplotMultiple)) r p meanAUROC];
+                end
+                [r p]=corr([1:length(sessionNums)]',meanAUROC','type','Spearman');
                 allStats=[allStats;{animal} {area} testContrast(conds(subplotMultiple)) r p meanAUROC];
                 notPoint5=find(ps(subplotMultiple,:)<0.05);
                 numNotPoint5=length(notPoint5);
@@ -293,25 +430,61 @@ for animalInd=1:length(animals)
                 alltStats=[alltStats;{animal} {area} testContrast(conds(subplotMultiple)) numNotPoint5 lessPoint5 morePoint5];
                 [h p ci stat]=ttest(allAUROC{subplotMultiple}',0.5);
                 allchAUROC=[];
-                for chInd=1:length(channels)
-                    allchAUROC=[allchAUROC allAUROC{subplotMultiple}(chInd,:)];
-                end
-                [h p ci stat]=ttest(allchAUROC,0.5);
-                allChtStats=[allChtStats;{animal} {area} testContrast(conds(subplotMultiple)) h p ci(1) ci(2) {stat}];
             end
+            dirSigInd=[];
+            sumDirSigInd=[];
+            dirSigCond=[];
+            sigInd=[];
+            allFs=[];
+            allPs=[];
+            for chInd=1:length(channels)
+                for subplotMultiple=1:length(conds(sampleContrastsInd,:))
+                    sigInd(chInd,subplotMultiple)=allChtStatsAct{subplotMultiple}(chInd,5)<.05/3;
+                    allFs(chInd,subplotMultiple)=allChtStatsAct{subplotMultiple}(chInd,4);
+                    allPs(chInd,subplotMultiple)=allChtStatsAct{subplotMultiple}(chInd,5);
+                end
+            end
+            for subplotMultiple=1:length(conds(sampleContrastsInd,:))
+                sigFs=allFs(sigInd(:,subplotMultiple)==1);
+                dirSigCond(subplotMultiple,:)=[sum(sigFs<0) sum(sigFs>0)];
+            end
+            sumSigInd=sum(sigInd,2);
+            for chInd=1:length(channels)
+                if sumSigInd(chInd)>0
+                    for subplotMultiple=1:length(conds(sampleContrastsInd,:))%1:3
+                        sigFs=allFs(chInd,sigInd(chInd,:)==1);
+                        if sum(sigFs>0)==length(sigFs)%all significant conds show higher test act
+                            dirSigInd(chInd)=1;
+                        elseif sum(sigFs<0)==length(sigFs)%all significant conds show lower test act
+                            dirSigInd(chInd)=-1;
+                        else
+                            dirSigInd(chInd)=0;%sig conds show mixture of directions
+                        end
+                    end
+                else
+                    dirSigInd(chInd)=NaN;
+                end
+            end
+            sumDirSigInd=[sum(dirSigInd==-1) sum(dirSigInd==1) sum(isnan(dirSigInd))];%tallies: higher to sample; higher to test; no sig diff
+            allChstStatsAct
         end
     end
 end
+figure(figDiff);
+subplot(2,2,1);title('Monkey 1');ylabel('adaptation index');xlabel('session number');
+ylim([-0.3 0.05]);
+subplot(2,2,2);title('Monkey 2');
+subplot(2,2,3);
+ylim([-0.15 0.05]);
+subplot(2,2,4);
+ylim([-0.15 0.05]);
+
 figure(figMeanChs);
-subplot(1,2,2);
-for subplotMultiple=1:3
-    ptext=sprintf('- %d%% test',testContrast(conds(subplotMultiple)));
-    text('Position',[18 0.44+0.015*subplotMultiple],'FontSize',14,'String',ptext,'Color',condCol(subplotMultiple,:));
-end
-% figure(figMeanChs);
-% subplot(2,2,1);title('Monkey 1');ylabel('V4');
-% subplot(2,2,2);ylim([0.32 0.51]);title('Monkey 2');
+subplot(2,2,1);title('Monkey 1');ylabel('firing rate (spikes/s)');xlabel('session number');
+subplot(2,2,2);title('Monkey 2');
 % subplot(2,2,3);ylabel('V1');
+subplot(2,2,2);
+text('Position',[26.5 yLimVals(2)-(yLimVals(2)-yLimVals(1))/6],'FontSize',11,'String','30% sample','Color','k');
 % subplot(2,2,4);ylim([0.41 0.51])
 allStats
 alltStats
@@ -324,3 +497,4 @@ end
 for row=1:8
     allChtStatsTable=[allChtStatsTable;allChtStats{row,8}.df allChtStats{row,8}.tstat allChtStats{row,5}];
 end
+endHere=1;
