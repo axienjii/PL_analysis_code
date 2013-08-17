@@ -209,7 +209,7 @@ for animalInd=1:length(animals)
                 plot(size(allMeanPerf,1)+1,horizontalPerf(1,2)*100,'Marker','o','Color','b','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
             end
             if ~strcmp(area,'v4_2')
-                [chiselinearperf(animalInd+2*(plotAreaInd-1)) chiseperf(animalInd+2*(plotAreaInd-1))]=bj_linearexpo_fitting(testContrast,allMeanPerf(:,2)*100,0,0,'ROC');
+                [chiselinearperf(animalInd+2*(plotAreaInd-1)) chiseperf(animalInd+2*(plotAreaInd-1))]=bj_linearexpo_fitting(testContrast,allMeanPerf(:,2)*100,0,0,'ROC',0,[],[]);
             end
             
             % %simple proportion correct without error bars,
@@ -547,6 +547,12 @@ for animalInd=1:length(animals)
                 figure(pc_condFig);
             end
             subplot(length(areaTexts),2,animalInd+2*(plotAreaInd-1));
+            %check for changes in lambda with trianing:
+            if strcmp(area,'v4_1')||strcmp(area,'v1_1')
+                [rLowerLambda(animalInd,areaInd) pLowerLambda(animalInd,areaInd)]=corr([1:size(allMeanPerf,1)]',allMeanPerf(:,2+1),'Type','Spearman')
+                [rHigherLambda(animalInd,areaInd) pHigherLambda(animalInd,areaInd)]=corr([1:size(allMeanPerf,1)]',allMeanPerf(:,2+14),'Type','Spearman')
+                dfLambda(animalInd,areaInd)=size(allMeanPerf,1)-2;
+            end
             markerText=markerTexts(2);markerS=8;
             if strcmp(animal,'blanco')&&strcmp(area,'v1_1')
                 xlim([0 17]);
@@ -577,7 +583,7 @@ for animalInd=1:length(animals)
                         plotLinear=0;
                         startpoint5=1;
 %                     end
-                    [chiselinearTemp(i,:) chiseTemp(i,:) coefperflinearTemp(i,:) coefperfTemp(i,:) aRSlinearTemp(i,:) aRSTemp(i,:)]=bj_linearexpo_fitting(testContrast,allMeanPerf(:,2+i)*100,i,startpoint5,'ROC',plotLinear);
+                    [chiselinearTemp(i,:) chiseTemp(i,:) coefperflinearTemp(i,:) coefperfTemp(i,:) aRSlinearTemp(i,:) aRSTemp(i,:)]=bj_linearexpo_fitting(testContrast,allMeanPerf(:,2+i)*100,i,startpoint5,'ROC',plotLinear,[],[]);
                 end
                 %     yLimVals=get(gca,'ylim');
                 %     xLimVals=get(gca,'xlim');
@@ -678,7 +684,7 @@ for animalInd=1:length(animals)
                     animalMarkerFaceColors={'none' 'b'};
                     plot(size(allMeanPerf,1)+1,horizontalPerf(1,3+length(testContrast)),'Marker','o','Color','b','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
                 end
-                [chiselinearpse(animalInd+2*(plotAreaInd-1)) chisepse(animalInd+2*(plotAreaInd-1))]=bj_linearexpo_fitting(testContrast,allMeanPerf(:,3+length(testContrast)),0,0,'ROC');
+                [chiselinearpse(animalInd+2*(plotAreaInd-1)) chisepse(animalInd+2*(plotAreaInd-1))]=bj_linearexpo_fitting(testContrast,allMeanPerf(:,3+length(testContrast)),0,0,'ROC',0,[],[]);
                 if strcmp(area,'v4_1')&&strcmp(animal,'jack')
                     xlim([0 31]);
                     ylim([28 48])
@@ -718,7 +724,7 @@ for animalInd=1:length(animals)
                     animalMarkerFaceColors={'none' 'b'};
                     plot(size(allMeanPerf,1)+1,horizontalPerf(1,4+length(testContrast)),'Marker','o','Color','b','LineStyle','none','MarkerFaceColor',animalMarkerFaceColors{animalInd});
                 end
-                [chiselinearsl(animalInd+2*(plotAreaInd-1)) chisesl(animalInd+2*(plotAreaInd-1))]=bj_linearexpo_fitting(testContrast,allMeanPerf(:,4+length(testContrast)),0,0,'ROC');
+                [chiselinearsl(animalInd+2*(plotAreaInd-1)) chisesl(animalInd+2*(plotAreaInd-1))]=bj_linearexpo_fitting(testContrast,allMeanPerf(:,4+length(testContrast)),0,0,'ROC',0,[],[]);
                 if strcmp(area,'v4_1')&&strcmp(animal,'jack')
                     xlim([0 37])
                     ylim([0 12])
@@ -836,13 +842,22 @@ if roving==0
     figure(pcpseslFig)
     subplot(length(areaTexts),3,1);
     ylim([50 90]);
+    set(gca,'YTick',[50 90],'YTickLabel',[0.5 0.9]);
     % ylim([0.55 0.9]);
+    subplot(length(areaTexts),3,2);
+    set(gca,'YTick',[1 11],'YTickLabel',[1 11]);
     subplot(length(areaTexts),3,3);
     ylim([27 40]);
+    set(gca,'YTick',[27 40],'YTickLabel',[27 40]);
     subplot(length(areaTexts),3,4);
     ylim([60 95]);
+    set(gca,'YTick',[60 95],'YTickLabel',[0.6 0.95]);
     % ylim([0.65 0.95]);
     xlim([0 24]);
+    subplot(length(areaTexts),3,5);
+    set(gca,'YTick',[0 7],'YTickLabel',[0 7]);
+    subplot(length(areaTexts),3,6);
+    set(gca,'YTick',[20 34],'YTickLabel',[20 34]);
     
     % %proportion correct, slope, PSE: first and last 30% of trials within each
     % session
@@ -1131,7 +1146,7 @@ elseif roving==1
     figure(pc_condFig)
     subplot(length(areaTexts),2,1);
     % ylim([-0.1 1.1]);
-%     xlim([0 37]);
+    xlim([0 37]);
     ylim([-5 105]);
     subplot(length(areaTexts),2,2);
     % ylim([-0.1 1.1]);
@@ -1140,6 +1155,7 @@ elseif roving==1
     subplot(length(areaTexts),2,3);
     % ylim([-0.1 1.1]);
     ylim([-5 105]);
+    xlim([0 37]);
     subplot(length(areaTexts),2,4);
     % ylim([-0.1 1.1]);
     xlim([0 17]);
@@ -1147,6 +1163,7 @@ elseif roving==1
     subplot(length(areaTexts),2,5);
     % ylim([-0.1 1.1]);
     ylim([-5 105]);
+    xlim([0 37]);
     subplot(length(areaTexts),2,6);
     % ylim([-0.1 1.1]);
     xlim([0 17]);
