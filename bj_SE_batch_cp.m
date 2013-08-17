@@ -136,7 +136,6 @@ for animalInd=1:length(animals)
                         eval(valsText);
                         corrTrialsArr=matarray;%correct response trials only
                         bj_SE_cp(channels(h),sessionNums(i),cellEpochTimes,minusSpon,allTrialsArr,corrTrialsArr,animal,area,sampleContrast,testContrast,closeCond)
-                        end
                     end
                 end
             end

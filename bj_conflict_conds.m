@@ -23,7 +23,7 @@ else
 end
 % fig=figure('Color',[1,1,1],'Units', 'Normalized', 'Position',[0.2, 0.04, 0.75/(3-length(areas)), 0.5]);
 % set(fig,'PaperUnits','centimeters','PaperType','A4','PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 31.5/(3-length(areas)) 15.78]);
-sampleConflictConds=[{6:8} {4:9} {5:7}];20% sample:22 25 28; 30% sample: 22 25 28 32 35 38; 40% sample: 32 35 8
+sampleConflictConds=[{6:8} {4:9} {5:7}];%20% sample:22 25 28; 30% sample: 22 25 28 32 35 38; 40% sample: 32 35 8
 allConflictConds=[22 25	28 32 35 38];%union of conditions which are to be plotted
 % colmapText=colormap(jet(size(allConflictConds,2)));
 taskCols=[0.7 0.7 0.7;173/256 216/255 230/256;204/256 153/256 256/256;207/256 253/256 162/256;255/256 222/256 173/256;255/256 153/256 153/256];%lighter versions black; blue;purple;green;orange;red

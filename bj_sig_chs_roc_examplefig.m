@@ -12,6 +12,7 @@ function bj_sig_chs_roc_examplefig
 %to only plot example figures of distributions of stimulus-evoked activity
 %and condition-dependent ROC curves.
 excludeSessHighSSE=0;
+roving=0;
 useColMap=1;
 analysisType='ROC_zero_one';
 sglroc3IndividualChs=1;%set to 0 to read ROC values for individual channels and calculate mean ROC across channels; set to 1 to calculate ROCs based on pooled activity across channels
@@ -22,7 +23,7 @@ else
     rootFolder='F:';
 end
 calculateTangent=1;
-plotSlopeFig=0;
+plotSlopeFig=1;
 if plotSlopeFig==1
     %example figures for channels with significant changes in slope at 30%:
     animals=[{'blanco'} {'jack'} {'jack'} {'blanco'} {'jack'}];
@@ -33,7 +34,7 @@ if plotSlopeFig==1
     areas=[{'v4_1'} {'v4_1'} {'v1_1'} {'v4_1'} {'v1_1'}];
     areas=[{'v4_1'} {'v4_1'} {'v1_1'} {'v4_1'}];
     if excludeSessHighSSE==0
-        animals=[{'blanco'} {'jack'} {'jack'} {'blanco'} {'jack'}];
+        animals=[{'blanco'} {'jack'} {'jack'} {'blanco'} {'blanco'}];
         allChannels=[{[36 51 52]} {[6 8 10 24 41 52 53]} {[18 19 21 51]} {[24 49]} {[21 26]}];%Spearman's correlation results, Bonferroni corrected
         areas=[{'v4_1'} {'v4_1'} {'v1_1'} {'v4_1'} {'v1_1'}];
     end
@@ -45,6 +46,7 @@ if plotSlopeFig==1
         animal=animals{animalInd};
         channels=allChannels{animalInd};
         area=areas{animalInd};
+        figure(figSlope);
         for chInd=1:length(channels)
             allChInd=allChInd+1;
             %         figROCnew=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
@@ -107,7 +109,6 @@ if plotSlopeFig==1
                 elseif calculateTangent==1
                     slopeNeuro(1,chInd)=X(1)*X(3)*exp(-(sampleContrast/X(2))^X(1))*sampleContrast^(X(1)-1)*(1/X(2))^X(1);
                 end
-                
                 yvals=1-X(4)-X(3).*exp(-(xvals./X(2)).^X(1));
                 xvalsFine=testContrast(1):0.01:testContrast(end);
                 yvalsFine=1-X(4)-X(3).*exp(-(xvalsFine./X(2)).^X(1));
@@ -120,6 +121,7 @@ if plotSlopeFig==1
                     [tempVal columnInd]=min(abs(diffTemp));
                     c50(1,chInd)=xvalsFine(columnInd);
                 end
+                
                 hold on
                 yvals=1-X(4)-X(3).*exp(-(xvals./X(2)).^X(1));
                 if useColMap==1
@@ -139,7 +141,7 @@ if plotSlopeFig==1
                 title(allChInd);
                 if allChInd==1
                     xlabel('contrast (%)');
-                    ylabel('AUROC');
+                    ylabel('PROBMAT');
                 end
             end
         end
@@ -277,7 +279,7 @@ for animalInd=1:length(animals)
             title(allChInd);
             if allChInd==1
                 xlabel('contrast (%)');
-                ylabel('AUROC');
+                ylabel('PROBMAT');
             end
         end
     end

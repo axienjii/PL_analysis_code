@@ -45,6 +45,7 @@ if nargin<1||isempty(animals)
 end
 if nargin<2||isempty(areas)
     areas=[{'v4_1'} {'v1_1'} {'v1_2_1'} {'v1_2_2'}];
+    areas=[{'v4_1'} {'v1_1'}];
 end
 
 % if roving==0
@@ -401,11 +402,11 @@ for areaInd=1:length(areas)
         end
         allPrefOriPath=fullfile(folder,allPrefOriMat);
         saveText=['save ',allPrefOriPath,' allChOri'];
-        % eval(saveText)
+        eval(saveText)
         if allV1sess==1&&strcmp(area,'v1_2')
             allPrefAmpMat='v1_1_and_v1_2_allChAmp.mat';
         else
-            allPrefAmpMat=[area,'_allChOri.mat'];
+            allPrefAmpMat=[area,'_allChAmp.mat'];
         end
         allPrefAmpPath=fullfile(folder,allPrefAmpMat);
         saveText=['save ',allPrefAmpPath,' allChAmp'];
@@ -433,7 +434,7 @@ for areaInd=1:length(areas)
         % eval(meanArrayText3);
         
         %check activity levels across sessions
-        act_across_sess=1;
+        act_across_sess=0;
         if act_across_sess==1
             Orientation=0:15:180;
             fig1=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.45, 0.65]); %
@@ -499,8 +500,10 @@ for areaInd=1:length(areas)
                 end
             end
         end
-        changeActChs=find(chStats(:,2)<0.05);%identify channels with sig changes
-        numChangeActChs=[length(changeActChs) length(channels)]%number of channels with sig changes
-        sigChangeChs=[allChOri(changeActChs,:) chStats(changeActChs,:)];
+        if actAcrossSess==1
+            changeActChs=find(chStats(:,2)<0.05);%identify channels with sig changes
+            numChangeActChs=[length(changeActChs) length(channels)]%number of channels with sig changes
+            sigChangeChs=[allChOri(changeActChs,:) chStats(changeActChs,:)];
+        end
     end
 end

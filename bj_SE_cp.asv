@@ -1,4 +1,4 @@
-function bj_SE_cp(ch,session,test_epochs,minusSpon,allTrialsArr,corrTrialsArr,animal,area,sampleContrast,testContrast,ROCmethod,useISI,closeCond)
+function bj_SE_cp(ch,session,test_epochs,minusSpon,allTrialsArr,corrTrialsArr,animal,area,sampleContrast,testContrast,closeCond)
 %Writes CP values to mat file:
 %session number, time epochs, CP in spikes/s for each condition during
 %spontaneous period, during sample, during ISI, and during test.
@@ -33,38 +33,54 @@ if min(numTrials(closeCond))>=minTrials
             corrTrialsAct=cell(length(testContrast),1);
             incorrTrialsAct=cell(length(testContrast),1);
             incorrTrialsArr=cell(length(testContrast),5);
+            CPvals=[];
             for cond=closeCond
                 allTrialRowInd=1;
                 for n=1:numTrials(cond)
                     corrTrialAct=corrTrialsArr{cond,4}{n};%test act
+                    correctTrialExists=0;
+                    %check that trial exists in new array
                     for allrowInd=1:size(allTrialsArr{cond,4},1)
-                        if length(allTrialsArr{cond,4}{allTrialRowInd})==length(corrTrialAct)
+                        if length(allTrialsArr{cond,4}{allrowInd})==length(corrTrialAct)
+                            if allTrialsArr{cond,4}{allrowInd}==corrTrialAct
+                                correctTrialExists=1;
+                            end
+                        end
                     end
-                    foundMatch=0;
-                    while foundMatch==0&&allTrialRowInd<=size(allTrialsArr{cond,4},1)
-                        if length(allTrialsArr{cond,4}{allTrialRowInd})==length(corrTrialAct)
-                            if allTrialsArr{cond,4}{allTrialRowInd}==corrTrialAct
-                                corrTrialsAct{cond,1}=[corrTrialsAct{cond,1};length(corrTrialAct)];%store number of spikes during test epoch for correct trials
-                                allTrialRowInd=allTrialRowInd+1;
-                                foundMatch=1;
+                    %if that correct trial exists, get the spike act details, otherwise, skip it
+                    if correctTrialExists==1
+                        foundMatch=0;
+                        while foundMatch==0&&allTrialRowInd<=size(allTrialsArr{cond,4},1)
+                            if length(allTrialsArr{cond,4}{allTrialRowInd})==length(corrTrialAct)
+                                if allTrialsArr{cond,4}{allTrialRowInd}==corrTrialAct
+                                    corrTrialsAct{cond,1}=[corrTrialsAct{cond,1};length(corrTrialAct)];%store number of spikes during test epoch for correct trials
+                                    allTrialRowInd=allTrialRowInd+1;
+                                    foundMatch=1;
+                                else
+                                    incorrTrialsArr{cond,4}=[incorrTrialsArr{cond,4};allTrialsArr{cond,4}(allTrialRowInd)];%store spike times in new matarray for incorrect trials
+                                    incorrTrialsAct{cond,1}=[incorrTrialsAct{cond,1};length(allTrialsArr{cond,4}{allTrialRowInd})];%store number of spikes during test epoch for incorrect trials
+                                    allTrialRowInd=allTrialRowInd+1;
+                                end
+                                if length(allTrialsArr{cond,4}(allTrialRowInd))
                             else
-                                incorrTrialsArr{cond,4}=[incorrTrialsArr{cond,4};allTrialsArr{cond,4}(allTrialRowInd)];%store spike times in new matarray for incorrect trials
+                                incorrTrialsArr{cond,4}=[incorrTrialsArr{cond,4};allTrialsArr{cond,4}(allTrialRowInd)];%store spike times
                                 incorrTrialsAct{cond,1}=[incorrTrialsAct{cond,1};length(allTrialsArr{cond,4}{allTrialRowInd})];%store number of spikes during test epoch for incorrect trials
                                 allTrialRowInd=allTrialRowInd+1;
                             end
-                        else
-                            incorrTrialsArr{cond,4}=[incorrTrialsArr{cond,4};allTrialsArr{cond,4}(allTrialRowInd)];%store spike times
-                            incorrTrialsAct{cond,1}=[incorrTrialsAct{cond,1};length(allTrialsArr{cond,4}{allTrialRowInd})];%store number of spikes during test epoch for incorrect trials
-                            allTrialRowInd=allTrialRowInd+1;
                         end
                     end
                 end
-                if testContrast(cond)<sampleContrast
-                    [roc]=sglroc3(incorrTrialsAct{cond}',corrTrialsAct{cond}');
-                elseif testContrast(cond)>sampleContrast
-                    [roc]=sglroc3(corrTrialsAct{cond}',incorrTrialsAct{cond}');
-                end
-                CPvals(1,cond)=roc;%20 vs 30; 30 vs 40; 20 vs 40
+%                 if testContrast(cond)<sampleContrast
+%                     [roc]=sglroc3(incorrTrialsAct{cond}',corrTrialsAct{cond}');
+%                 elseif testContrast(cond)>sampleContrast
+                    if isempty(incorrTrialsAct{cond})||isempty(corrTrialsAct{cond})
+                        roc=NaN;
+                    else
+                        [roc]=sglroc3(corrTrialsAct{cond}',incorrTrialsAct{cond}');%if test contrast is below sample contrast, expect CP value to be less than 0.5, vice versa for higher test contrast
+                        %PROBMAT method:
+                    end
+%                 end
+                CPvals=[CPvals roc];%20 vs 30; 30 vs 40; 20 vs 40
             end
             startEndTime=['_',num2str(periods(subPeriod)),'_to_',num2str(periods(subPeriod+1))];
             if round(ch)~=ch
@@ -77,7 +93,7 @@ if min(numTrials(closeCond))>=minTrials
                 mkdir(CPmatFolder);
             end
             CPmatPath=fullfile('F:','PL','CP',animal,area,CPmatName);
-            CPmatTemp=[{session} {test_epochs} {ave_act}];
+            CPmatTemp=[{session} {test_epochs} {CPvals}];
             if ~exist(CPmatPath,'file')
                 CPmat=CPmatTemp;
             elseif exist(CPmatPath,'file')
@@ -96,81 +112,7 @@ if min(numTrials(closeCond))>=minTrials
                 end
             end
             saveText=['save ',CPmatPath,' CPmat'];
-%             eval(saveText);
-        end
-    end
-    
-    if CPonly==0%if only need CP calculation, can skip the ROC calculation
-        for subPeriod=1:length(periods)-1
-            for cond=1:size(matarray,1)
-                %roc analysis:
-                higherTest=0;
-                lowerTest=0;
-                for rowInd=1:length(epoch4{cond,subPeriod})
-                    if useISI==0
-                        if epoch4{cond,subPeriod}(1,rowInd)>epoch2{cond,subPeriod}(1,rowInd)
-                            higherTest=higherTest+1;
-                        elseif epoch4{cond,subPeriod}(1,rowInd)<epoch2{cond,subPeriod}(1,rowInd)
-                            lowerTest=lowerTest+1;
-                        end
-                    elseif useISI==1%calculate AUROCs based on test vs pre-test, instead of test vs sample
-                        temp3=matarray{cond,3}{rowInd}>test_epochs{3}-256;%activity during ISI
-                        spikes=matarray{cond,3}{rowInd}(temp3);
-                        temp3=spikes<test_epochs{3};
-                        spikes=spikes(temp3);
-                        actList3{cond,subPeriod}(1,rowInd)=length(spikes)/256*1000;%find rate during second half of ISI
-                        if epoch4{cond,subPeriod}(1,rowInd)>actList3{cond,subPeriod}(1,rowInd)
-                            higherTest=higherTest+1;
-                        elseif epoch4{cond,subPeriod}(1,rowInd)<actList3{cond,subPeriod}(1,rowInd)
-                            lowerTest=lowerTest+1;
-                        end
-                    end
-                end
-                if strcmp(ROCmethod,'old')
-                    %previous method of calculating ROC values, does not take trial-by-trial fluctuations (i.e. trial-wise correlations between activity to sample and test) into account
-                    [roctemp]=sglroc3(epoch4{cond,subPeriod}(1,:),epoch2{cond,subPeriod}(1,:));
-                    rocvals(cond)=roctemp;
-                elseif strcmp(ROCmethod,'new')
-                    roc=higherTest/(higherTest+lowerTest);
-                    rocvals(cond)=roc;
-                end
-            end
-            startEndTime=['_',num2str(periods(subPeriod)),'_to_',num2str(periods(subPeriod+1))];
-            if round(ch)~=ch
-                ROCmatName=['ROC_Ch',num2str(round(ch)),'_',num2str(10*(ch-round(ch))),'_',num2str(sampleContrast),startEndTime,'.mat'];
-            else
-                ROCmatName=['ROC_Ch',num2str(ch),'_',num2str(sampleContrast),startEndTime,'.mat'];
-            end
-            if strcmp(ROCmethod,'old')
-                ROCmatFolder=fullfile('F:','PL','ROC_sglroc3',animal,area);
-                ROCmatPath=fullfile('F:','PL','ROC_sglroc3',animal,area,ROCmatName);
-            elseif strcmp(ROCmethod,'new')
-                ROCmatFolder=fullfile('F:','PL','ROC',animal,area);
-                ROCmatPath=fullfile('F:','PL','ROC',animal,area,ROCmatName);
-            end
-            if ~exist(ROCmatFolder,'dir')
-                mkdir(ROCmatFolder);
-            end
-            ROCmatTemp=[{session} {test_epochs} {rocvals}];
-            if ~exist(ROCmatPath,'file')
-                ROCmat=ROCmatTemp;
-            elseif exist(ROCmatPath,'file')
-                loadText=['load ',ROCmatPath,' ROCmat'];
-                eval(loadText);
-                replace=[];
-                for rowInd=1:size(ROCmat,1)
-                    if ROCmat{rowInd,1}==session
-                        replace=rowInd;
-                    end
-                end
-                if ~isempty(replace)
-                    ROCmat(replace,:)=ROCmatTemp;
-                else
-                    ROCmat=[ROCmat;ROCmatTemp];
-                end
-            end
-            saveText=['save ',ROCmatPath,' ROCmat'];
-%             eval(saveText);
+            eval(saveText);
         end
     end
 end

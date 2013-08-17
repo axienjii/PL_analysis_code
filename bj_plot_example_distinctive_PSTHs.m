@@ -41,6 +41,9 @@ for i=1:length(exampleChannels)
     line([timeInd timeInd],[0 yMax],'Color','r','LineStyle',':','LineWidth',1.5);
     title(num2str(exampleChannels(i)));
 end
+subplot(6,1,6);
+xlabel('Time from test stimulus onset (ms)');
+ylabel('Firing rate (spikes/s)');
 imageName=['example_channels_distinctive_waveforms_',animal,'_',area];
 imageFolder=fullfile('F:','PL','xcorr',animal,subfolder);
 imagePath=fullfile(imageFolder,imageName);
