@@ -428,7 +428,7 @@ for areaCount=1:2
     plot(xvals,yvals,'r');hold on
     if samePlot~=1||samePlot==1&&areaCount==1
         xlabel('contrast (%)');
-        ylabel('mean AUROC value');
+        ylabel('PROBMAT');
     end
         if samePlot~=1
             title('Distributions of ROC values during contrast and orientation tasks');

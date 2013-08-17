@@ -353,7 +353,7 @@ for areaCount=1:2
     meanROCc=mean(allROCvals{2});
     meanROCb=mean(allROCvals{1});
     stdROCc=std(allROCvals{2});%PL task (attend-RF, contrast)
-    stdROCb=std(allROCvals{1})%bottom-up attention task (attend-away, orientation)
+    stdROCb=std(allROCvals{1});%bottom-up attention task (attend-away, orientation)
 %     meanROCc=mean(allChSessROCc,1);%PL task (attend-RF, contrast)
 %     meanROCb=mean(allChSessROCb,1)%bottom-up attention task (attend-away, orientation)
 %     stdROCc=std(allChSessROCc,1);%PL task (attend-RF, contrast)
@@ -428,7 +428,7 @@ for areaCount=1:2
     plot(xvals,yvals,'r');hold on
     if samePlot~=1||samePlot==1&&areaCount==1
         xlabel('contrast (%)');
-        ylabel('mean AUROC value');
+        ylabel('PROBMAT');
     end
         if samePlot~=1
             title('Distributions of ROC values during contrast and orientation tasks');
@@ -476,7 +476,10 @@ for areaCount=1:2
     Fs(areaCount,1)=t{2,6};
 end
 if samePlot==1
-    figure(allMeanROCFig);    
+    figure(allMeanROCFig); 
+    subplot(1,2,2)
+    xlim([0 70])
+    ylim([0.25 0.7])
     folderPrint2='F:\PL\BUPL\';
     filename1=[folderPrint2,'allChSessMeanROC_BUPL_V4_3_V1_3_large'];
     printtext=sprintf('print -dpng %s',filename1);

@@ -93,7 +93,7 @@ for sampleContrastsInd=1:length(sampleContrasts)
     slopes={[]};
     mins={[]};
     maxs={[]};
-    chRowCouht=0;
+    chRowCount=0;
     for i=1:length(channels)
         for epoch=4:4
             if strcmp(analysisType,'CRF')||strcmp(analysisType,'ROC')&&epoch==4||strcmp(analysisType,'NVP')&&epoch==4||strcmp(analysisType,'ROC_diff')&&epoch==4||strcmp(analysisType,'ROC_zero_one')&&epoch==4||strcmp(analysisType,'NVP_zero_one')&&epoch==4
@@ -126,14 +126,14 @@ for sampleContrastsInd=1:length(sampleContrasts)
                     if exist(coefMatPathname,'file')
                         loadText=['load ',coefMatPathname,' coefficients c50 slopeNeuro minRate maxRate sessionSorted1'];
                         eval(loadText)
-                        chRowCouht=chRowCouht+1;
+                        chRowCount=chRowCount+1;
                         chCoefficients=[chCoefficients;coefficients(1,:)];
                         chps=[chps;coefficients(2,:)];
                         includedChannels=[includedChannels channels(i)];
-                        c50s{chRowCouht}=c50;%record C50 values, will need to tally number of channels where C50 shifts towards or away from 30%
-                        slopes{chRowCouht}=slopeNeuro;%record slope values, will need to tally number of channels where slope becomes steeper or shallower
-                        mins{chRowCouht}=minRate;%record slope values, will need to tally number of channels where slope becomes steeper or shallower
-                        maxs{chRowCouht}=maxRate;%record slope values, will need to tally number of channels where slope becomes steeper or shallower
+                        c50s{chRowCount}=c50;%record C50 values, will need to tally number of channels where C50 shifts towards or away from 30%
+                        slopes{chRowCount}=slopeNeuro;%record slope values, will need to tally number of channels where slope becomes steeper or shallower
+                        mins{chRowCount}=minRate;%record slope values, will need to tally number of channels where slope becomes steeper or shallower
+                        maxs{chRowCount}=maxRate;%record slope values, will need to tally number of channels where slope becomes steeper or shallower
                     end
                 end
             end
@@ -151,10 +151,30 @@ for sampleContrastsInd=1:length(sampleContrasts)
     sigChDir30=cell(2,1);
     sigChDirMin=cell(2,1);
     sigChDirMax=cell(2,1);
+    %find alpha level for each channel due to FDR correction:
+    alpha=zeros(1,size(chps,1))+0.05;
+    for rowInd=1:size(chps,1)
+        ch4ps=chps(rowInd,1:4);
+        ch4ps=ch4ps(~isnan(ch4ps));
+        numComparisons=length(ch4ps);
+        factor=1;
+        while factor<=numComparisons
+            if sum(ch4ps<0.05/numComparisons*factor)==numComparisons-factor+1
+                alpha(rowInd)=0.05/numComparisons*(numComparisons-factor+1);
+            end
+            factor=factor+1;
+        end
+    end
     for paramInd=1:size(chCoefficients,2)
         if calcPartial==0
-%             sigInd=find(chps(:,paramInd)<0.05/size(chps,1));
-            sigInd=find(chps(:,paramInd)<0.05/4);%4 comparisons for slope, PNE, min and max
+        %sigInd=find(chps(:,paramInd)<0.05/size(chps,1));
+        sigInd=[];
+        for rowInd=1:size(chCoefficients,1)
+            if chps(rowInd,paramInd)<alpha(rowInd)
+                sigInd=[sigInd rowInd];%FDR correction for slope, PNE, min and max
+            end
+        end
+        %sigInd=find(chps(:,paramInd)<0.05/4);%FDR correction for slope, PNE, min and max
         elseif calcPartial==1
             sigInd=find(chps(:,paramInd)<0.05);
         end
@@ -182,7 +202,7 @@ for sampleContrastsInd=1:length(sampleContrasts)
                 end
             elseif paramInd==2%sig change in C50
                 for chRowInd=1:length(sigInd)
-                    sigchC50s=c50s{sigInd};
+                    sigchC50s=c50s{sigInd(chRowInd)};
                     lengthThird=floor(size(sigchC50s,2)/3);
                     if mean(sigchC50s(1:lengthThird))<30&&mean(sigchC50s(1:lengthThird))<mean(sigchC50s(end-lengthThird+1:end))||mean(sigchC50s(1:lengthThird))>30&&mean(sigchC50s(1:lengthThird))>mean(sigchC50s(end-lengthThird+1:end))
                         dir30(1,1)=dir30(1)+1;%towards 30%
@@ -195,7 +215,7 @@ for sampleContrastsInd=1:length(sampleContrasts)
                 end
             elseif paramInd==3%sig change in min
                 for chRowInd=1:length(sigInd)
-                    sigchMins=mins{sigInd};
+                    sigchMins=mins{sigInd(chRowInd)};
                     lengthThird=floor(size(sigchMins,2)/3);
                     if mean(sigchMins(1:lengthThird))<mean(sigchMins(end-lengthThird+1:end))
                         dirMin(1,1)=dirMin(1)+1;
@@ -208,7 +228,7 @@ for sampleContrastsInd=1:length(sampleContrasts)
                 end
             elseif paramInd==4%sig change in max
                 for chRowInd=1:length(sigInd)
-                    sigchMaxs=maxs{sigInd};
+                    sigchMaxs=maxs{sigInd(chRowInd)};
                     lengthThird=floor(size(sigchMaxs,2)/3);
                     if mean(sigchMaxs(1:lengthThird))<mean(sigchMaxs(end-lengthThird+1:end))
                         dirMax(1,1)=dirMax(1)+1;

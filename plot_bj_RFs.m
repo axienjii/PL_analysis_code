@@ -8,7 +8,7 @@ function plot_bj_RFs
 
 plotUnknown=0;
 plotSUA=0;
-plotAllRFs=0;
+plotAllRFs=1;
 plotFlankers=1;
 %can load the following file and enter or adjust values as needed:
 animals=[{'blanco'} {'jack'}];

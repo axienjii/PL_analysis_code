@@ -15,7 +15,7 @@ intervalSizes=[95 99];
 for intervalInd=1:length(intervalSizes)
     figure('Color',[1,1,1],'Units', 'Normalized', 'Position',[0.05,0.05, 0.9, 0.9]);
     set(gcf,'Color',[1,1,1],'Units', 'Normalized', 'Position',[0.05,0.05, 0.3, 0.3]);
-    animalTexts=[{'subject B'} {'subject J'}];
+    animalTexts=[{'Monkey 1'} {'Monkey 2'}];
     animals=[{'blanco'} {'jack'}];
     if roving==0
         areaTexts=[{'V4'} {'V1'}];
