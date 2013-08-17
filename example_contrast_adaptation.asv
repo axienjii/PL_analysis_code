@@ -12,14 +12,16 @@ sessions=[77 75 46];
 % set(figSess, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
 sampleContrast=30;
 animal='jack';
-figSess=figure('Color',[1,1,1],'Units','Normalized','Position',[0.05, 0.1, 0.3, 0.8]); %
+yOriginal=[30 30 30];
+rastersRow=3*yOriginal;%stretch PSTHs out by factor of 3 in y-dimension, otherwise too flat in comparison to rasters
+figSess=figure('Color',[1,1,1],'Units','Normalized','Position',[0.05, 0.1, 0.3, 0.4]); %
 set(figSess, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
 for chInd=1:length(channels)
     channel=channels(chInd);
     session=sessions(chInd);
-    subplot(3,1,chInd);
+    subplot(1,3,chInd);
     spikeDataName=[num2str(channel),'_',num2str(floor(session)),'_',num2str(sampleContrast)];
-    spikeDataFolder=fullfile('F:','PL','spikeData',animal,spikeDataName);
+    spikeDataFolder=fullfile('F:','PL','spikeData',animal,'all_trials_previous_version',spikeDataName);
     loadText=['load ',spikeDataFolder,'.mat matarray'];
     eval(loadText);
     
@@ -41,6 +43,12 @@ for chInd=1:length(channels)
                 N=N';
             end
             histo(n,1:length(N))=histo(n,1:length(N))+N;
+            rastersRow(chInd)=rastersRow(chInd)+1;
+            if ~isempty(spikeTimes)
+                for m=1:length(spikeTimes)
+                    plot([spikeTimes(m) spikeTimes(m)],rastersRow(chInd),'k-');hold on
+                end
+            end
         end
     end
     histostd=std(histo*1000/binWidth,0,1)/totalTrials;
@@ -51,9 +59,9 @@ for chInd=1:length(channels)
     y=(y*(1/(sigma*sqrt(2*pi))).*exp(-(((fit_val-mu).^2)/(2*sigma*sigma))));
     fitted_vector=filter2(y,histo);
     midBins=bins1(2:end)-512/(numBins*2);
-    plot(midBins,fitted_vector(1:end-1),'k-','LineWidth',2);hold on%last bin contains number of spikes that equal to the final bin edge- can exclude it
-    plot(midBins,fitted_vector(1:end-1)+histostd(1:end-1),'k--');hold on%last bin contains number of spikes that equal to the final bin edge- can exclude it
-    plot(midBins,fitted_vector(1:end-1)-histostd(1:end-1),'k--');hold on%last bin contains number of spikes that equal to the final bin edge- can exclude it
+    plot(midBins,3*fitted_vector(1:end-1),'k-','LineWidth',2);hold on%last bin contains number of spikes that equal to the final bin edge- can exclude it
+%     plot(midBins,fitted_vector(1:end-1)+histostd(1:end-1),'k--');hold on%last bin contains number of spikes that equal to the final bin edge- can exclude it
+%     plot(midBins,fitted_vector(1:end-1)-histostd(1:end-1),'k--');hold on%last bin contains number of spikes that equal to the final bin edge- can exclude it
     
     bins=512*2:binWidth:512*3;%test act, for each of 3 conditions
     for cond=8:10
@@ -65,6 +73,12 @@ for chInd=1:length(channels)
                 N=N';
             end
             histo(n,1:length(N))=histo(n,1:length(N))+N;
+            rastersRow(chInd)=rastersRow(chInd)+1;
+            if ~isempty(spikeTimes)
+                for m=1:length(spikeTimes)
+                    plot([spikeTimes(m)-1024 spikeTimes(m)-1024],rastersRow(chInd),'Color',condCol(cond,:));hold on
+                end
+            end
         end
         histostd=std(histo*1000/binWidth,0,1)/size(matarray{cond,4},1);
         %     histostd=std(histo*1000/binWidth,0,1);
@@ -74,56 +88,24 @@ for chInd=1:length(channels)
         y=(y*(1/(sigma*sqrt(2*pi))).*exp(-(((fit_val-mu).^2)/(2*sigma*sigma))));
         fitted_vector=filter2(y,histo);
         midBins=bins1(2:end)-512/(numBins*2);
-        plot(midBins,fitted_vector(1:end-1),'Color',condCol(cond,:),'LineWidth',2);hold on%last bin contains number of spikes that equal to the final bin edge- can exclude it
+        plot(midBins,3*fitted_vector(1:end-1),'Color',condCol(cond,:),'LineWidth',2);hold on%last bin contains number of spikes that equal to the final bin edge- can exclude it
         hold on
-        plot(midBins,fitted_vector(1:end-1)+histostd(1:end-1),'Color',condCol(cond,:),'LineStyle','--');hold on%last bin contains number of spikes that equal to the final bin edge- can exclude it
-        plot(midBins,fitted_vector(1:end-1)-histostd(1:end-1),'Color',condCol(cond,:),'LineStyle','--');hold on%last bin contains number of spikes that equal to the final bin edge- can exclude it
+%         plot(midBins,fitted_vector(1:end-1)+histostd(1:end-1),'Color',condCol(cond,:),'LineStyle','--');hold on%last bin contains number of spikes that equal to the final bin edge- can exclude it
+%         plot(midBins,fitted_vector(1:end-1)-histostd(1:end-1),'Color',condCol(cond,:),'LineStyle','--');hold on%last bin contains number of spikes that equal to the final bin edge- can exclude it
         xlim([midBins(1) midBins(end)]);
         set(gca,'XTick',[midBins(1) midBins(end)],'XTickLabel',[0 512]);
-        if chInd==3
-            ptext=sprintf('- %d%% test',testContrast(cond));
-            text('Position',[360 2.7*cond],'FontSize',14,'String',ptext,'Color',condCol(cond,:));
-        end
+        set(gca,'YTick',[0 yOriginal(chInd)*3],'YTickLabel',[0 yOriginal(chInd)]);
+    end
+    if chInd==1
+        ylabel('firing rate (spikes/s)');
+        xlabel('time from stimulus onset (ms)');
     end
     if chInd==3
         ptext=sprintf('- 30%% sample',testContrast(cond));
-        text('Position',[360 2.7*7],'FontSize',14,'String',ptext,'Color','k');
+        text('Position',[360 2.7*7],'FontSize',12,'String',ptext,'Color','k');
+        ptext=sprintf('- %d%% test',testContrast(cond));
+        text('Position',[360 2.7*cond],'FontSize',12,'String',ptext,'Color',condCol(cond,:));
     end
+    ylim([0 rastersRow(chInd)]);
+    set(gca,'Box','off');
 end
-
-
-% for cond=8:10%test act, for each of 3 conditions
-%     for stimType=1:2
-%         if stimType==1
-%             bins=0:binWidth:512;
-%             epoch=2;%sample
-%         elseif stimType==2
-%             bins=512*2:binWidth:512*3;
-%             epoch=4;%test
-%         end
-%         histo=zeros(size(matarray{cond,4},1),length(bins));
-%         for n=1:size(matarray{cond,4},1)
-%             spikeTimes=matarray{cond,4}{n};%sample
-%             [N X]=histc(spikeTimes,bins);%2nd input arg is bin edges
-%             if size(N,2)==1
-%                 N=N';
-%             end
-%             histo(n,1:length(N))=histo(n,1:length(N))+N;
-%         end
-%         histostd=std(histo,0,1)/size(matarray{cond,epoch},1);
-%         histo=mean(histo);
-%         fit_val=(-3*sigma):1:(3*sigma);
-%         y=ones(1,length(fit_val));
-%         y=(y*(1/(sigma*sqrt(2*pi))).*exp(-(((fit_val-mu).^2)/(2*sigma*sigma))));
-%         fitted_vector=filter2(y,histo);
-%         midBins=bins1(2:end)-512/(numBins*2);
-%         plot(midBins,fitted_vector(1:end-1),'MarkerSize',5,'Color',condCol(cond,:),'LineStyle',lineCond{stimType},'LineWidth',2);hold on%last bin contains number of spikes that equal to the final bin edge- can exclude it
-%         hold on
-%         plot(midBins,fitted_vector(1:end-1)+histostd(1:end-1),'MarkerSize',5,'Color',condCol(cond,:),'LineStyle',':');hold on%last bin contains number of spikes that equal to the final bin edge- can exclude it
-%         plot(midBins,fitted_vector(1:end-1)-histostd(1:end-1),'MarkerSize',5,'Color',condCol(cond,:),'LineStyle',':');hold on%last bin contains number of spikes that equal to the final bin edge- can exclude it
-%     end
-%     xlim([midBins(1) midBins(end)]);
-%     set(gca,'XTick',[midBins(1) midBins(end)],'XTickLabel',[0 512]);
-%     ptext=sprintf('- %d%%',testContrast(cond));
-%     text('Position',[400 0.015*cond],'FontSize',16,'String',ptext,'Color',condCol(cond,:));
-% end
