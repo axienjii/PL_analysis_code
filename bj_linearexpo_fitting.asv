@@ -112,7 +112,7 @@ elseif startpoint5==1
     ycurvevals=50-coefperf(1)+coefperf(1).*exp(-1.*xcurvevals).^coefperf(2)+coefperf(3);
 end
 if plotLinear==0
-    if nargin<=7||~isempty(taskColsLight)
+    if nargin<=7||~isempty(taskColsLight)||
         plot(xcurvevals+startPoint,ycurvevals,'Color',taskColsLight,'LineStyle',lineText);
     else
         plot(xcurvevals,ycurvevals,'Color',colmapText(j,:),'LineStyle',lineText);

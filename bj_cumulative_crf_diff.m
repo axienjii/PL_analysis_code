@@ -1,4 +1,4 @@
-function bj_cumulative_crf_diff(exampleFig,cutoff,animals,useISI,areas,excludeSuppressed,normaliseCh,normaliseSpontan,plotErrorBars)
+function bj_cumulative_crf_diff(exampleFig,cutoff,animals,useISI,areas,excludeSuppressed,normaliseCh,normaliseSpontan,plotErrorBars,excludeNonmonotonic)
 %Written by Xing 08/06/13
 %Set useISI to 1: based on pre-test vs test, not on sample vs test.
 %Set useISI to 0: sample vs test.
@@ -14,7 +14,10 @@ function bj_cumulative_crf_diff(exampleFig,cutoff,animals,useISI,areas,excludeSu
 %activity to max reocrded on individual channel before combing data across
 %channels; set normaliseSpontan to deduct spontaneous or ISI activity levels from
 %test response.
+roving=1;
 analysisType='CRF';
+samePlot=1;
+useColMap=1;
 sglroc3IndividualChs=1;%set to 0 to read ROC values for individual channels and calculate mean ROC across channels; set to 1 to calculate ROCs based on pooled activity across channels
 onExternalHD=0;
 if onExternalHD==1
@@ -26,11 +29,15 @@ plotDiffC50_30=1;
 calculateTangent=1;
 if nargin<3||isempty(animals)
     animals=[{'blanco'} {'jack'}];
+    animalTexts=[{'Monkey 1'} {'Monkey 2'}];
     % animals={'blanco'};
 end
 if nargin<4||isempty(areas)
     areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
-    areas=[{'v4_1'} {'v1_1'} {'v1_2_1'} {'v1_2_2'} {'v1_2_3'}];
+    areas=[{'v4_1'} {'v1_1'}];
+    if roving==1
+        areas=[{'v1_2_1'} {'v1_2_2'} {'v1_2_3'}];
+    end
 end
 startEndTime='_1024_to_1536';
 if exampleFig==1
@@ -60,6 +67,15 @@ for animalInd=1:length(animals)
         for sampleContrastsInd=1:length(sampleContrasts)
             sampleContrast=sampleContrasts(sampleContrastsInd);
             testContrast=testContrasts(sampleContrastsInd,:); 
+            if roving==0&&animalInd==1&&areaInd==1
+            if samePlot==1
+                figSamePlot=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+                set(figSamePlot, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+            end
+            elseif roving==1&&animalInd==1&&sampleContrastsInd==1
+                figSamePlot(areaInd)=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+                set(figSamePlot(areaInd), 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+            end
             %read in list of included channels
             if cutoff~=1
                 matname=['good_SNR_',area,'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10),'.mat'];
@@ -82,7 +98,16 @@ for animalInd=1:length(animals)
             allMeanEpoch1AcrossTrials=[];
             allMeanEpoch3AcrossTrials=[];
             allMeanEpoch4AcrossTrials=[];
-            sessionCounter=1;
+            sessionCounter=1;        
+            copperCols1=[];
+            copperCols2=[];
+            for colMapInd=1:ceil(length(sessionNums)/2)
+                copperCols1(colMapInd,:)=[1 0 (colMapInd-1)/ceil((length(sessionNums))/2)];
+            end
+            for colMapInd=1:length(sessionNums)-length(sessionNums)/2
+                copperCols2(colMapInd,:)=[1-colMapInd/floor((length(sessionNums))/2) 0 1];
+            end
+            copperCols=[copperCols1;copperCols2];
             for i=1:length(sessionNums)
                 rocvals=zeros(1,length(testContrast));
                 matFolder=['F:\PL\spikeData\',animal];
@@ -104,6 +129,11 @@ for animalInd=1:length(animals)
                             if strcmp(animal,'blanco')&&channels(chInd)==13||channels(chInd)==24||channels(chInd)==42
                                 includeCh=0;
                             elseif strcmp(animal,'jack')&&channels(chInd)==49
+                                includeCh=0;
+                            end
+                        end
+                        if excludeNonmonotonic==1
+                            if strcmp(animal,'blanco')&&channels(chInd)==14||channels(chInd)==55
                                 includeCh=0;
                             end
                         end
@@ -214,15 +244,38 @@ for animalInd=1:length(animals)
                         if sessionCounter==8||sessionCounter==11||sessionCounter==18
 %                             pause
                         end
-                        if normaliseCh==0&&normaliseSpontan==0
-                            [slopeNeuroNew,PNENew,diffPNENew,minRateNew,maxRateNew,chSSENew]=nr_fitting(meanEpoch4AcrossTrials,sampleContrast,testContrast,sessionCounter,slopeNeuroNew,chSSENew,PNENew,minRateNew,maxRateNew,diffPNENew,plotDiffC50_30,calculateTangent,startEndTime,animal,area);
-                        end
+                        %if normaliseCh==0&&normaliseSpontan==0
+                            [slopeNeuroNew,PNENew,diffPNENew,minRateNew,maxRateNew,chSSENew,xvals,yvals]=nr_fitting(meanEpoch4AcrossTrials,sampleContrast,testContrast,sessionCounter,slopeNeuroNew,chSSENew,PNENew,minRateNew,maxRateNew,diffPNENew,plotDiffC50_30,calculateTangent,startEndTime,animal,area);
+                        %end
                         if sessionCounter==1
                             xlabel('contrast (%)');
                             ylabel('firing rate (spikes/s)');
                         end
                         sessionCounter=sessionCounter+1;
                         title(num2str(i),'FontSize',16);
+                        %plot CRFs across sessions on same subplot
+                        if samePlot==1
+                            if roving==0
+                                figure(figSamePlot)
+                                subplot(2,2,animalInd+(areaInd-1)*2);
+                            elseif roving==1
+                                figure(figSamePlot(areaInd))
+                                subplot(3,2,animalInd+(sampleContrastsInd-1)*2);
+                            end
+                            if useColMap==1
+                                plot(xvals,yvals,'Color',copperCols(i,:));
+                            else
+                                plot(xvals,yvals,'Color',[1-i/length(sessionNums) 0 i/length(sessionNums)],'LineWidth',0.75);
+                            end
+                            hold on
+                            if animalInd+(areaInd-1)*2==1
+                                xlabel('contrast (%)');
+                                ylabel('firing rate (spikes/s)');                                
+                            end
+                            if areaInd==1
+                                title(animalTexts{animalInd});
+                            end
+                        end
                     end
                 end
             end
@@ -242,6 +295,9 @@ for animalInd=1:length(animals)
                 if excludeSuppressed
                     subFolder=[subFolder,'_excludeSuppressed'];
                 end
+                if excludeNonmonotonic
+                    subFolder=[subFolder,'_excludeNonmonotonic'];
+                end                
                 if useISI==0
                     imagename=['cumulative_CRFs_old_new_',area,'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10)];
                 elseif useISI==1
@@ -274,31 +330,32 @@ for animalInd=1:length(animals)
                     end
                 end
                 eval(saveText);
-            elseif exampleFig==1
-%                 figure(figGauss);
-%                 if sglroc3IndividualChs==1
-%                     subFolder='new_vs_old_sglroc3acrosschannels';
-%                 elseif sglroc3IndividualChs==0
-%                     subFolder='new_vs_old_sglrocmeanchannels';
-%                 end
-%                 imagename=['gauss_sample_test_act_',area,'_ch_',num2str(channels(chInd)),'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10)];
-%                 pathname=fullfile(rootFolder,'PL',analysisType,animal,subFolder,imagename);
-%                 printtext=sprintf('print -dpng %s.png',pathname);
-%                 set(gcf,'PaperPositionMode','auto')
-%                 eval(printtext);
-%                 figure(figROCconds);
-%                 imagename=['ROC_individual_conds_',area,'_ch_',num2str(channels(chInd)),'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10)];
-%                 pathname=fullfile(rootFolder,'PL',analysisType,animal,subFolder,imagename);
-%                 printtext=sprintf('print -dpng %s.png',pathname);
-%                 set(gcf,'PaperPositionMode','auto')
-%                 eval(printtext);
-%                 figure(figROCnew);
-%                 imagename=['bar_ROC_new_',area,'_ch_',num2str(channels(chInd)),'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10)];
-%                 pathname=fullfile(rootFolder,'PL',analysisType,animal,subFolder,imagename);
-%                 printtext=sprintf('print -dpng %s.png',pathname);
-%                 set(gcf,'PaperPositionMode','auto')
-%                 eval(printtext);
             end
         end
     end
+end
+if samePlot==1
+    if roving==0
+        figure(figSamePlot)
+        subplot(2,2,3)
+        xlim([5 90])
+        subplot(2,2,4)
+        xlim([5 90])
+    end
+    if useISI==0
+        imagename=['cumulative_CRFs_samePlot_',area,'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10)];
+    elseif useISI==1
+        imagename=['cumulative_CRFs_samePlot_',area,'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10)];
+    end
+    if plotErrorBars==1
+        imagename=[imagename,'_errorbar'];
+    end
+    folderpathname=fullfile(rootFolder,'PL',analysisType,animal,subFolder);
+    if ~exist(folderpathname,'dir')
+        mkdir(folderpathname);
+    end
+    pathname=fullfile(rootFolder,'PL',analysisType,animal,subFolder,imagename);
+    printtext=sprintf('print -dpng %s.png',pathname);
+    set(gcf,'PaperPositionMode','auto')
+    eval(printtext);    
 end
