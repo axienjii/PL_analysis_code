@@ -110,8 +110,10 @@ for i=1:numsessions
                 diffTemp=[];
                 if slopeNeuro(1,i)>=0&&max(yvals)>=0.82%stimulus-evoked excitation
                     diffTemp=yvalsFine-0.82;%single neurometric threshold
+                    diffTemp2=yvalsFine-0.18;%second neurometric threshold
                 elseif slopeNeuro(1,i)<0&&min(yvals)<=1-0.82%stimulus-evoked suppression
                     diffTemp=yvalsFine-(1-0.82);%single neurometric threshold
+                    diffTemp2=yvalsFine-(0.82);%single neurometric threshold
                 end
                 if ~isempty(diffTemp)
                     if max(yvals)>=0.82&&min(yvals)<=0.82||max(yvals)>=1-0.82&&min(yvals)<=1-0.82
@@ -123,8 +125,18 @@ for i=1:numsessions
                 else
                     threshold82higher(1,i)=NaN;
                 end
-                if ~isnan(threshold82higher(1,i))
-                    line(threshold82higher(1,i),0:0.01:1,'Color','b');
+                if ~isempty(diffTemp)
+                    if max(yvals)>=0.18&&min(yvals)<=0.18||max(yvals)>=1-0.18&&min(yvals)<=1-0.18
+                        [tempVal columnInd]=min(abs(diffTemp2));
+                        threshold82lower(1,i)=xvalsFine(columnInd);
+                    else
+                        threshold82lower(1,i)=NaN;
+                    end
+                else
+                    threshold82lower(1,i)=NaN;
+                end
+                if ~isnan(threshold82lower(1,i))
+%                     line(threshold82lower(1,i),0:0.01:1,'Color','r');
                 end
             end
         end
@@ -311,7 +323,9 @@ for i=1:numsessions
         %         ylim([0 1]);
     end
     if ~strcmp(analysisType,'CRF')&&~strcmp(analysisType,'ROC_zero_one')
-        xlim([0 max([testContrastSplit{1} testContrastSplit{2}])]);
+        if ~strcmp(analysisType,'psycho_zero_one')
+            xlim([0 max([testContrastSplit{1} testContrastSplit{2}])]);
+        end
     end
     subplottitle=num2str(i);
     title(subplottitle);
@@ -361,6 +375,11 @@ if excludeSessHighSSE==0&&~strcmp(analysisType,'ROC_diff')&&~strcmp(analysisType
     if strcmp(analysisType,'psycho_param')%include all sessions for behavioural paper
         sessionSorted2=sessionSorted1;
         saveText=['save ',slC50MatPathname,' sessionSorted2 threshold82higher'];%just single threshold as AUROC vals run from 0.5 to 1
+        eval(saveText)
+    end
+    if strcmp(analysisType,'psycho_zero_one')%upper and lower threshold for comparison with neuronal data
+        sessionSorted2=sessionSorted1;
+        saveText=['save ',slC50MatPathname,' sessionSorted2 threshold82lower threshold82higher'];
         eval(saveText)
     end
 elseif excludeSessHighSSE==1
