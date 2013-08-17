@@ -1,4 +1,4 @@
-function jack_psycho_batch_V1(animal,area,psychoOnly)
+function jack_psycho_batch_V1(animal,area,psychoOnly,plotLinear)
 %Similar to blanco_SE_roc_batch, contains list of sessions and data
 %directories, however, as this analyses psychometric performance, does not
 %take spike activity into account and thus the function
@@ -247,9 +247,10 @@ end
 
 taskCols=[204/256 153/256 256/256;255/256 222/256 173/256;154/256 205/256 50/256];%purple;orange;green
 taskColsDark=[153/256 50/256 204/256;210/256 105/256 30/256;34/256 139/256 34/256];%purple;orange;green
+taskColsVDark=[84/256 3/256 163/256;166/256 121/256 3/256;79/256 117/256 2/256];%purple;orange;green, for fitted line
 
 plotRoving=1;
-preflankerOnly=4;%1: flankers absent, 2: flankers present 3: control task, flankers absent 4: control task, flankers present
+preflankerOnly=5;%1: flankers absent, 2: flankers present 3: control task, flankers absent 4: control task, flankers present 0: all roving 5: pre-flanker, flanker & post-flanker V1_2
 if plotRoving==1
     if strcmp(animal,'jack')
         if preflankerOnly==1||preflankerOnly==2%show only part of the data
@@ -260,6 +261,9 @@ if plotRoving==1
             areaText=[{'control location (-3.5,-3)'}];
         elseif preflankerOnly==0
             areas=[{'v1_2'} {'v1_4'}];
+            areaText=[{'V1 RFs location (-0.7,-1.3)'} {'control location (-3.5,-3)'}];
+        elseif preflankerOnly==5
+            areas=[{'v1_2'}];
             areaText=[{'V1 RFs location (-0.7,-1.3)'} {'control location (-3.5,-3)'}];
         end
     elseif strcmp(animal,'blanco')
@@ -298,10 +302,13 @@ if plotRoving==1
                 sampleContrast=sampleContrasts(i);
                 if sampleContrast==30
                     markerFaceType=markerFaceTypes{2};
+                    fittedLineCol=taskColsDark(flankerInd,:);
                 elseif sampleContrast==20
                     markerFaceType=markerFaceTypes{1};
+                    fittedLineCol=taskCols(flankerInd,:);
                 elseif sampleContrast==40
                     markerFaceType=markerFaceTypes{3};
+                    fittedLineCol=taskColsVDark(flankerInd,:);
                 end
                 loadText=['load ',rootFolder,'\PL\psycho_data\',animal,'\allMeanPerf\allMeanPerf_',area,'_',num2str(flankerInd),'_',num2str(sampleContrast),'.mat allMeanPerf'];
                 eval(loadText)
@@ -314,6 +321,7 @@ if plotRoving==1
                     subplot(3,length(areas),areaInd);
                 end
                 plot(count+1:count+length(flankerSessions{flankerInd}),perf,'LineStyle','none','Marker','o','MarkerEdgeColor',taskColDark,'MarkerFaceColor',markerFaceType);hold on
+                bj_linearexpo_fitting([count+1:count+length(flankerSessions{flankerInd})]',perf,0,0,'ROC',plotLinear,count,fittedLineCol);
                 if length(areas)==2
                     ylim([0.5 0.95]);
                 else
@@ -324,11 +332,12 @@ if plotRoving==1
                     ylabel('proportion correct');
                 end
                 if length(areas)==1
-                    subplot(3,length(areas),2);
+                    subplot(3,length(areas),3);
                 else
-                    subplot(3,length(areas),areaInd+2);
+                    subplot(3,length(areas),areaInd+4);
                 end
                 plot(count+1:count+length(flankerSessions{flankerInd}),PSE,'LineStyle','none','Marker','o','MarkerEdgeColor',taskColDark,'MarkerFaceColor',markerFaceType);hold on
+                bj_linearexpo_fitting([count+1:count+length(flankerSessions{flankerInd})]',PSE,0,0,'ROC',plotLinear,count,fittedLineCol);
                 if length(areas)==2
                     ylim([20 50]);
                 else
@@ -338,11 +347,12 @@ if plotRoving==1
                     ylabel('PSE');
                 end
                 if length(areas)==1
-                    subplot(3,length(areas),3);
+                    subplot(3,length(areas),2);
                 else
-                    subplot(3,length(areas),areaInd+4);
+                    subplot(3,length(areas),areaInd+2);
                 end
                 plot(count+1:count+length(flankerSessions{flankerInd}),slope,'LineStyle','none','Marker','o','MarkerEdgeColor',taskColDark,'MarkerFaceColor',markerFaceType);hold on
+                bj_linearexpo_fitting([count+1:count+length(flankerSessions{flankerInd})]',slope,0,0,'ROC',plotLinear,count,fittedLineCol);
                 if length(areas)==2
                     ylim([1 9]);
                 else
@@ -355,13 +365,104 @@ if plotRoving==1
             count=count+length(flankerSessions{flankerInd});
         end
     end
+    if strcmp(animal,'blanco')
+%         if strcmp(area,'v1_4')
+%             subplot(3,1,1);
+%             xlabel('session number');
+%             subplot(3,1,2);
+%             ylim([0 9]);
+%             subplot(3,1,3);
+%             ylim([20 40]);
+%         elseif strcmp(area,'v1_2')
+%             subplot(3,1,1);
+%             xlabel('session number');
+%             ylim([0.5 0.9]);
+%             subplot(3,1,2);
+%             ylim([0 11]);
+%             subplot(3,1,3);
+%             ylim([20 45]);
+%         end
+        if preflankerOnly==1
+            subplot(3,1,1);
+            ylim([0.7 0.9]);
+            xlim([0 35]);
+            subplot(3,1,2);
+            ylim([0 8]);
+            xlim([0 35]);
+            subplot(3,1,3);
+            ylim([25 40]);
+            xlim([0 35]);
+        end
+        if preflankerOnly==0
+            subplot(3,1,1);
+            xlim([0 57]);
+            subplot(3,1,2);
+            xlim([0 57]);
+            subplot(3,1,3);
+            xlim([0 57]);
+        end
+    end
+    if strcmp(animal,'jack')
+        if strcmp(area,'v1_4')&&preflankerOnly~=0
+            subplot(3,1,1);
+            xlabel('session number');
+            subplot(3,1,2);
+            ylim([0 9]);
+            subplot(3,1,3);
+            ylim([20 40]);
+        elseif strcmp(area,'v1_2')&&preflankerOnly==2
+            subplot(3,1,1);
+            xlabel('session number');
+            ylim([0.5 0.9]);
+            subplot(3,1,2);
+            ylim([0 11]);
+            subplot(3,1,3);
+            ylim([20 45]);
+        elseif strcmp(area,'v1_4')&&preflankerOnly==0
+            subplot(3,2,1);
+            xlabel('session number');
+            xlim([0 43]);
+            subplot(3,2,2);
+            xlim([0 51]);
+            subplot(3,2,3);
+            ylim([0 9]);
+            xlim([0 43]);
+            subplot(3,2,4);
+            ylim([0 9]);
+            xlim([0 51]);
+            subplot(3,2,5);
+            ylim([20 45]);
+            xlim([0 43]);
+            subplot(3,2,6);
+            ylim([20 45]);
+            xlim([0 51]);
+        elseif strcmp(area,'v1_4')&&preflankerOnly==4
+            subplot(3,1,1);
+            xlabel('session number');
+            xlim([0 43]);
+            subplot(3,1,2);
+            xlim([0 43]);
+            subplot(3,1,3);
+            ylim([20 40]);
+            xlim([0 43]);
+        end
+        if preflankerOnly==1
+            subplot(3,1,1);
+            ylim([0.7 0.9]);
+            subplot(3,1,2);
+            ylim([0 11]);
+            subplot(3,1,3);
+            ylim([20 40]);
+        end
+    end
     subplot(3,length(areas),length(areas));
     ylims=get(gca,'YLim');
     xlims=get(gca,'XLim');
     sampleTexts=[{'20% sample'} {'30% sample'} {'40% sample'}];
     flankerTexts=[{'no flankers'} {'flankers'} {'no flankers'}];
     markerFaceTypes=[{'none'} {[180/256 180/256 180/256]} {'k'}];
-    markerFaceTypesPreflankerOnly=[{'none'} {[204/256 153/256 256/256]} {[153/256 50/256 204/256]}];
+    markerFaceTypesPreflankerOnly=[{'none'} {[204/256 153/256 256/256]} {[153/256 50/256 204/256]}];%purple
+    markerFaceTypesFlankerOnly=[{'none'} {[255/256 222/256 173/256]} {[210/256 105/256 30/256]}];%green
     taskColsMedium=[147/256 112/256 219/256;255/256 165/256 0/256;154/256 205/256 50/256];%purple;orange;green
     for i=1:3
         if preflankerOnly==0
@@ -370,17 +471,21 @@ if plotRoving==1
             else
                 keyText=[sampleTexts{i},'            ',flankerTexts{i}];
             end
-            plot(xlims(1)+(xlims(2)-xlims(1))/20,ylims(1)+(ylims(2)-ylims(1))/10*(4-i),'LineStyle','none','Marker','o','MarkerEdgeColor','k','MarkerFaceColor',markerFaceTypes{i});
-            plot(xlims(1)+(xlims(2)-xlims(1))/3.6,ylims(1)+(ylims(2)-ylims(1))/10*(4-i),'LineStyle','none','Marker','o','MarkerEdgeColor',taskColsMedium(i,:),'MarkerFaceColor',taskColsMedium(i,:));
-            text('Position',[xlims(1)+(xlims(2)-xlims(1))/15,ylims(1)+(ylims(2)-ylims(1))/10*(4-i)],'LineStyle','none','FontSize',9,'String',keyText,'Color','k');
+            plot(xlims(1)+(xlims(2)-xlims(1))/20,ylims(1)+(ylims(2)-ylims(1))/12*(i),'LineStyle','none','Marker','o','MarkerEdgeColor','k','MarkerFaceColor',markerFaceTypes{i});
+            plot(xlims(1)+(xlims(2)-xlims(1))/3.6,ylims(1)+(ylims(2)-ylims(1))/12*(i),'LineStyle','none','Marker','o','MarkerEdgeColor',taskColsMedium(i,:),'MarkerFaceColor',taskColsMedium(i,:));
+            text('Position',[xlims(1)+(xlims(2)-xlims(1))/15,ylims(1)+(ylims(2)-ylims(1))/12*(i)],'LineStyle','none','FontSize',9,'String',keyText,'Color','k');
         elseif preflankerOnly==1||preflankerOnly==2||preflankerOnly==3||preflankerOnly==4
             if length(areas)==2
                 keyText=[sampleTexts{i}];
             else
                 keyText=[sampleTexts{i}];
             end
-            plot(xlims(1)+(xlims(2)-xlims(1))/20,ylims(1)+(ylims(2)-ylims(1))/10*(4-i),'LineStyle','none','Marker','o','MarkerEdgeColor',taskColsMedium(1,:),'MarkerFaceColor',markerFaceTypesPreflankerOnly{i});
-            text('Position',[xlims(1)+(xlims(2)-xlims(1))/15,ylims(1)+(ylims(2)-ylims(1))/10*(4-i)],'LineStyle','none','FontSize',9,'String',keyText,'Color','k');
+            plot(xlims(1)+(xlims(2)-xlims(1))/20,ylims(1)+(ylims(2)-ylims(1))/12*(i),'LineStyle','none','Marker','o','MarkerEdgeColor',taskColsDark(1,:),'MarkerFaceColor',markerFaceTypesPreflankerOnly{i});
+            text('Position',[xlims(1)+(xlims(2)-xlims(1))/15,ylims(1)+(ylims(2)-ylims(1))/12*(i)],'LineStyle','none','FontSize',9,'String',keyText,'Color','k');
+            if preflankerOnly==2||preflankerOnly==4
+                plot(xlims(1)+xlims(2)-(xlims(2)-xlims(1))/4,ylims(1)+(ylims(2)-ylims(1))/12*(i),'LineStyle','none','Marker','o','MarkerEdgeColor',taskColsDark(2,:),'MarkerFaceColor',markerFaceTypesFlankerOnly{i});
+                text('Position',[xlims(1)+xlims(2)-(xlims(2)-xlims(1))/5,ylims(1)+(ylims(2)-ylims(1))/12*(i)],'LineStyle','none','FontSize',9,'String',keyText,'Color','k');
+            end
         end
     end
     formats=[{'eps'} {'png'}];
@@ -408,7 +513,7 @@ close all
 
 %analyse performance between pairs of sample contrasts
 plotPairSample=0;
-preflankerOnly=2;%1: flankers absent, 2: flankers present 
+preflankerOnly=1;%1: flankers absent, 2: flankers present 
 if plotPairSample==1
     animals=[{'blanco'} {'jack'}];
     animalText=[{'Monkey 1'} {'Monkey 2'}];
