@@ -3,15 +3,15 @@ if nargin<3||isempty(animals)
     animals=[{'blanco'} {'jack'}];
     % animals={'blanco'};
 end
-roving=1;
+roving=0;
 if nargin<4||isempty(areas)
     areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
     areas=[{'v4_1'} {'v1_1'} {'v1_2_1'} {'v1_2_2'} {'v1_2_3'}];
     if roving==0
         areas=[{'v4_1'} {'v1_1'}];
     elseif roving==1
-        areas=[{'v1_2_2'}];
         areas=[{'v1_2_1'} {'v1_2_2'}];
+        areas=[{'v1_2_2'}];
     end
 end
 calcStats=0;
@@ -134,7 +134,7 @@ for animalInd=1:length(animals)
             if animalInd==1
                 pcpseslFig(areaInd)=figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.4, 0.5]);
             else
-                pcpseslFig(areaInd)
+                figure(pcpseslFig(areaInd))
             end
         end
         for sampleContrastsInd=1:length(sampleContrasts)
@@ -144,6 +144,11 @@ for animalInd=1:length(animals)
             colmapText=[colmapText(1,:);132/255 22/255 216/255;202/255 65/255 223/255;colmapText(3:7,:);157/255 212/255 61/255;colmapText(10:12,:);178/255 111/255 12/255;colmapText(end,:)];
             loadText=['load F:\PL\ROC_zero_one\',animal,'\new_vs_old_sglroc3acrosschannels\cumulative_ROCs_old_new_',area,'_',num2str(sampleContrast),'_cutoff10.mat'];
             eval(loadText)
+            if roving==1
+                figure(pcpseslFig(areaInd))
+            elseif roving==0
+                figure(pcpseslFig)
+            end
             allMeanPerf=all_rocvals;
             if roving==0
                 subplot(length(areas),2,animalInd+2*(areaInd-1));
@@ -172,12 +177,21 @@ for animalInd=1:length(animals)
                     text('Position',[xLimVals(2)+(xLimVals(2)-xLimVals(1))/25 yLimVals(1)+unitSpace*i*2],'FontSize',9,'String',[markerText,'  ',num2str(testContrast(i)),'%'],'Color',colmapText(i,:));
                 end
             end
-            chiselinear{animalInd+2*(areaInd-1)}=chiselinearTemp;
-            chise{animalInd+2*(areaInd-1)}=chiseTemp;
-            coefperflinear{animalInd+2*(areaInd-1)}=coefperflinearTemp;
-            coefperf{animalInd+2*(areaInd-1)}=coefperfTemp;
-            aRSlinear{animalInd+2*(areaInd-1)}=aRSlinearTemp;
-            aRS{animalInd+2*(areaInd-1)}=aRSTemp;
+            if roving==0
+                chiselinear{animalInd+2*(areaInd-1)}=chiselinearTemp;
+                chise{animalInd+2*(areaInd-1)}=chiseTemp;
+                coefperflinear{animalInd+2*(areaInd-1)}=coefperflinearTemp;
+                coefperf{animalInd+2*(areaInd-1)}=coefperfTemp;
+                aRSlinear{animalInd+2*(areaInd-1)}=aRSlinearTemp;
+                aRS{animalInd+2*(areaInd-1)}=aRSTemp;
+            elseif roving==1
+                chiselinear{animalInd+2*(sampleContrastsInd-1)}=chiselinearTemp;
+                chise{animalInd+2*(sampleContrastsInd-1)}=chiseTemp;
+                coefperflinear{animalInd+2*(sampleContrastsInd-1)}=coefperflinearTemp;
+                coefperf{animalInd+2*(sampleContrastsInd-1)}=coefperfTemp;
+                aRSlinear{animalInd+2*(sampleContrastsInd-1)}=aRSlinearTemp;
+                aRS{animalInd+2*(sampleContrastsInd-1)}=aRSTemp;
+            end
             legend('hide');
             xlabel('');
             ylabel('');
@@ -189,8 +203,43 @@ for animalInd=1:length(animals)
                     ylabel('PROBMAT');
                 end
             end
+            if roving==0
+                if animalInd==1&&areaInd==1&&sampleContrastsInd==1
+                    pc_condcoefFig=figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.8, 0.8]);
+                else
+                    figure(pc_condcoefFig);
+                end
+            elseif roving==1
+                if animalInd==1&&sampleContrastsInd==1
+                    pc_condcoefFig=figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.5, 0.8]);
+                else
+                    figure(pc_condcoefFig);
+                end
+            end
+            if roving==0
+                subplot(length(areas),2,animalInd+2*(areaInd-1));
+            elseif roving==1
+                subplot(length(sampleContrasts),2,animalInd+2*(sampleContrastsInd-1));
+            end
+            ind=find(testContrast<sampleContrast);
+            ind=ind(end);
+            [rperfcoeff(animalInd+2*(sampleContrastsInd-1),1:2) pperfcpef(animalInd+2*(sampleContrastsInd-1),1:2)]=bj_plot_coef_expo_perf(coefperf{animalInd+2*(sampleContrastsInd-1)}(:,1),sampleContrast,testContrast,ind);
         end
     end
+end
+if roving==1&&strcmp(area,'v1_2_2')
+    subplot(3,2,1);
+    xlabel('difference in contrast (%)');
+    ylabel('coefficient a');
+    subplot(3,2,2);
+    ylim([-50 70]);
+    xlim([0 70]);
+    subplot(3,2,1);
+    xlim([0 70]);
+    subplot(3,2,5);
+    xlim([0 50]);
+    subplot(3,2,6);
+    xlim([0 50]);    
 end
 %compare sizes of adjusted R-square values, between linear and polynomial fits, for PC divided by test contrast
 aRSlinexpo1=[];
