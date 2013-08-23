@@ -589,6 +589,16 @@ for animalInd=1:length(animals)
                 %     xLimVals=get(gca,'xlim');
                 %     unitSpace=(yLimVals(2)-yLimVals(1))/30;
             end
+            if roving==1
+                if strcmp(animal,'jack')
+                    yLimVals=get(gca,'ylim');
+                    xLimVals=get(gca,'xlim');
+                    for i=1:numconds
+                        unitSpace=(yLimVals(2)-yLimVals(1))/30;
+                        text('Position',[xLimVals(2)+(xLimVals(2)-xLimVals(1))/25 yLimVals(1)+unitSpace*i*2],'FontSize',9,'String',[markerText,'  ',num2str(testContrast(i)),'%'],'Color',colmapText(i,:));
+                    end
+                end
+            end
             if ~strcmp(area,'v4_2')
                 chiselinear{animalInd+2*(plotAreaInd-1)}=chiselinearTemp;
                 chise{animalInd+2*(plotAreaInd-1)}=chiseTemp;
