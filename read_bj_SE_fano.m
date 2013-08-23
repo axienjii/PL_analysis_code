@@ -36,6 +36,8 @@ for animalInd=1:2
         analyseSeparateChannels=1;
         if analyseSeparateChannels==1
             sigCoefs=[];
+            increase=zeros(1,length(sampleContrasts));
+            decrease=zeros(1,length(sampleContrasts));
             for sampleContrastInd=1:length(sampleContrasts)%combine across sample contrasts (if >1) because highest test contrast is always the same (60% in V4, 90% in V1)
                 sampleContrast=sampleContrasts(sampleContrastInd);
                 if roving==0&&animalInd==1&&areaInd==1
@@ -70,6 +72,39 @@ for animalInd=1:2
                             sigCoefs=[sigCoefs;channels(i) sampleContrast cond coefficients1(1,2) p1(1,2) fano_vals];
                         end
                     end
+                    
+                    %run ANOVA to check whether there is a main effect of
+                    %period (early vs late), while taking test contrast as
+                    %a second factor:
+                    earlylateIndividualChFano=[];
+                    condArr=[];
+                    earlylateArr=[];
+                    num30Sess=floor(0.3*size(fanoSessions,1));%number of sessions in first and last half
+                    for sessCount=1:num30Sess%early sessions
+                        earlylateIndividualChFano=[earlylateIndividualChFano fanoSessions(sessCount,:)];
+                        condArr=[condArr 1:size(fanoSessions,2)];
+                        earlylateArr=[earlylateArr zeros(1,size(fanoSessions,2))+1];%1 for early; 2 for late
+                    end
+                    for sessCount=size(fanoSessions,1)-num30Sess+1:size(fanoSessions,1)%late sessions
+                        earlylateIndividualChFano=[earlylateIndividualChFano fanoSessions(sessCount,:)];
+                        condArr=[condArr 1:size(fanoSessions,2)];
+                        earlylateArr=[earlylateArr zeros(1,size(fanoSessions,2))+2];%1 for early; 2 for late
+                    end
+                    [p,t,stats]=anovan(earlylateIndividualChFano,{earlylateArr,condArr},'model','full');%check for differences in fano factor values based on 2 factors: training period (early vs late sessions) and condition number
+                    allpIndCh{i}=p;%row 1: main effect of training period; row 2: main effect of condition; row 3: interaction between the two factors
+                    pIndCh(i)=p(1);
+                    tIndCh{i}=t;
+                    statsIndCh{i}=stats;
+                    statsColumnIndCh(i)=stats.dfe;
+                    if pIndCh(i)<.05
+                        c=multcompare(stats,'dimension',1);
+                        if c(4)>0
+                            decrease(sampleContrastInd)=decrease(sampleContrastInd)+1;
+                        elseif c(4)<0%negative value means that early session values were smaller (c(4) equals to mean of group 1 minus mean of group 2
+                            increase(sampleContrastInd)=increase(sampleContrastInd)+1;%so if value is negative, group 2 mean was higher than group 1 mean, i.e. later sessions had higher mean than early sessions
+                        end
+                    end
+                    
                     if strcmp(animal,'blanco')&&strcmp(area,'v1_2')
                         ylim([0 3]);
                     end
@@ -91,16 +126,19 @@ for animalInd=1:2
                 matCoefPath=fullfile('F:','PL','fano',animal,subfolder,matCoefName);
                 saveText=['save ',matCoefPath,' allfanoCoefs'];
                 eval(saveText);
+                increase(sampleContrastInd)
+                decrease(sampleContrastInd)
+                totalSig(sampleContrastInd)=increase(sampleContrastInd)+decrease(sampleContrastInd)
             end
             
             matSigCoefsName=['sigCoefs_',area];
             matSigCoefsPath=fullfile('F:','PL','fano',animal,subfolder,matSigCoefsName);
-            saveText=['save ',matSigCoefsPath,' sigCoefs'];
+            saveText=['save ',matSigCoefsPath,' sigCoefs totalSig increase decrease'];
             eval(saveText);
-%             close all
+            close all hidden
         end
         
-        analyseMeanChannels=1;
+        analyseMeanChannels=0;
         if analyseMeanChannels==1
             %carry out correlation analysis on fano factors averaged across channels:
             meanSigCoefs=[];
@@ -149,6 +187,10 @@ for animalInd=1:2
                     stdELFanoSessions(cond,1:2)=[std(earlyFanoSessions(:,cond)) std(lateFanoSessions(:,cond))];   
                     condArr=[condArr ones(size(earlyFanoSessions,1),1)*cond]; 
                 end 
+                
+                %
+                
+                figure(fig2);
                 earlylateFanoSessions=[earlyFanoSessions;lateFanoSessions];
                 condArr=[condArr;condArr];%array containing condition numbers for early (upper half) and late (lower half) sessions
                 earlylateArr=[earlyFanoSessions*0+1;earlyFanoSessions*0+2];%array of ones, representing first 30% of sessions, followed by twos, representing last 30%
