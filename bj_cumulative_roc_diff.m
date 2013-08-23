@@ -301,7 +301,7 @@ for animalInd=1:length(animals)
                         [slopeNeuroNew,PNENew,diffPNENew,minRateNew,maxRateNew,chSSENew,threshold82higher,threshold82lower]=weibull_fitting(rocvals,sampleContrast,testContrast,'new',sessionCounter,slopeNeuroNew,chSSENew,PNENew,minRateNew,maxRateNew,diffPNENew,plotDiffC50_30,calculateTangent,useISI,threshold82higher,threshold82lower);
                         if sessionCounter==1
                             xlabel('contrast (%)');
-                            ylabel('AUROC');
+                            ylabel('AUROC & PROBMAT');
                         end
                         sessionCounter=sessionCounter+1;
                         title(num2str(i),'FontSize',16);

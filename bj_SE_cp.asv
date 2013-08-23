@@ -33,6 +33,7 @@ if min(numTrials(closeCond))>=minTrials
             corrTrialsAct=cell(length(testContrast),1);
             incorrTrialsAct=cell(length(testContrast),1);
             incorrTrialsArr=cell(length(testContrast),5);
+            allTrialsCorrectIncorrect=[];
             CPvals=[];
             for cond=closeCond
                 allTrialRowInd=1;
@@ -61,7 +62,6 @@ if min(numTrials(closeCond))>=minTrials
                                     incorrTrialsAct{cond,1}=[incorrTrialsAct{cond,1};length(allTrialsArr{cond,4}{allTrialRowInd})];%store number of spikes during test epoch for incorrect trials
                                     allTrialRowInd=allTrialRowInd+1;
                                 end
-                                if length(allTrialsArr{cond,4}(allTrialRowInd))
                             else
                                 incorrTrialsArr{cond,4}=[incorrTrialsArr{cond,4};allTrialsArr{cond,4}(allTrialRowInd)];%store spike times
                                 incorrTrialsAct{cond,1}=[incorrTrialsAct{cond,1};length(allTrialsArr{cond,4}{allTrialRowInd})];%store number of spikes during test epoch for incorrect trials
@@ -77,7 +77,6 @@ if min(numTrials(closeCond))>=minTrials
                         roc=NaN;
                     else
                         [roc]=sglroc3(corrTrialsAct{cond}',incorrTrialsAct{cond}');%if test contrast is below sample contrast, expect CP value to be less than 0.5, vice versa for higher test contrast
-                        %PROBMAT method:
                     end
 %                 end
                 CPvals=[CPvals roc];%20 vs 30; 30 vs 40; 20 vs 40

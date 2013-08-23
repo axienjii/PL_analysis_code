@@ -1,4 +1,4 @@
-function bj_sig_chs_roc_examplefig
+function bj_sig_chs_roc_examplefig_split
 %Written by Xing 17/05/13
 %Set useISI to 1: based on pre-test vs test, not on sample vs test.
 %Set useISI to 0: sample vs test.
@@ -12,6 +12,7 @@ function bj_sig_chs_roc_examplefig
 %to only plot example figures of distributions of stimulus-evoked activity
 %and condition-dependent ROC curves.
 excludeSessHighSSE=0;
+roving=0;
 useColMap=1;
 analysisType='ROC_zero_one';
 sglroc3IndividualChs=1;%set to 0 to read ROC values for individual channels and calculate mean ROC across channels; set to 1 to calculate ROCs based on pooled activity across channels
@@ -39,9 +40,7 @@ if plotSlopeFig==1
     end
     figSlope=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.6, 0.8]); %
     set(figSlope, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
-    figELPNE=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.6, 0.8]); %
-    set(figELPNE, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
-   sampleContrast=30;
+    sampleContrast=30;
     allChInd=0;
     for animalInd=1:length(animals)
         animal=animals{animalInd};
@@ -122,18 +121,6 @@ if plotSlopeFig==1
                     [tempVal columnInd]=min(abs(diffTemp));
                     c50(1,chInd)=xvalsFine(columnInd);
                 end
-                %for comparison across channels during early and late
-                %sessions:
-                allPNENeuro(sessionInd,chInd)=c50(1,chInd);
-                if max(yvals)<0.5%out of range
-                    allCHalfNeuro(sessionInd,chInd)=100;
-                elseif min(yvals)>0.5
-                    allCHalfNeuro(sessionInd,chInd)=0;
-                else
-                    diffTemp=yvalsFine-((max(yvals)-min(yvals))/2+min(yvals));%find contrast at half height
-                    [tempVal columnInd]=min(abs(diffTemp));
-                    allCHalfNeuro(sessionInd,chInd)=xvalsFine(columnInd);
-                end
                 
                 hold on
                 yvals=1-X(4)-X(3).*exp(-(xvals./X(2)).^X(1));
@@ -157,11 +144,6 @@ if plotSlopeFig==1
                     ylabel('PROBMAT');
                 end
             end
-        end
-        figure
-        numSess30=floor(size(ROCmat,1)*0.3);%number of sessions during first & last 30% of sessions
-        for numSess30Ind=1:numSess30
-            plot(numSess30Ind,allCHalfNeuro(numSess30Ind,:),'k.');hold on
         end
     end
     imagename='example_sig_chs_change_slope';

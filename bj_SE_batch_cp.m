@@ -3,6 +3,7 @@ function bj_SE_batch_cp(animals,areas,sessionNums)
 %Batch file for V1, V4_1 and V1_2 sessions.
 %Calculate choice probability.
 
+CPorTrialsAcrossSess='CP';
 % animal='blanco';
 % area='v4_1';
 if nargin<1||isempty(animals)
