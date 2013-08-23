@@ -1,4 +1,4 @@
-function plot_all_psychometric_neurometric2(cutoff,excludeSuppressed,normalised,V1only)
+function plot_all_psychometric_neurometric2(cutoff,excludeSuppressed,normalised,V1only,V4only)
 %Written by Xing 04/08/13
 %Compare neurometric and psychometric function parameters.
 %Set V1only to 1 to just combine data across V1 sites, set to 0 to include
@@ -30,7 +30,9 @@ for roving=0:1
     if roving==0
         if V1only==1
             areas=[{'v1_1'}];
-        elseif
+        elseif V4only==1
+            areas=[{'v4_1'}];
+        else
             areas=[{'v4_1'} {'v1_1'}];
         end
         allTableStats=[];
@@ -38,6 +40,9 @@ for roving=0:1
         mpallTableStats=[];
     elseif roving==1
         areas=[{'v1_2_1'} {'v1_2_2'} {'v1_2_3'}];
+        if V4only==1
+            areas=[];
+        end
         rovingCol=[0.5 0 0;0.75 0 0;1 0 0];
         rovingCol=[1 0 0;10/255 170/255 60/255;0 0 1];
         if newColCode==1
