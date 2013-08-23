@@ -1,4 +1,4 @@
-function [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE]=nr_fitting(datavals,sampleContrast,testContrast,i,slopeNeuro,chSSE,c50,minRate,maxRate,diffc50,plotDiffC50_30,calculateTangent,startEndTime,animal,area)
+function [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,xvals,yvals]=nr_fitting(datavals,sampleContrast,testContrast,i,slopeNeuro,chSSE,c50,minRate,maxRate,diffc50,plotDiffC50_30,calculateTangent,startEndTime,animal,area)
 %Naka-Rushton counterpart of weibull_fitting function
         xvals=testContrast(1):1:testContrast(end);
         hold on
@@ -81,6 +81,9 @@ function [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE]=nr_fitting(datavals,samp
             slopeNeuro(1,i)=X(3);
         elseif calculateTangent==1
             slopeNeuro(1,i)=X(2)^X(3)*sampleContrast^(X(3)-1)/(30^X(3)+X(2)^X(3))^2;
+%             if X(3)<0
+%                 slopeNeuro(1,i)=slopeNeuro(1,i)*-1;
+%             end
         end
         maxFitted=max(fitted_yvals);
         minFitted=min(fitted_yvals);

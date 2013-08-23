@@ -154,7 +154,7 @@ for areaInd=1:length(areas)
             subFolder=[subFolder,'_normSpontan'];%read normalised data
             loadText=['load ',rootFolder,'\PL\',analysisType,'\',animal,'\',subFolder,'\cumulative_CRFs_old_new_',area,'_',subFolder,'_cutoff',num2str(cutoff*10),'.mat allMeanEpoch4AcrossTrials'];  
             loadText=['load ',rootFolder,'\PL\',analysisType,'\',animal,'\',subFolder,'\cumulative_CRFs_old_new_',area,'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10),'.mat allMeanEpoch4AcrossTrials'];
-%             loadText=['load ',rootFolder,'\PL\',analysisType,'\',animal,'\',subFolder,'\cumulative_CRFs_old_new_',area,'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10),'.mat'];
+            loadText=['load ',rootFolder,'\PL\',analysisType,'\',animal,'\',subFolder,'\cumulative_CRFs_old_new_',area,'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10),'.mat'];
             if excludeNonmonotonic
                 loadText=['load ',rootFolder,'\PL\',analysisType,'\',animal,'\crf_meanchannels_excludeNonMonotonic\cumulative_CRFs_old_new_',area,'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10),'.mat'];
             end
