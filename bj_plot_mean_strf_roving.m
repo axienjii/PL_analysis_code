@@ -434,8 +434,10 @@ for areaInd=1:length(areas)
         % eval(meanArrayText3);
         
         %check activity levels across sessions
-        act_across_sess=0;
+        act_across_sess=1;
+        normaliseSpontan=1;
         if act_across_sess==1
+            chStats=[];
             Orientation=0:15:180;
             fig1=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.45, 0.65]); %
             set(fig1, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 3.305 3.325/0.4*0.45 3.305/5*65]);
@@ -480,9 +482,17 @@ for areaInd=1:length(areas)
                                     meanGoodOriActs=mean(goodOriActs);%find mean across sessions
                                     [dummy bestStimAll]=max(meanGoodOriActs);%now find specific stim combi (phase and SF) that elicits highest activity. (best ori was already known)
                                     if bestStimAll<7%if the best stimulus is within the first 433 columns
-                                        bestStimSessionsAct=strfArray(rows,73+bestStimInd+12*bestStimAll);%read activity across sessions, for best stim
+                                        if normaliseSpontan==0
+                                            bestStimSessionsAct=strfArray(rows,73+bestStimInd+12*bestStimAll);%read activity across sessions, for best stim
+                                        elseif normaliseSpontan==1
+                                            bestStimSessionsAct=strfArray(rows,73+bestStimInd+12*bestStimAll)-strfArray(rows,1+bestStimInd+12*bestStimAll);%read activity across sessions, for best stim
+                                        end
                                     else
-                                        bestStimSessionsAct=strfArray(rows,433+72+bestStimInd+12*(bestStimAll-7));%read activity across sessions, for best stim
+                                        if normaliseSpontan==0
+                                            bestStimSessionsAct=strfArray(rows,433+72+bestStimInd+12*(bestStimAll-7));%read activity across sessions, for best stim
+                                        elseif normaliseSpontan==1
+                                            bestStimSessionsAct=strfArray(rows,433+72+bestStimInd+12*(bestStimAll-7))-strfArray(rows,433+bestStimInd+12*(bestStimAll-7));%read activity across sessions, for best stim
+                                        end
                                     end
                                     %example: best stim is identified as being in 3rd bin out of 12. As 3 is less than 6, it belongs to either the first half of a doubled-sized array, or the array itself is 433 columns wide, rather than 865. To find the correct multiplication factor for 12, subtract 1 (3-1=2).
                                     %example: best stim is identified as being in 10th bin out of 12. As 10 is more than 6, it belongs to the second half of the doubled-sized array. To find the correct multiplication factor for 12, subtract 6 from 10 (4) and subtract 1.
