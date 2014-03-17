@@ -137,6 +137,7 @@ function[vals ]=jack_2target_psycho_EV_v3_mex(file_of_int,sampleContrast,testCon
 % testContrast=[10 15 20 25 27 28 29 31 32 33 35 40 50 60];
 % testContrast=[10 15 20 25 27 29 31 33 35 40 50 60];
 numconds=length(testContrast);
+bins=zeros(1,1);
 % conditions=1:numconds;
 NAME=file_of_int;
 
@@ -213,6 +214,8 @@ max_event_length=0;
 corr_resp=zeros(1,numconds);
 error_resp=zeros(1,numconds);
 prl=find(Nttls2==255);%#define NLX_TRIAL_START (Alex previously set to 253, which was #define NLX_TRIALPARAM_START 253)
+RT=[];RT_early=[];RT_distract=[];
+all_ave_RT=zeros(1,length(bins));fix1_dur=[];fix2_dur=[];fix3_dur=[];sample_dur=[];test_dur=[];fixchange_dur=[];trial_dur=[];
 for k=1:length(prl)-1%look through all trials
     for j=1:numconds
         if Nttls2(prl(k)+6)==conditions(j)%condition number (Alex previously set to 4, as count started from NLX_TRIALPARAM_START instead of NLX_TRIAL_START
@@ -299,6 +302,10 @@ end;
 for k=1:length(bins)%eg.2000/50=40 bins of 50 trials, in 1 session
     trial=bins(k);
     for h=1:numconds
+        correct=0;
+        wrong=0;
+        early=0;
+        held=0;heldcheck=0;
         for i=trial-sizebin+1:trial
             %if (header(13,i)==0)
             if event_arr(8,i)==conditions(h)% condition number, test has lower contrast than sample
@@ -394,6 +401,55 @@ for k=1:length(bins)%eg.2000/50=40 bins of 50 trials, in 1 session
                 x1=find(event_arr(15:end,i)==NLX_TRIAL_END)+14;
                 if ~isempty(x1)
                     vals(i,21)=time_arr(x1,i);
+                end
+                if vals(i,16)>-1 %if correct saccade occurred
+                    RT=[RT vals(i,16)-vals(i,14)];%from target onset to correct saccade
+                    vals(i,22)=vals(i,16)-vals(i,14);
+                    correct=correct+1;
+                end
+                if vals(i,17)>-1
+                    RT_distract=[RT_distract vals(i,17)-vals(i,14)];%from target onset to saccade to distractor 
+                    vals(i,23)=vals(i,17)-vals(i,14);
+                    wrong=wrong+1;
+                end
+                if vals(i,9)>-1
+                    RT_early=[RT_early vals(i,9)-vals(i,8)];%from start of fixation (behavioural) to early fix break (reference differs from RT for correct responses)
+                    vals(i,24)=vals(i,9)-vals(i,8);
+                    early=early+1;
+                end
+                if (vals(i,8)~=-1)&&(vals(i,9)==-1)&&(vals(i,16)==-1)&&(vals(i,17)==-1)&&(vals(i,18)==-1)%fix begun but never broken
+                    vals(i,25)=1;
+                    held=held+1;
+                end
+                if (vals(i,22)>-1)%only examine times for correct trials
+                    if vals(i,10)>-1%sample was turned on after spontaneous period
+                        fix1_dur=[fix1_dur vals(i,10)-vals(i,8)];%from start of fixation (behavioural)TO sample onset
+                        vals(i,26)=vals(i,10)-vals(i,8);
+                    end
+                    if vals(i,11)>-1%calculate sample duration
+                        sample_dur=[sample_dur vals(i,11)-vals(i,10)];
+                        vals(i,27)=vals(i,11)-vals(i,10);
+                    end
+                    if vals(i,12)>-1%sample-test interval
+                        fix2_dur=[fix2_dur vals(i,12)-vals(i,11)];
+                        vals(i,28)=vals(i,12)-vals(i,11);
+                    end
+                    if vals(i,13)>-1%calculate test duration
+                        test_dur=[test_dur vals(i,13)-vals(i,12)];
+                        vals(i,29)=vals(i,13)-vals(i,12);
+                    end
+                    if vals(i,14)>-1%test-target interval
+                        fix3_dur=[fix3_dur vals(i,14)-vals(i,13)];
+                        vals(i,30)=vals(i,14)-vals(i,13);
+                    end
+                    if vals(i,15)>-1%interval between target onset and fixspot colour change
+                        fixchange_dur=[fixchange_dur vals(i,15)-vals(i,14)];
+                        vals(i,31)=vals(i,15)-vals(i,14);
+                    end
+                    if vals(i,21)>-1%interval between trial start and end (not including pre-trial period)
+                        trial_dur=[trial_dur vals(i,21)-vals(i,1)];
+                        vals(i,32)=vals(i,21)-vals(i,1);
+                    end
                 end
             end
         end
