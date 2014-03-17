@@ -1,4 +1,4 @@
-function plot_bj_nvp_PROBMAT_batch_across_chs2(roving,areas,psychoType)
+function plot_bj_nvp_PROBMAT_batch_across_chs2(roving,areas,psychoType,useDenominator)
 
 %Written 15/08/13, modified from plot_bj_nvp_PROBMAT_batch_across_chs (function that plotted both neuro- and psychometric thresholds on same figure).
 %Reads and plots either just the neurometric or just the psychometric threshold values for all conditions, based
@@ -21,7 +21,7 @@ excludeSuppressed=0;
 normalize=0;
 useISI=0;
 cutoff=1;
-plotPsychoOnly=0;%set to 0 to plot neuro, set to 1 to plot psycho
+plotPsychoOnly=1;%set to 0 to plot neuro, set to 1 to plot psycho
 analysisType='NVP';
 animalTexts=[{'Monkey 1'} {'Monkey 2'}];
 animals=[{'blanco'} {'jack'}];
@@ -31,7 +31,7 @@ if roving==0
 elseif roving==1
     areaTexts={'20' '30' '40'};
     areas=[{'v1_2_1'} {'v1_2_2'}];
-    areas=[{'v1_2_1'}];
+    areas=[{'v1_2_2'}];
 end
 calculateStats=0;
 allcReshape=[];
@@ -134,11 +134,17 @@ for animalInd=1:length(animals)
                         periods=[test_epochs{epoch-1} test_epochs{epoch}(1)];
                     end
                     for subPeriod=1:length(periods)-1
+                        allData=[];
+                        allSessionData=[];
+                        allXData=[];
                         startEndTime=['_',num2str(periods(subPeriod)),'_to_',num2str(periods(subPeriod+1))];
                         psychoThresholdMatName=[area,appendText,'wholetrial_psyThreshold_dualThresholds'];
                         psychoThresholdMatFolder=fullfile(rootFolder,'PL',psychoType,animal,'psyThreshold_mat');
                         psychoThresholdMatPathname=fullfile(psychoThresholdMatFolder,psychoThresholdMatName);
                         loadText=['load ',psychoThresholdMatPathname,' sessionSorted2 threshold82lower threshold82higher'];
+                        if useDenominator
+                            loadText=['load ',psychoThresholdMatPathname,' sessionSorted2 threshold82lower threshold82higher thresholdDenominatorHigher thresholdDenominatorLower'];
+                        end
                         eval(loadText)
                         sessPsyInd=[];
                         for sessInd=1:length(sessions)
@@ -157,24 +163,32 @@ for animalInd=1:length(animals)
                         for sessionInd=1:length(threshold82lower)
                             thresholdsPL(sessionInd)=sampleContrast-threshold82lower(sessionInd);%find difference between threshold and sample contrast
                             thresholdsPH(sessionInd)=threshold82higher(sessionInd)-sampleContrast;%find difference between threshold and sample contrast
+                            if useDenominator
+                                thresholdsPL(sessionInd)=thresholdDenominatorLower(sessionInd);%find difference between threshold and sample contrast
+                                thresholdsPH(sessionInd)=thresholdDenominatorHigher(sessionInd);%find difference between threshold and sample contrast
+                            end
                         end
                         psychoThresholds=[thresholdsPL;thresholdsPH];
                         isnanListPL=zeros(1,length(threshold82higher));
                         isnanListPH=zeros(1,length(threshold82lower));
-                        for sessionInd=1:length(threshold82lower)
-                            if isnan(threshold82lower(sessPsyInd))
-                                thresholdsPL(sessPsyInd)=sampleContrast;%set to max if threshold cannot be obtained
-                                isnanListPL(sessPsyInd)=1;
-                            else
-                                thresholdsPL(sessPsyInd)=sampleContrast-threshold82lower(sessPsyInd);%find difference between threshold and sample contrast
-                            end
-                            if isnan(threshold82higher(sessPsyInd))
-                                thresholdsPH(sessPsyInd)=100-sampleContrast;%set to max if threshold cannot be obtained
-                                isnanListPH(sessPsyInd)=1;
-                            else
-                                thresholdsPH(sessPsyInd)=threshold82higher(sessPsyInd)-sampleContrast;%find difference between threshold and sample contrast
+                        for sessPsyInd=1:length(threshold82lower)
+                            if useDenominator==0
+                                if isnan(threshold82lower(sessPsyInd))
+                                    thresholdsPL(sessPsyInd)=sampleContrast;%set to max if threshold cannot be obtained
+                                    isnanListPL(sessPsyInd)=1;
+                                else
+                                    thresholdsPL(sessPsyInd)=sampleContrast-threshold82lower(sessPsyInd);%find difference between threshold and sample contrast
+                                end
+                                if isnan(threshold82higher(sessPsyInd))
+                                    thresholdsPH(sessPsyInd)=100-sampleContrast;%set to max if threshold cannot be obtained
+                                    isnanListPH(sessPsyInd)=1;
+                                else
+                                    thresholdsPH(sessPsyInd)=threshold82higher(sessPsyInd)-sampleContrast;%find difference between threshold and sample contrast
+                                end
                             end
                         end
+                        allSessionData=[allSessionData;{sessionSorted2} {sessionSorted2}];
+                        allXData=[allXData;{1:length(sessionSorted2)} {1:length(sessionSorted2)}];
                         if sglroc3IndividualChs==1
                             subFolder='new_vs_old_sglroc3acrosschannels';
                         elseif sglroc3IndividualChs==0
@@ -216,20 +230,17 @@ for animalInd=1:length(animals)
                                 thresholdsNH(sessionInd)=threshold82higher(sessionInd)-sampleContrast;%find difference between threshold and sample contrast
                             end
                         end
-                        allData=[];
-                        allSessionData=[];
-                        allXData=[];
                         allData=[allData;{thresholdsNL} {thresholdsNH} {thresholdsPL} {thresholdsPH}];
                         allisNanList=[{isnanListNL} {isnanListNH} {isnanListPL} {isnanListPH}];
-                        allSessionData=[allSessionData;{sessions} {sessions} {sessions} {sessions}];
-                        allXData=[allXData;{1:length(sessions)} {1:length(sessions)} {1:length(sessions)} {1:length(sessions)}];
+                        allSessionData=[{sessions} {sessions} allSessionData];
+                        allXData=[{1:length(sessions)} {1:length(sessions)} allXData];
                         startComparison=1;
                         if strcmp(psychoType,'psycho_param')
                             startComparison=3;
                         end
                         for comparison=startComparison:4
-                            temp=isnan(allData{1,comparison});
-                            allData{1,comparison}=allData{1,comparison}(~temp);
+%                             temp=isnan(allData{1,comparison});
+%                             allData{1,comparison}=allData{1,comparison}(~temp);
 %                             allSessionData{1,comparison}=allSessionData{1,comparison}(~temp);
 %                             allXData{1,comparison}=allXData{1,comparison}(~temp);
                             c=[(allSessionData{1,comparison})' (allData{1,comparison})'];%session in column 1, data in column 2
@@ -280,11 +291,12 @@ for animalInd=1:length(animals)
                         if plotPsychoOnly==0%neurometric data
                             subplotRemap=[1 2];
                             thresholdInterest=neuroThresholds;
-                            allisNanList=allisNanListN;
                         elseif plotPsychoOnly==1%psychometric data
                             subplotRemap=[3 4];
+                            if useDenominator==1
+                                subplotRemap=[1 2];
+                            end
                             thresholdInterest=psychoThresholds;
-                            allisNanList=allisNanListP;
                         end
                         if roving==0
                             figure(fig);
@@ -322,6 +334,11 @@ for animalInd=1:length(animals)
                                         end
                                     end
                                 else
+                                end
+                            end
+                            if useDenominator==1
+                                for sessionNum=1:size(thresholdInterest,2)
+                                    plot(sessionNum+startPoint,thresholdInterest(subplotInd,sessionNum),'Marker','o','Color',markerCols(subplotInd),'LineStyle','none','MarkerFaceColor',markerCols(subplotInd));hold on
                                 end
                             end
                             if plotSameGraph==0
@@ -458,6 +475,22 @@ for animalInd=1:length(animals)
         end
     end
 end
+if  useDenominator==1
+    subplot(2,2,2);
+    xlim([0 26]);
+    subplot(2,2,3);
+    xlim([0 19]);
+    subplot(2,2,4);
+    xlim([0 24]);
+    subplot(2,2,1);
+    set(gca,'XTick',[0 30],'XTickLabel',[0 30]);
+    subplot(2,2,2);
+    set(gca,'XTick',[0 26],'XTickLabel',[0 26]);
+    subplot(2,2,3);
+    set(gca,'XTick',[0 19],'XTickLabel',[0 19]);
+    subplot(2,2,4);
+    set(gca,'XTick',[0 24],'XTickLabel',[0 24]);
+end
 if flankerlessOnly==1%plot just flankerless data
     figure(fig);
     subplot(3,2,1);
@@ -496,8 +529,13 @@ elseif roving==1
         rho2=rho{sampCond}';
         pSpearman2=pSpearman{sampCond}';
         dfs2=dfs{sampCond}';
-        allCorrStats=[dfs2(:,1) rho2(:,1) pSpearman2(:,1) dfs2(:,3) rho2(:,3) pSpearman2(:,3);dfs2(:,2) rho2(:,2) pSpearman2(:,2) dfs2(:,4) rho2(:,4) pSpearman2(:,4)];
-        allCorrStats=[allCorrStats(1,:);allCorrStats(3,:);allCorrStats(2,:);allCorrStats(4,:);allCorrStats(5,:);allCorrStats(7,:);allCorrStats(6,:);allCorrStats(8,:)];
+        if length(areas)==2
+            allCorrStats=[dfs2(:,1) rho2(:,1) pSpearman2(:,1) dfs2(:,3) rho2(:,3) pSpearman2(:,3);dfs2(:,2) rho2(:,2) pSpearman2(:,2) dfs2(:,4) rho2(:,4) pSpearman2(:,4)];
+            allCorrStats=[allCorrStats(1,:);allCorrStats(3,:);allCorrStats(2,:);allCorrStats(4,:);allCorrStats(5,:);allCorrStats(7,:);allCorrStats(6,:);allCorrStats(8,:)];
+        elseif length(areas)==1
+            allCorrStats=[dfs2(:,1) rho2(:,1) pSpearman2(:,1) dfs2(:,2) rho2(:,2) pSpearman2(:,2)];
+            allCorrStats=[allCorrStats(1,:);allCorrStats(3,:);allCorrStats(2,:);allCorrStats(4,:)];
+        end
         allCorrSamplesStats{sampCond}=allCorrStats;
     end
     subplot(3,2,6);
@@ -527,6 +565,9 @@ if roving==0
     saveCoefImageName=[areaTexts{1},'_',areaTexts{2},'_',analysisType,'_coefs',startEndTime,'_populationPROBMAT'];
 elseif roving==1
     saveCoefImageName=[areaTexts{1},'_',analysisType,'_coefs',startEndTime,'_populationPROBMAT'];
+end
+if useDenominator==1
+    saveCoefImageName=[saveCoefImageName,'_useDenominator'];
 end
 saveCoefImageFolder=fullfile(rootFolder,'PL',analysisType);
 saveCoefImagePath=fullfile(saveCoefImageFolder,saveCoefImageName);
