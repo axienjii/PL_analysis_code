@@ -1,4 +1,5 @@
 function bj_early_late_AUROC
+drawExpoFit=0;
 if nargin<3||isempty(animals)
     animals=[{'blanco'} {'jack'}];
     % animals={'blanco'};
@@ -165,7 +166,15 @@ for animalInd=1:length(animals)
                     plotLinear=0;
                     startpoint5=1;
                 end
-                [chiselinearTemp(i,:) chiseTemp(i,:) coefperflinearTemp(i,:) coefperfTemp(i,:) aRSlinearTemp(i,:) aRSTemp(i,:)]=bj_linearexpo_fitting(testContrast,allMeanPerf(:,1+i)*100,i,startpoint5,'ROC',plotLinear,[],[]);
+                if drawExpoFit==1
+                    [chiselinearTemp(i,:) chiseTemp(i,:) coefperflinearTemp(i,:) coefperfTemp(i,:) aRSlinearTemp(i,:) aRSTemp(i,:)]=bj_linearexpo_fitting(testContrast,allMeanPerf(:,1+i)*100,i,startpoint5,'ROC',plotLinear,[],[]);
+                elseif drawExpoFit==0
+                    runningMean=[];
+                    for threeSessCount=1:size(allMeanPerf,1)-2
+                        runningMean(threeSessCount,i)=mean([allMeanPerf(threeSessCount,1+i)*100 allMeanPerf(threeSessCount+1,1+i)*100 allMeanPerf(threeSessCount+2,1+i)*100]);
+                    end
+                    plot(2:size(allMeanPerf,1)-1,runningMean(:,i),'Color',colmapText(i,:),'LineStyle','-','Marker','none');hold on%
+                end
             end
             xlim([0 size(allMeanPerf,1)+1]);
             ylim([0 100]);
@@ -177,20 +186,22 @@ for animalInd=1:length(animals)
                     text('Position',[xLimVals(2)+(xLimVals(2)-xLimVals(1))/25 yLimVals(1)+unitSpace*i*2],'FontSize',9,'String',[markerText,'  ',num2str(testContrast(i)),'%'],'Color',colmapText(i,:));
                 end
             end
-            if roving==0
-                chiselinear{animalInd+2*(areaInd-1)}=chiselinearTemp;
-                chise{animalInd+2*(areaInd-1)}=chiseTemp;
-                coefperflinear{animalInd+2*(areaInd-1)}=coefperflinearTemp;
-                coefperf{animalInd+2*(areaInd-1)}=coefperfTemp;
-                aRSlinear{animalInd+2*(areaInd-1)}=aRSlinearTemp;
-                aRS{animalInd+2*(areaInd-1)}=aRSTemp;
-            elseif roving==1
-                chiselinear{animalInd+2*(sampleContrastsInd-1)}=chiselinearTemp;
-                chise{animalInd+2*(sampleContrastsInd-1)}=chiseTemp;
-                coefperflinear{animalInd+2*(sampleContrastsInd-1)}=coefperflinearTemp;
-                coefperf{animalInd+2*(sampleContrastsInd-1)}=coefperfTemp;
-                aRSlinear{animalInd+2*(sampleContrastsInd-1)}=aRSlinearTemp;
-                aRS{animalInd+2*(sampleContrastsInd-1)}=aRSTemp;
+            if drawExpoFit==1
+                if roving==0
+                    chiselinear{animalInd+2*(areaInd-1)}=chiselinearTemp;
+                    chise{animalInd+2*(areaInd-1)}=chiseTemp;
+                    coefperflinear{animalInd+2*(areaInd-1)}=coefperflinearTemp;
+                    coefperf{animalInd+2*(areaInd-1)}=coefperfTemp;
+                    aRSlinear{animalInd+2*(areaInd-1)}=aRSlinearTemp;
+                    aRS{animalInd+2*(areaInd-1)}=aRSTemp;
+                elseif roving==1
+                    chiselinear{animalInd+2*(sampleContrastsInd-1)}=chiselinearTemp;
+                    chise{animalInd+2*(sampleContrastsInd-1)}=chiseTemp;
+                    coefperflinear{animalInd+2*(sampleContrastsInd-1)}=coefperflinearTemp;
+                    coefperf{animalInd+2*(sampleContrastsInd-1)}=coefperfTemp;
+                    aRSlinear{animalInd+2*(sampleContrastsInd-1)}=aRSlinearTemp;
+                    aRS{animalInd+2*(sampleContrastsInd-1)}=aRSTemp;
+                end
             end
             legend('hide');
             xlabel('');
@@ -203,27 +214,29 @@ for animalInd=1:length(animals)
                     ylabel('PROBMAT');
                 end
             end
-            if roving==0
-                if animalInd==1&&areaInd==1&&sampleContrastsInd==1
-                    pc_condcoefFig=figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.8, 0.8]);
-                else
-                    figure(pc_condcoefFig);
+            if drawExpoFit==1
+                if roving==0
+                    if animalInd==1&&areaInd==1&&sampleContrastsInd==1
+                        pc_condcoefFig=figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.8, 0.8]);
+                    else
+                        figure(pc_condcoefFig);
+                    end
+                elseif roving==1
+                    if animalInd==1&&sampleContrastsInd==1
+                        pc_condcoefFig=figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.5, 0.8]);
+                    else
+                        figure(pc_condcoefFig);
+                    end
                 end
-            elseif roving==1
-                if animalInd==1&&sampleContrastsInd==1
-                    pc_condcoefFig=figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.5, 0.8]);
-                else
-                    figure(pc_condcoefFig);
+                if roving==0
+                    subplot(length(areas),2,animalInd+2*(areaInd-1));
+                elseif roving==1
+                    subplot(length(sampleContrasts),2,animalInd+2*(sampleContrastsInd-1));
                 end
+                ind=find(testContrast<sampleContrast);
+                ind=ind(end);
+                [rperfcoeff(animalInd+2*(sampleContrastsInd-1),1:2) pperfcpef(animalInd+2*(sampleContrastsInd-1),1:2)]=bj_plot_coef_expo_perf(coefperf{animalInd+2*(sampleContrastsInd-1)}(:,1),sampleContrast,testContrast,ind);
             end
-            if roving==0
-                subplot(length(areas),2,animalInd+2*(areaInd-1));
-            elseif roving==1
-                subplot(length(sampleContrasts),2,animalInd+2*(sampleContrastsInd-1));
-            end
-            ind=find(testContrast<sampleContrast);
-            ind=ind(end);
-            [rperfcoeff(animalInd+2*(sampleContrastsInd-1),1:2) pperfcpef(animalInd+2*(sampleContrastsInd-1),1:2)]=bj_plot_coef_expo_perf(coefperf{animalInd+2*(sampleContrastsInd-1)}(:,1),sampleContrast,testContrast,ind);
         end
     end
 end
@@ -241,20 +254,22 @@ if roving==1&&strcmp(area,'v1_2_2')
     subplot(3,2,6);
     xlim([0 50]);    
 end
-%compare sizes of adjusted R-square values, between linear and polynomial fits, for PC divided by test contrast
-aRSlinexpo1=[];
-aRSlinexpo2=[];
-for animalInd=1:length(animals)
-    for areaInd=1:2%hard-coded for V4_1 and V1_1
-        aRSlinexpo1=[aRSlinexpo1;aRSlinear{animalInd+2*(areaInd-1)}(:,:)];
-        aRSlinexpo2=[aRSlinexpo2;aRS{animalInd+2*(areaInd-1)}(:,:)];
+if drawExpoFit==1
+    %compare sizes of adjusted R-square values, between linear and polynomial fits, for PC divided by test contrast
+    aRSlinexpo1=[];
+    aRSlinexpo2=[];
+    for animalInd=1:length(animals)
+        for areaInd=1:2%hard-coded for V4_1 and V1_1
+            aRSlinexpo1=[aRSlinexpo1;aRSlinear{animalInd+2*(areaInd-1)}(:,:)];
+            aRSlinexpo2=[aRSlinexpo2;aRS{animalInd+2*(areaInd-1)}(:,:)];
+        end
     end
+    aRSlinexpo=[aRSlinexpo1 aRSlinexpo2];
+    [h,p,ci,stats]=ttest(aRSlinexpo(:,1),aRSlinexpo(:,2))
+    mean(aRSlinexpo(:,1)-aRSlinexpo(:,2));
+    figure
+    diff=aRSlinexpo(:,1)-aRSlinexpo(:,2);hold on
+    plot(sort(diff));
+    plot([0 56],[0 0],'k:');
+    sum(diff<0)/length(diff)
 end
-aRSlinexpo=[aRSlinexpo1 aRSlinexpo2];
-[h,p,ci,stats]=ttest(aRSlinexpo(:,1),aRSlinexpo(:,2))
-mean(aRSlinexpo(:,1)-aRSlinexpo(:,2));
-figure
-diff=aRSlinexpo(:,1)-aRSlinexpo(:,2);hold on
-plot(sort(diff));
-plot([0 56],[0 0],'k:');
-sum(diff<0)/length(diff)
