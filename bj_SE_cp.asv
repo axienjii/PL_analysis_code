@@ -8,6 +8,7 @@ function bj_SE_cp(ch,session,test_epochs,minusSpon,allTrialsArr,corrTrialsArr,an
 %before sample onset. Average firing rates (also in spikes/s) are
 %calculated for epochs 4 and 5, and spontaneous rates are subtracted.
 
+writeCorrIncorr=0;
 durSpon=150;%length of period prior to sample onset from which spontaneous rates are calculated. Can take on a value of up to 512 ms.
 minTrials=10;%set value of minumum number of trials for inclusion of session
 
@@ -33,7 +34,6 @@ if min(numTrials(closeCond))>=minTrials
             corrTrialsAct=cell(length(testContrast),1);
             incorrTrialsAct=cell(length(testContrast),1);
             incorrTrialsArr=cell(length(testContrast),5);
-            allTrialsCorrectIncorrect=[];
             CPvals=[];
             for cond=closeCond
                 allTrialRowInd=1;
@@ -111,7 +111,13 @@ if min(numTrials(closeCond))>=minTrials
                 end
             end
             saveText=['save ',CPmatPath,' CPmat'];
-            eval(saveText);
+%             eval(saveText);
+            if writeCorrIncorr==1
+                corr_incorr_matName=['corr_incorr_Ch',num2str(ch),'_',num2str(sampleContrast),startEndTime,'.mat'];
+                corr_incorr_matPath=fullfile('F:','PL','CP',animal,area,corr_incorr_matName);
+                saveText=['save ',corr_incorr_matPath,' corrTrialsAct incorrTrialsAct'];
+                eval(saveText);
+            end
         end
     end
 end
