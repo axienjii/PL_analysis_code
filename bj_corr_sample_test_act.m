@@ -25,6 +25,7 @@ end
 areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
 % areas=[{'v4_2'} {'v1_2'}];
 areas=[{'v1_2'} {'v1_2_1'} {'v1_2_2'}];
+areas=[{'v4_1'}];
 test_epochs={0 512 512*2 512*3};durSpon=150;
 durSpon=150;%length of period prior to sample onset from which spontaneous rates are calculated. Can take on a value of up to 512 ms.
 minTrials=10;%set value of minumum number of trials for inclusion of session
@@ -95,7 +96,11 @@ for animalInd=1:length(animals)
                             if ~exist(saveFolderName,'dir')
                                 mkdir(saveFolderName);
                             end
-                            saveText=['save F:\PL\sample_test_activity\',animal,'_',area,'\ch',num2str(channels(h)),'_',num2str(sessionNums(i)),'_',num2str(sampleContrast),'_example_sample_test_act.mat epoch2 epoch4'];
+                            if strcmp(area,'v4_1')||strcmp(area,'v1_1')
+                                saveText=['save F:\PL\sample_test_activity\',animal,'_',area,'\ch',num2str(channels(h)),'_',num2str(sessionNums(i)),'_example_sample_test_act.mat epoch2 epoch4'];
+                            else
+                                saveText=['save F:\PL\sample_test_activity\',animal,'_',area,'\ch',num2str(channels(h)),'_',num2str(sessionNums(i)),'_',num2str(sampleContrast),'_example_sample_test_act.mat epoch2 epoch4'];
+                            end
                             eval(saveText);
                             matActName=['F:\PL\ch',num2str(channels(h)),'_',num2str(sessionNums(i)),'_example_sample_test_act.mat'];
 %                             txtActName=['F:\PL\ch',num2str(channels(h)),'_',num2str(sessionNums(i)),'_example_sample_test_act.txt'];
