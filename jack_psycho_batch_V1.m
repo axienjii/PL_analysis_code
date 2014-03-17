@@ -15,8 +15,8 @@ function jack_psycho_batch_V1(animal,area,psychoOnly,plotLinear)
 %set accordingly:
 % monkeys=[{'blanco'} {'jack'}];
 % areas=[{'v4_1'} {'v4_2'} {'v1'}];
-roving=1;
-readData=0;
+roving=0;
+readData=1;
 onExternalHD=0;
 if onExternalHD==1
     rootFolder='G:\PL_backup_060413';
@@ -195,6 +195,9 @@ end
                     eval(cdText);
                     conditions=1:length(testContrast);
                     [vals]=jack_2target_psycho_EV_v3_mex(file_of_int,sampleContrast,testContrast,sessionNums(i),conditions,area,analysisFolderAppend,animal);
+%                     [vals]=bj_2target_psycho_EV_v3_mex(file_of_int,sample
+%                     Contrast,testContrast,sessionNums(i),conditions);%can
+%                     use this for 304 & 305
                     if splitSess==1
                         cdText=['cd V:\thielelab\Groups\ThieleGroup\monkey_data\blanco\_grid\',area,'_events_files\',num2str(sessionNums(i)),'_2'];
                         eval(cdText);
@@ -233,13 +236,15 @@ end
                         end
                         savevals{sampleNum}=analyseVals2(vals,testContrast,conditions,sampleContrast,animal,area,analysisFolderAppend,sessionNums(i),roving,onExternalHD,psychoOnly);
                     end
-                    splitSess=0;
-                    valsFileName=['vals_',num2str(sessionNums(i)),'.mat'];
-                    valsFolder=fullfile(rootFolder,'PL','vals_perf',animal,valsFileName); %#ok<NASGU>
-                    saveText=['save ',valsFolder,' vals'];
-                    vals=savevals;
-                    eval(saveText);
                 end
+                splitSess=0;
+                valsFileName=['vals_',num2str(sessionNums(i)),'.mat'];
+                valsFolder=fullfile(rootFolder,'PL','vals_perf',animal,valsFileName); %#ok<NASGU>
+                saveText=['save ',valsFolder,' vals'];
+                if roving==1
+                    vals=savevals;
+                end
+                eval(saveText);
             end
         end
 %     end
@@ -444,6 +449,17 @@ if plotRoving==1
             xlim([0 43]);
             subplot(3,1,3);
             ylim([20 40]);
+            xlim([0 43]);
+        elseif strcmp(area,'v1_4')&&preflankerOnly==5
+            subplot(3,1,1);
+            xlabel('session number');
+            xlim([0 43]);
+            ylim([0.5 0.9]);
+            subplot(3,1,2);
+            xlim([0 43]);
+            ylim([0 11]);
+            subplot(3,1,3);
+            ylim([20 45]);
             xlim([0 43]);
         end
         if preflankerOnly==1
