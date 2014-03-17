@@ -1,0 +1,135 @@
+function [] = filter_NCS(name, rectify,blurayData) 
+%Modified from Alex's generate_CSC_files_laminar code by Xing 25/10/13.
+%Read in NCS data (600-9000 Hz) from Bluray discs for sessions with missing raw data.
+%Reduce filter range to 600-4000 Hz, to make it more comparable with other
+%sessions (for which raw date were available).
+
+%%% name is the name of the new file that is written
+%%% name2 is the existing filename that should be read
+%%% rectify is flag which does rectify if 1, and does not rectify if 0
+prl = strfind(name,'.ncs');
+prl2=[' currently doing: ', name(1:prl-1)];
+disp(prl2);
+name2         = sprintf('%s_downsamp.ncs',name(1:prl-1));
+chan_name       = sprintf('%s',name(1:prl-1));
+exit_fun=0;
+
+
+% -------------------------------------------------------------------------
+FieldSelection(1) = 1;
+FieldSelection(2) = 1;
+FieldSelection(3) = 1;
+FieldSelection(4) = 1;
+FieldSelection(5) = 1;
+%FieldSelection(6) = 1;
+
+ExtractHeader = 1;
+
+[TimeStamps2, ChNumbers, SampFreq, NumValSamp, Samp, Header] = Nlx2MatCSC(name, FieldSelection,  ExtractHeader, 1);
+
+AppendFile = 0;
+ExtractMode = 1;
+ModeArray=1;
+ExtractModeArray=1;
+NumRecs = length(TimeStamps2);
+FieldSelection(1) = 1;
+FieldSelection(2) = 1;
+FieldSelection(3) = 1;
+FieldSelection(4) = 1;
+FieldSelection(5) = 1;
+FieldSelection(6) = 1;
+
+prl=size(Samp);
+if rectify==1
+    %%%%%%%%%%%%%%%% rectify the signal
+    Samples2 = abs(Samp);
+else 
+    Samples2=Samp;%added this- check that rectification isn't needed and that this is correct
+end
+%%%%%%%%%%%%%%%%%% put into one single row array for filtering
+Samples2=Samples2(:);
+
+[b,a]    = butter(3,[200]/(SampFreq(1)/2));
+Samples3 = filtfilt(b,a,Samples2);
+
+%%% put back into array that has dimension: 512*(number of timestamp)
+Samples2=reshape(Samples3,prl(1),prl(2));
+
+
+if exit_fun==0
+    if rectify==1
+        %%% save the rectified signal
+        Mat2NlxCSC(name, AppendFile, ExtractMode, ModeArray, NumRecs, FieldSelection, TimeStamps2, ChNumbers, SampFreq, NumValSamp, Samples2, Header );
+    end
+    
+    % - now downsample the rectified channel to ~ 1KHz ------------------------
+    %%% first decide which downsampling is required to achieve ~1 kHz
+    %%% resolution
+    
+    if SampFreq(1)>1000 && SampFreq(1)<2000
+        downsamp=1; %%% sample freq of ~1000 HZ
+    elseif SampFreq(1)>2000 && SampFreq(1)<4000
+        downsamp=2; %%% sample freq of ~2000 HZ
+    elseif SampFreq(1)>4000 && SampFreq(1)<8000
+        downsamp=4; %%% sample freq of ~4000 HZ
+    elseif SampFreq(1)>8000 && SampFreq(1)<16000
+        downsamp=8; %%% sample freq of ~8000 HZ
+    elseif SampFreq(1)>16000 && SampFreq(1)<32000
+        downsamp=16; %%% sample freq of ~16000 HZ
+    elseif SampFreq(1)>32000 && SampFreq(1)<64000
+        downsamp=32; %%% sample freq of ~32000 HZ
+    end
+    downsamp=1;%do not downsample 
+    if blurayData==1
+        downsamp=4;%downsample to around 4000 Hz
+    end
+    outname2 = sprintf('%s.ncs',chan_name);
+    
+    fclose all;
+    fid  = fopen(name, 'rb');
+    fid2 = fopen(name2,'w');
+    
+    if fid > 0
+        [head, count]    = fscanf(fid,'%c', 16384);
+        prl              = findstr('-SamplingFrequency',head);
+        prl2              = findstr('-ADMaxValue',head);
+        head(prl2+6:length(head))  = head(prl2-2:length(head)-8);
+        head(prl2:prl2+5)='      ';
+        head(prl:prl+26) = sprintf('-SamplingFrequency %6.3f',SampFreq(1)/downsamp);
+        count            = fwrite(fid2,head,'int8');
+        position1        = ftell(fid);
+        stat1            = fseek(fid,0,'eof');
+        position2        = ftell(fid);
+        numevents        = (position2-position1)/1044;
+        fclose(fid);
+        
+        fid           = fopen(name, 'rb');
+        [head, count] = fscanf(fid,'%c', 16384);
+        Newsamp       = zeros(downsamp*512,1);
+        for j = 1 : downsamp : numevents-downsamp
+            for k = 1 : downsamp
+                tp = fread(fid, 1, 'uint64');
+                if k == 1
+                    timestamp = tp;
+                end
+                ScNumber     = fread(fid, 1, 'uint32');
+                SampFreq     = fread(fid, 1, 'uint32');
+                NumValidSamp = fread(fid, 1, 'uint32');
+                Samp         = fread(fid, 512, 'int16');
+                Newsamp(1+(k-1)*512:k*512)  =Samp;
+            end
+            
+            count = fwrite(fid2, timestamp,'uint64');
+            count = fwrite(fid2,ScNumber,'uint32');
+            count = fwrite(fid2,SampFreq/downsamp,'uint32');
+            count = fwrite(fid2,NumValidSamp,'uint32');
+            count = fwrite(fid2,Newsamp(1:downsamp:end),'int16');
+            
+        end
+    end
+    fclose(fid);
+    fclose(fid2);
+%     delfile = sprintf('delete %s',outname);
+%     eval(delfile);
+end
+    
