@@ -239,7 +239,7 @@ for i=1:numsessions
                         if strcmp(analysisType,'psycho')
                             [coefEsts2(InitVar,:),fval2(InitVar)]=fminsearch(@weibull_pointfive_one,X0,options,testContrastSplit{higherOrLower},datavalsSplit{higherOrLower},[1 1],[maxDiff(higherOrLower) 10],[1 1],[0 0],'mle');%place upper limit on threshold value, depending on whether examining higher or lower test contrast conds
                         elseif strcmp(analysisType,'psycho_param')
-                            [coefEsts2(InitVar,:),fval2(InitVar)]=fminsearch(@weibull_behav_param,X0,options,testContrastSplit{higherOrLower},datavalsSplit{higherOrLower},[1 1],[maxDiff(higherOrLower) 10],[1 1],[0 0],1-datavalsSplit{higherOrLower}(end),'mle');%place upper limit on threshold value, depending on whether examining higher or lower test contrast conds
+                            [coefEsts2(InitVar,:),fval2(InitVar)]=fminsearch(@weibull_behav_param,X0,options,testContrastSplit{higherOrLower},datavalsSplit{higherOrLower},[1 1],[maxDiff(higherOrLower) 10],[1 1],[0 0],1-datavalsSplit{higherOrLower}(end));%place upper limit on threshold value, depending on whether examining higher or lower test contrast conds
                         end
                     end
                 end
@@ -283,6 +283,7 @@ for i=1:numsessions
                         threshold82lower(1,i)=sampleContrast;
                         lineTypeLower(1,i)={'-.'};
                     end
+                    thresholdDenominatorLower(1,i)=X(1);%do not read off the fitted curve- just use value of parameter in denominator
                 elseif higherOrLower==2%higher contrast than sample
                     threshold82higher(1,i)=X(1).*(-log(1-(1-0.5*exp(-1)-0.5)./(0.5-(1-datavalsSplit{higherOrLower}(end))))).^(1/X(2));
                     lineTypeHigher(1,i)={'--'};
@@ -290,6 +291,7 @@ for i=1:numsessions
                         threshold82higher(1,i)=100-sampleContrast;
                         lineTypeHigher(1,i)={'-.'};
                     end
+                    thresholdDenominatorHigher(1,i)=X(1);%do not read off the fitted curve- just use value of parameter in denominator
                 end
             end
             if strcmp(analysisType,'psycho_param')
@@ -322,7 +324,7 @@ for i=1:numsessions
         ylim([0,max(datavals)]);
         %         ylim([0 1]);
     end
-    if ~strcmp(analysisType,'CRF')&&~strcmp(analysisType,'ROC_zero_one')
+    if ~strcmp(analysisType,'CRF')&&~strcmp(analysisType,'ROC_zero_one')&&~strcmp(analysisType,'ROC')
         if ~strcmp(analysisType,'psycho_zero_one')
             xlim([0 max([testContrastSplit{1} testContrastSplit{2}])]);
         end
@@ -375,6 +377,7 @@ if excludeSessHighSSE==0&&~strcmp(analysisType,'ROC_diff')&&~strcmp(analysisType
     if strcmp(analysisType,'psycho_param')%include all sessions for behavioural paper
         sessionSorted2=sessionSorted1;
         saveText=['save ',slC50MatPathname,' sessionSorted2 threshold82higher'];%just single threshold as AUROC vals run from 0.5 to 1
+        saveText=['save ',slC50MatPathname,' sessionSorted2 threshold82higher threshold82lower thresholdDenominatorHigher thresholdDenominatorLower'];%just single threshold as AUROC vals run from 0.5 to 1
         eval(saveText)
     end
     if strcmp(analysisType,'psycho_zero_one')%upper and lower threshold for comparison with neuronal data
@@ -397,7 +400,8 @@ elseif excludeSessHighSSE==1
             eval(saveText)
         elseif strcmp(analysisType,'psycho')||strcmp(analysisType,'psycho_param')
             sessionSorted2=sessionSorted1;
-            saveText=['save ',slC50MatPathname,' sessionSorted2 threshold82higher'];
+            saveText=['save ',slC50MatPathname,' sessionSorted2 threshold82higher'];%just single threshold as AUROC vals run from 0.5 to 1
+            saveText=['save ',slC50MatPathname,' sessionSorted2 threshold82higher thresholdDenominatorHigher thresholdDenominatorLower'];
             eval(saveText)
         elseif strcmp(analysisType,'ROC')||strcmp(analysisType,'CRF')||strcmp(analysisType,'ROC_zero_one')
             saveText=['save ',slC50MatPathname,'.mat sessionSorted1 slopeNeuro c50 threshold82higher threshold82lower'];
@@ -417,6 +421,7 @@ elseif excludeSessHighSSE==1
                 saveText=['save ',slC50MatPathname,' sessionSorted1 threshold82higher'];
             elseif strcmp(analysisType,'psycho')||strcmp(analysisType,'psycho_param')
                 saveText=['save ',slC50MatPathname,' sessionSorted2 threshold82higher'];
+                saveText=['save ',slC50MatPathname,' sessionSorted2 threshold82higher thresholdDenominatorHigher thresholdDenominatorLower'];%just single threshold as AUROC vals run from 0.5 to 1
             end
             eval(saveText)
         end
