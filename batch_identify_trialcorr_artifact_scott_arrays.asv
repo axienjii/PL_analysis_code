@@ -1,0 +1,41 @@
+% **** Batch file ****
+function batch_identify_trialcorr_artifact_scott_arrays(animal, area, sessions, icopy, ncopies, istart)
+
+channels = main_channels(animal,area);
+if nargin<3 || isempty(sessions)
+    sessions = main_raw_sessions(animal,area);
+end
+if nargin<5
+    icopy = 1;
+end
+if nargin<6
+    ncopies = 1;
+end
+if nargin<7
+    istart = 1;
+end
+
+verbose = 10;
+
+generateInitialList=0;
+if generateInitialList==1
+    for iter = icopy:ncopies:length(sessions)
+        
+        if iter<istart
+            continue;
+        end
+        
+        session = sessions(iter);
+        
+        if verbose; fprintf('%d(%d): %d/%d Processing session %.1f\n',...
+                icopy, ncopies, iter, length(sessions), session);
+        end
+        loadText=['load ',output_fname,' removeTrialsTimestamps rlist'];
+        eval(loadText)
+        saveText=['save ',output_fname,' removeTrialsTimestamps'];
+        eval(saveText)
+        
+            identify_trial_corr_artifact(animal, area, session, channels, max(0,verbose-1))
+        fclose all;
+    end
+end
