@@ -153,7 +153,7 @@ for k=1:sessSegments;%examine all trials, then just first and last 30% of trials
     plot(testContrast,prop_corr(k,:),'ok');
     hold on
     X0=[2 30 0.2 0.1];
-    X=fminsearch(@fit_weibull,X0,[],testContrast,prop_corr(k,:),[],'least_square',[0 0 0 0],[],[0 0 0 0],[]);
+    X=fminsearch(@fit_weibull,X0,[],testContrast,prop_corr(k,:),[],'mle',[0 0 0 0],[],[0 0 0 0],[]);
     allX(k,:)=X;
     if calculateTangent==1
         allX(k,1)=100*X(1)*X(3)*exp(-(sampleContrast/X(2))^X(1) )*sampleContrast^(X(1)-1)*(1/X(2))^X(1);%multiply by 100 as prop_corr given as fraction, not percentage
