@@ -105,6 +105,7 @@ else
         slopeNeuro(1,i)=X(1);
     elseif calculateTangent==1
         slopeNeuro(1,i)=X(1)*X(3)*exp(-(sampleContrast/X(2))^X(1))*sampleContrast^(X(1)-1)*(1/X(2))^X(1);
+%         slopeNeuro(1,i)=(1-X(4)-X(3).*exp(-(30.001./X(2)).^X(1))-1-X(4)-X(3).*exp(-(29.999./X(2)).^X(1)))/0.002;
     end
     
     yvals=1-X(4)-X(3).*exp(-(xvals./X(2)).^X(1));
