@@ -39,6 +39,7 @@ if plotSlopeFig==1
             channels=main_channels(animal,area);
             sessionNums=main_raw_sessions_final(animal,area,[],0);
             if readData==1
+                allCHalfNeuro=[];
                 for chInd=1:length(channels)
                     allChInd=allChInd+1;
                     %         figROCnew=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
@@ -254,7 +255,7 @@ if plotSlopeFig==1
             end
             xlim([0 100]);
             matName=[animal,'_',area,'_',num2str(sampleContrast),'.mat'];
-            matPath=fullfile('F:','PL','PNE_distributions',matName);
+            matPath=fullfile('F:','PL','PNE_CHalf_distributions',matName);
             saveText=['save ',matPath,' earlyCHalf lateCHalf earlyPNE latePNE pCHalf pPNE statsCHalf statsPNE pCHalfWilcoxon pPNEWilcoxon statsCHalfWilcoxon statsPNEWilcoxon pCHalfVar statsCHalfVar pPNEVar statsPNEVar'];
             eval(saveText);
         end
