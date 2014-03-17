@@ -40,7 +40,7 @@ end
 
 if generateSpikes==1
     % for iter = icopy:ncopies:(length(channels)*length(sessions))
-    parfor iter = icopy:(length(channels)*length(sessions))
+    for iter = icopy:(length(channels)*length(sessions))
         if iter<istart
             continue;
         end
@@ -55,7 +55,7 @@ if generateSpikes==1
                 session, isess, length(sessions), ...
                 channel, ichan, length(channels));
         end
-        try
+%         try
             % Check if file with ROC values already exists
             if strcmp(area,'v1_2')
                 sampleText=40;
@@ -77,18 +77,18 @@ if generateSpikes==1
                     end
                 end
             end
-        catch ME
-            %If an error occured, output the details about the error
-            animal
-            session
-            channel
-            
-            disp(ME);
-            for i=1:length(ME.stack);
-                last_error_made = ME.stack(i);
-                fprintf('In ==> %s at %d.\n', last_error_made.file, last_error_made.line);
-            end
-        end
+%         catch ME
+%             %If an error occured, output the details about the error
+%             animal
+%             session
+%             channel
+%             
+%             disp(ME);
+%             for i=1:length(ME.stack);
+%                 last_error_made = ME.stack(i);
+%                 fprintf('In ==> %s at %d.\n', last_error_made.file, last_error_made.line);
+%             end
+%         end
     end
 end
 if drawFigs==1
