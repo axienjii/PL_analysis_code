@@ -2,7 +2,11 @@ function plot_all_bj_behav_figs(roving,areas,psychoOnly)
 %Written by Xing 27/10/12.
 %Plot figures for both monkeys, for behavioural paper.
 includeV4_0=0;
-printFigs=1;
+drawExpoFit=0;
+plotRunningMean=0;
+plotContinuous=0;
+plotMarker=1;
+printFigs=0;
 if includeV4_0==1
     printFigs=0;
 end
@@ -111,7 +115,7 @@ for animalInd=1:length(animals)
                 figure(psychoCurves(animalInd+2*(areaInd-1)))
                 prop_corr=VALUES(i,1:numconds);%psychometric performance for each session
                 X=fminsearch(@fit_weibull,X0,[],testContrast,prop_corr,[],'least_square',[1 0 1 0],[20 0 max(prop_corr) 0],[1 0 0 0],[0 0 0 0]);
-                subplot(6,6,i);%check
+                subplot(ceil(numsessions/6),6,i);%check
                 plot(testContrast,prop_corr,'ok');
                 hold on
                 yvals=1-X(4)-X(3).*exp(-(xvals./X(2)).^X(1));
@@ -150,6 +154,10 @@ for animalInd=1:length(animals)
                             subplot(1,2,2);
                             prop_corr=[0.917431193000000,0.961538462000000,0.934579439000000,0.775193798000000,0.757575758000000,0.662251656000000,0.636942675000000,0.520833333000000,0.641025641000000,0.680272109000000,0.793650794000000,0.925925926000000,0.990099010000000,1];
                             prop_corr=[1-prop_corr(1:7) prop_corr(8:end)];
+                            generateExampleROCFig=0;
+                            if generateExampleROCFig==1
+                                prop_corr=[0.114285714285714,0.0990990990990991,0.131578947368421,0.132231404958678,0.248322147651007,0.288590604026846,0.289308176100629,0.350000000000000,0.363095238095238,0.389261744966443,0.406250000000000,0.618181818181818,0.923809523809524,1];
+                            end
                             X=fminsearch(@fit_weibull,X0,[],testContrast,prop_corr,[],'least_square',[0 0 0 0],[],[0 0 0 0],[]);
                             yvals=1-X(4)-X(3).*exp(-(xvals./X(2)).^X(1));
                             PSE=X(2).*(-log((0.5-X(4))/X(3))).^(1/X(1));
@@ -575,7 +583,6 @@ for animalInd=1:length(animals)
                         unitSpace=(yLimVals(2)-yLimVals(1))/30;
                         text('Position',[xLimVals(2)+(xLimVals(2)-xLimVals(1))/25 yLimVals(1)+unitSpace*i*2],'FontSize',9,'String',[markerText,'  ',num2str(testContrast(i)),'%'],'Color',colmapText(i,:));
                     end
-                    plot(1:size(allMeanPerf,1),allMeanPerf(:,2+i)*100,'Color',colmapText(i,:),'LineStyle','none','Marker',markerText,'MarkerFaceColor',colmapText(i,:),'MarkerEdgeColor',colmapText(i,:),'MarkerSize',markerS);hold on%'MarkerFaceColor',[1/i 1/i 1/i],
 %                     if strcmp(area,'v1_2_1')%try a linear fit as little learning occurs during roving stage 4
 %                         plotLinear=1;
 %                         startpoint5=0;
@@ -583,7 +590,64 @@ for animalInd=1:length(animals)
                         plotLinear=0;
                         startpoint5=1;
 %                     end
-                    [chiselinearTemp(i,:) chiseTemp(i,:) coefperflinearTemp(i,:) coefperfTemp(i,:) aRSlinearTemp(i,:) aRSTemp(i,:)]=bj_linearexpo_fitting(testContrast,allMeanPerf(:,2+i)*100,i,startpoint5,'ROC',plotLinear,[],[]);
+                    if plotRunningMean==0
+                        if strcmp(animal,'blanco')
+                            changeSessions=[1 35 50];
+                        elseif strcmp(animal,'jack')
+                            changeSessions=[1 17 39];
+                        end
+                        for sessInd=1:size(allMeanPerf,1)
+                            markerText2='x';
+                            markerS2=7;%6
+                            if sessInd>=changeSessions(2)
+                                if sessInd<changeSessions(3)
+                                    markerText2='o';
+                                    markerS2=5;%4
+                                end
+                            end
+                            if plotMarker==1
+                                plot(sessInd,allMeanPerf(sessInd,2+i)*100,'Color',colmapText(i,:),'LineStyle','none','Marker',markerText2,'MarkerFaceColor','none','MarkerEdgeColor',colmapText(i,:),'MarkerSize',markerS2);hold on%'MarkerFaceColor',[1/i 1/i 1/i],
+                            end                            
+                        end
+                        plot(1:size(allMeanPerf,1),allMeanPerf(:,2+i)*100,'Color',colmapText(i,:),'LineStyle','-','Marker','none','MarkerFaceColor',colmapText(i,:),'MarkerEdgeColor',colmapText(i,:),'MarkerSize',markerS2);hold on%'MarkerFaceColor',[1/i 1/i 1/i],
+                    end
+                    if drawExpoFit==1
+                       [chiselinearTemp(i,:) chiseTemp(i,:) coefperflinearTemp(i,:) coefperfTemp(i,:) aRSlinearTemp(i,:) aRSTemp(i,:)]=bj_linearexpo_fitting(testContrast,allMeanPerf(:,2+i)*100,i,startpoint5,'ROC',plotLinear,[],[]);
+                    elseif drawExpoFit==0
+                        if plotRunningMean==1
+                            if plotContinuous==1
+                                runningMean=[];
+                                for threeSessCount=1:size(allMeanPerf,1)-2
+                                    runningMean(threeSessCount,i)=mean([allMeanPerf(threeSessCount,2+i)*100 allMeanPerf(threeSessCount+1,2+i)*100 allMeanPerf(threeSessCount+2,2+i)*100]);
+                                end
+                                plot(2:size(allMeanPerf,1)-1,runningMean(:,i),'Color',colmapText(i,:),'LineStyle','-','Marker','none');hold on%
+                            elseif plotContinuous==0&&roving==1
+                                if strcmp(animal,'blanco')
+                                    changeSessions=[1 35 50];
+                                elseif strcmp(animal,'jack')
+                                    changeSessions=[1 17 39];
+                                end
+                                runningMean=[];
+                                for threeSessCount=changeSessions(1):changeSessions(2)-3%-2 for running average over 3 sessions, then -1 again to calculate up to session before 'change session'
+                                    runningMean(threeSessCount,i)=mean([allMeanPerf(threeSessCount,2+i)*100 allMeanPerf(threeSessCount+1,2+i)*100 allMeanPerf(threeSessCount+2,2+i)*100]);
+                                end
+                                plot(2:changeSessions(2)-2,runningMean(:,i),'Color',colmapText(i,:),'LineStyle','-','Marker','none');hold on%
+                                for threeSessCount=changeSessions(2):changeSessions(3)-3
+                                    runningMean(threeSessCount,i)=mean([allMeanPerf(threeSessCount,2+i)*100 allMeanPerf(threeSessCount+1,2+i)*100 allMeanPerf(threeSessCount+2,2+i)*100]);
+                                end
+                                plot(changeSessions(2)+1:changeSessions(3)-2,runningMean(changeSessions(2):changeSessions(3)-3,i),'Color',colmapText(i,:),'LineStyle','-','Marker','none');hold on%
+                                for threeSessCount=changeSessions(3):size(allMeanPerf,1)-2
+                                    runningMean(threeSessCount,i)=mean([allMeanPerf(threeSessCount,2+i)*100 allMeanPerf(threeSessCount+1,2+i)*100 allMeanPerf(threeSessCount+2,2+i)*100]);
+                                end
+                                plot(changeSessions(3)+1:size(allMeanPerf,1)-1,runningMean(changeSessions(3):size(allMeanPerf,1)-2,i),'Color',colmapText(i,:),'LineStyle','-','Marker','none');hold on%
+                            end
+                            xlim([0 size(allMeanPerf,1)+1]);
+                            set(gca, 'box', 'off');
+                        elseif plotRunningMean==0
+%                             plot(1:size(allMeanPerf,1),allMeanPerf(:,2+i)*100,'Color',colmapText(i,:),'LineStyle','-','Marker','none');hold on%
+                            plot(1:size(allMeanPerf,1),allMeanPerf(:,2+i)*100,'Color',colmapText(i,:),'LineStyle','none','Marker','none');hold on%
+                        end
+                    end
                 end
                 %     yLimVals=get(gca,'ylim');
                 %     xLimVals=get(gca,'xlim');
@@ -600,12 +664,14 @@ for animalInd=1:length(animals)
                 end
             end
             if ~strcmp(area,'v4_2')
-                chiselinear{animalInd+2*(plotAreaInd-1)}=chiselinearTemp;
-                chise{animalInd+2*(plotAreaInd-1)}=chiseTemp;
-                coefperflinear{animalInd+2*(plotAreaInd-1)}=coefperflinearTemp;
-                coefperf{animalInd+2*(plotAreaInd-1)}=coefperfTemp;
-                aRSlinear{animalInd+2*(plotAreaInd-1)}=aRSlinearTemp;
-                aRS{animalInd+2*(plotAreaInd-1)}=aRSTemp;
+                if drawExpoFit==1
+                    chiselinear{animalInd+2*(plotAreaInd-1)}=chiselinearTemp;
+                    chise{animalInd+2*(plotAreaInd-1)}=chiseTemp;
+                    coefperflinear{animalInd+2*(plotAreaInd-1)}=coefperflinearTemp;
+                    coefperf{animalInd+2*(plotAreaInd-1)}=coefperfTemp;
+                    aRSlinear{animalInd+2*(plotAreaInd-1)}=aRSlinearTemp;
+                    aRS{animalInd+2*(plotAreaInd-1)}=aRSTemp;
+                end
             end
             ylim([0 100]);
             legend('hide');
@@ -624,18 +690,20 @@ for animalInd=1:length(animals)
                 xlim([0 23]);
             end
             
-            if ~strcmp(area,'v4_2')
-                if animalInd==1&&areaInd==1&&sampleInd==1
-                    if roving==0
-                    pc_condcoefFig=figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.8, 0.8]);
-                    elseif roving==1
-                    pc_condcoefFig=figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.5, 0.8]);
+            if drawExpoFit==1
+                if ~strcmp(area,'v4_2')
+                    if animalInd==1&&areaInd==1&&sampleInd==1
+                        if roving==0
+                            pc_condcoefFig=figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.8, 0.8]);
+                        elseif roving==1
+                            pc_condcoefFig=figure('Color',[1,1,1],'Units','Normalized','Position',[0.12, 0.08, 0.5, 0.8]);
+                        end
+                    else
+                        figure(pc_condcoefFig);
                     end
-                else
-                    figure(pc_condcoefFig);
+                    subplot(length(areaTexts),2,animalInd+2*(plotAreaInd-1));
+                    [rperfcoeff(animalInd+2*(plotAreaInd-1),1:2) pperfcpef(animalInd+2*(plotAreaInd-1),1:2)]=bj_plot_coef_expo_perf(coefperf{animalInd+2*(plotAreaInd-1)}(:,1),sampleContrast,testContrast,ind);
                 end
-                subplot(length(areaTexts),2,animalInd+2*(plotAreaInd-1));
-                [rperfcoeff(animalInd+2*(plotAreaInd-1),1:2) pperfcpef(animalInd+2*(plotAreaInd-1),1:2)]=bj_plot_coef_expo_perf(coefperf{animalInd+2*(plotAreaInd-1)}(:,1),sampleContrast,testContrast,ind);
             end
             
             %to check values of coefficients:
@@ -830,22 +898,24 @@ end
 % ylim([-15 105])
 
 %compare sizes of adjusted R-square values, between linear and polynomial fits, for PC divided by test contrast
-aRSlinexpo1=[];
-aRSlinexpo2=[];
-for animalInd=1:length(animals)
-    for areaInd=1:2%hard-coded for V4_1 and V1_1
-        aRSlinexpo1=[aRSlinexpo1;aRSlinear{animalInd+2*(plotAreaInd-1)}(:,:)];
-        aRSlinexpo2=[aRSlinexpo2;aRS{animalInd+2*(plotAreaInd-1)}(:,:)];
+if drawExpoFit==1
+    aRSlinexpo1=[];
+    aRSlinexpo2=[];
+    for animalInd=1:length(animals)
+        for areaInd=1:2%hard-coded for V4_1 and V1_1
+            aRSlinexpo1=[aRSlinexpo1;aRSlinear{animalInd+2*(plotAreaInd-1)}(:,:)];
+            aRSlinexpo2=[aRSlinexpo2;aRS{animalInd+2*(plotAreaInd-1)}(:,:)];
+        end
     end
+    aRSlinexpo=[aRSlinexpo1 aRSlinexpo2];
+    [h,p,ci,stats]=ttest(aRSlinexpo(:,1),aRSlinexpo(:,2))
+    mean(aRSlinexpo(:,1)-aRSlinexpo(:,2));
+    figure
+    diff=aRSlinexpo(:,1)-aRSlinexpo(:,2);hold on
+    plot(sort(diff));
+    plot([0 56],[0 0],'k:');
+    sum(diff<0)/length(diff)
 end
-aRSlinexpo=[aRSlinexpo1 aRSlinexpo2];
-[h,p,ci,stats]=ttest(aRSlinexpo(:,1),aRSlinexpo(:,2))
-mean(aRSlinexpo(:,1)-aRSlinexpo(:,2));
-figure
-diff=aRSlinexpo(:,1)-aRSlinexpo(:,2);hold on
-plot(sort(diff));
-plot([0 56],[0 0],'k:');
-sum(diff<0)/length(diff)
 
 if roving==0
     % %proportion correct
@@ -936,7 +1006,7 @@ if roving==0
     figure(pc_condFig)
     subplot(length(areaTexts),2,1);
     % ylim([-0.1 1.1]);
-    xlim([0 30]);
+    xlim([0 38]);
     ylim([-5 105]);
     subplot(length(areaTexts),2,2);
     % ylim([-0.1 1.1]);
@@ -1179,7 +1249,29 @@ elseif roving==1
     xlim([0 17]);
     ylim([-5 105]);
     
-   
+   subplot(3,2,1)
+   xlim([0 57])
+   set(gca, 'box', 'off')
+   subplot(3,2,3)
+   xlim([0 57])
+   set(gca, 'box', 'off')
+   subplot(3,2,5)
+   xlim([0 57])
+   set(gca, 'box', 'off')
+   subplot(3,2,2)
+   xlim([0 43])
+   set(gca, 'box', 'off')
+   subplot(3,2,4)
+   xlim([0 43])
+   set(gca, 'box', 'off')
+   subplot(3,2,6)
+   xlim([0 43])
+   set(gca, 'box', 'off')
+   subplot(3,2,2)
+   ylim([0 100.5]);
+   subplot(3,2,1)
+   ylim([0 100.5]);
+
     figure(pc_condcoefFig)
 %     subplot(length(areaTexts),2,1);
 %     ylim([0 60]);
