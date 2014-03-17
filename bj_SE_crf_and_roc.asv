@@ -1,4 +1,4 @@
-function bj_SE_crf_and_roc(ch,session,test_epochs,minusSpon,matarray,animal,area,sampleContrast,testContrast,ROCmethod,useISI)
+function bj_SE_crf_and_roc(ch,session,test_epochs,minusSpon,matarray,animal,area,sampleContrast,testContrast,ROCmethod,useISI,CRFonly)
 %Writes CRF values to mat file:
 %session number, time epochs, CRF in spikes/s for each condition durnig
 %spontaneous period, during sample, during ISI, and during test.
@@ -61,76 +61,109 @@ if min(numTrials)>=minTrials
             elseif exist(CRFmatPath,'file')
                 loadText=['load ',CRFmatPath,' CRFmat'];
                 eval(loadText);
-                CRFmat=[CRFmat;CRFmatTemp];
+                replace=[];
+                for rowInd=1:size(CRFmat,1)
+                    if CRFmat{rowInd,1}==session
+                        replace=rowInd;
+                    end
+                end
+                if ~isempty(replace)
+                    CRFmat(replace,:)=CRFmatTemp;
+                else
+                    CRFmat=[CRFmat;CRFmatTemp];
+                end
             end
             saveText=['save ',CRFmatPath,' CRFmat'];
-            eval(saveText);
+%             eval(saveText);
         end
     end
     
-    for subPeriod=1:length(periods)-1
-        for cond=1:size(matarray,1)
-            %roc analysis:
-            higherTest=0;
-            for rowInd=1:length(epoch4{cond,subPeriod})
-                if useISI==0
-                    if epoch4{cond,subPeriod}(1,rowInd)>epoch2{cond,subPeriod}(1,rowInd)
-                        higherTest=higherTest+1;
-                    end
-                elseif useISI==1
-                    temp3=matarray{cond,3}{n}>test_epochs{3}-256;%activity during ISI
-                    spikes=matarray{cond,3}{n}(temp3);
-                    actList3(rowInd)=length(spikes)/256*1000;%find rate during second half of ISI
-                    if epoch4{cond,subPeriod}(1,rowInd)>epoch2{cond,subPeriod}(1,rowInd)
-                        higherTest=higherTest+1;
+    if CRFonly==0%if only need CRF calculation, can skip the ROC calculation
+        for subPeriod=1:length(periods)-1
+            for cond=1:size(matarray,1)
+                %roc analysis:
+                higherTest=0;
+                lowerTest=0;
+                higherTestSum=0;
+                lowerTestSum=0;
+                for rowInd=1:length(epoch4{cond,subPeriod})
+                    if useISI==0
+                        if epoch4{cond,subPeriod}(1,rowInd)>epoch2{cond,subPeriod}(1,rowInd)
+                            higherTest=higherTest+1;
+                            higherTestSum=higherTestSum+epoch4{cond,subPeriod}(1,rowInd)-epoch2{cond,subPeriod}(1,rowInd);
+                        elseif epoch4{cond,subPeriod}(1,rowInd)<epoch2{cond,subPeriod}(1,rowInd)
+                            lowerTest=lowerTest+1;
+                            lowerTestSum=lowerTestSum+epoch2{cond,subPeriod}(1,rowInd)-epoch4{cond,subPeriod}(1,rowInd);
+                        end
+                    elseif useISI==1%calculate AUROCs based on test vs pre-test, instead of test vs sample
+                        temp3=matarray{cond,3}{rowInd}>test_epochs{3}-256;%activity during ISI
+                        spikes=matarray{cond,3}{rowInd}(temp3);
+                        temp3=spikes<test_epochs{3};
+                        spikes=spikes(temp3);
+                        actList3{cond,subPeriod}(1,rowInd)=length(spikes)/256*1000;%find rate during second half of ISI
+                        if epoch4{cond,subPeriod}(1,rowInd)>actList3{cond,subPeriod}(1,rowInd)
+                            higherTest=higherTest+1;
+                            higherTestSum=higherTestSum+epoch4{cond,subPeriod}(1,rowInd)-actList3{cond,subPeriod}(1,rowInd)
+                        elseif epoch4{cond,subPeriod}(1,rowInd)<actList3{cond,subPeriod}(1,rowInd)
+                            lowerTest=lowerTest+1;
+                            lowerTestSum=lowerTestSum+actList3{cond,subPeriod}(1,rowInd)-epoch4{cond,subPeriod}(1,rowInd);
+                        end
                     end
                 end
+                if strcmp(ROCmethod,'old')
+                    %previous method of calculating ROC values, does not take trial-by-trial fluctuations (i.e. trial-wise correlations between activity to sample and test) into account
+                    [roctemp]=sglroc3(epoch4{cond,subPeriod}(1,:),epoch2{cond,subPeriod}(1,:));
+                    rocvals(cond)=roctemp;
+                elseif strcmp(ROCmethod,'new')
+                    roc=higherTest/(higherTest+lowerTest);
+                    rocvals(cond)=roc;
+                elseif strcmp(ROCmethod,'extra_new')
+                    roc=higherTestSum/(higherTestSum+lowerTestSum);%trialwise activity difference (in units of spikes/s)
+                    rocvals(cond)=roc;
+                    roc=higherTest/(higherTest+lowerTest);%trialwise difference tally (in units of proportion of trials)
+                    rocvalsDiff(cond)=roc;
+                end
+            end
+            startEndTime=['_',num2str(periods(subPeriod)),'_to_',num2str(periods(subPeriod+1))];
+            if round(ch)~=ch
+                ROCmatName=['ROC_Ch',num2str(round(ch)),'_',num2str(10*(ch-round(ch))),'_',num2str(sampleContrast),startEndTime,'.mat'];
+            else
+                ROCmatName=['ROC_Ch',num2str(ch),'_',num2str(sampleContrast),startEndTime,'.mat'];
             end
             if strcmp(ROCmethod,'old')
-                %previous method of calculating ROC values, does not take trial-by-trial fluctuations (i.e. trial-wise correlations between activity to sample and test) into account
-                [roctemp]=sglroc3(epoch4{cond,subPeriod}(1,:),epoch2{cond,subPeriod}(1,:));
-                rocvals(cond)=roctemp;
+                ROCmatFolder=fullfile('F:','PL','ROC_sglroc3',animal,area);
+                ROCmatPath=fullfile('F:','PL','ROC_sglroc3',animal,area,ROCmatName);
             elseif strcmp(ROCmethod,'new')
-                roc=higherTest/length(epoch4{cond,subPeriod});
-                rocvals(cond)=roc;
+                ROCmatFolder=fullfile('F:','PL','ROC',animal,area);
+                ROCmatPath=fullfile('F:','PL','ROC',animal,area,ROCmatName);
+            elseif strcmp(ROCmethod,'extra_new')
+                ROCmatFolder=fullfile('F:','PL','ROC_actdiff',animal,area);
+                ROCmatPath=fullfile('F:','PL','ROC_actdiff',animal,area,ROCmatName);
             end
-        end
-        startEndTime=['_',num2str(periods(subPeriod)),'_to_',num2str(periods(subPeriod+1))];
-        if round(ch)~=ch
-            ROCmatName=['ROC_Ch',num2str(round(ch)),'_',num2str(10*(ch-round(ch))),'_',num2str(sampleContrast),startEndTime,'.mat'];
-        else
-            ROCmatName=['ROC_Ch',num2str(ch),'_',num2str(sampleContrast),startEndTime,'.mat'];
-        end
-        if strcmp(ROCmethod,'old')
-            ROCmatFolder=fullfile('F:','PL','ROC_sglroc3',animal,area);
-            ROCmatPath=fullfile('F:','PL','ROC_sglroc3',animal,area,ROCmatName);
-        elseif strcmp(ROCmethod,'new')
-            ROCmatFolder=fullfile('F:','PL','ROC',animal,area);
-            ROCmatPath=fullfile('F:','PL','ROC',animal,area,ROCmatName);
-        end
-        if ~exist(ROCmatFolder,'dir')
-            mkdir(ROCmatFolder);
-        end
-        ROCmatTemp=[{session} {test_epochs} {rocvals}];
-        if ~exist(ROCmatPath,'file')
-            ROCmat=ROCmatTemp;
-        elseif exist(ROCmatPath,'file')
-            loadText=['load ',ROCmatPath,' ROCmat'];
-            eval(loadText);
-            replace=[];
-            for rowInd=1:size(ROCmat,1)
-                if ROCmat{rowInd,1}==session
-                    replace=rowInd;
+            if ~exist(ROCmatFolder,'dir')
+                mkdir(ROCmatFolder);
+            end
+            ROCmatTemp=[{session} {test_epochs} {rocvals}];
+            if ~exist(ROCmatPath,'file')
+                ROCmat=ROCmatTemp;
+            elseif exist(ROCmatPath,'file')
+                loadText=['load ',ROCmatPath,' ROCmat'];
+                eval(loadText);
+                replace=[];
+                for rowInd=1:size(ROCmat,1)
+                    if ROCmat{rowInd,1}==session
+                        replace=rowInd;
+                    end
+                end
+                if ~isempty(replace)
+                    ROCmat(replace,:)=ROCmatTemp;
+                else
+                    ROCmat=[ROCmat;ROCmatTemp];
                 end
             end
-            if ~isempty(replace)
-                ROCmat(replace,:)=ROCmatTemp;
-            else
-                ROCmat=[ROCmat;ROCmatTemp];
-            end
+            saveText=['save ',ROCmatPath,' ROCmat'];
+            eval(saveText);
         end
-        saveText=['save ',ROCmatPath,' ROCmat'];
-        eval(saveText);
     end
 end
 

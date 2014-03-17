@@ -84,12 +84,16 @@ if min(numTrials)>=minTrials
                 %roc analysis:
                 higherTest=0;
                 lowerTest=0;
+                higherTestSum=0;
+                lowerTestSum=0;
                 for rowInd=1:length(epoch4{cond,subPeriod})
                     if useISI==0
                         if epoch4{cond,subPeriod}(1,rowInd)>epoch2{cond,subPeriod}(1,rowInd)
                             higherTest=higherTest+1;
+                            higherTestSum=higherTestSum+epoch4{cond,subPeriod}(1,rowInd)-epoch2{cond,subPeriod}(1,rowInd);
                         elseif epoch4{cond,subPeriod}(1,rowInd)<epoch2{cond,subPeriod}(1,rowInd)
                             lowerTest=lowerTest+1;
+                            lowerTestSum=lowerTestSum+epoch2{cond,subPeriod}(1,rowInd)-epoch4{cond,subPeriod}(1,rowInd);
                         end
                     elseif useISI==1%calculate AUROCs based on test vs pre-test, instead of test vs sample
                         temp3=matarray{cond,3}{rowInd}>test_epochs{3}-256;%activity during ISI
@@ -99,8 +103,10 @@ if min(numTrials)>=minTrials
                         actList3{cond,subPeriod}(1,rowInd)=length(spikes)/256*1000;%find rate during second half of ISI
                         if epoch4{cond,subPeriod}(1,rowInd)>actList3{cond,subPeriod}(1,rowInd)
                             higherTest=higherTest+1;
+                            higherTestSum=higherTestSum+epoch4{cond,subPeriod}(1,rowInd)-actList3{cond,subPeriod}(1,rowInd)
                         elseif epoch4{cond,subPeriod}(1,rowInd)<actList3{cond,subPeriod}(1,rowInd)
                             lowerTest=lowerTest+1;
+                            lowerTestSum=lowerTestSum+actList3{cond,subPeriod}(1,rowInd)-epoch4{cond,subPeriod}(1,rowInd);
                         end
                     end
                 end
@@ -111,6 +117,11 @@ if min(numTrials)>=minTrials
                 elseif strcmp(ROCmethod,'new')
                     roc=higherTest/(higherTest+lowerTest);
                     rocvals(cond)=roc;
+                elseif strcmp(ROCmethod,'extra_new')
+                    roc=higherTestSum/(higherTestSum+lowerTestSum);%trialwise activity difference (in units of spikes/s)
+                    rocvals(cond)=roc;
+                    roc2=higherTest/(higherTest+lowerTest);%trialwise difference tally (in units of proportion of trials)
+                    rocvalsDiff(cond)=roc-roc2;
                 end
             end
             startEndTime=['_',num2str(periods(subPeriod)),'_to_',num2str(periods(subPeriod+1))];
@@ -125,11 +136,17 @@ if min(numTrials)>=minTrials
             elseif strcmp(ROCmethod,'new')
                 ROCmatFolder=fullfile('F:','PL','ROC',animal,area);
                 ROCmatPath=fullfile('F:','PL','ROC',animal,area,ROCmatName);
+            elseif strcmp(ROCmethod,'extra_new')
+                ROCmatFolder=fullfile('F:','PL','ROC_actdiff',animal,area);
+                ROCmatPath=fullfile('F:','PL','ROC_actdiff',animal,area,ROCmatName);
             end
             if ~exist(ROCmatFolder,'dir')
                 mkdir(ROCmatFolder);
             end
             ROCmatTemp=[{session} {test_epochs} {rocvals}];
+            if strcmp(ROCmethod,'extra_new')
+                ROCmatTemp=[{session} {test_epochs} {rocvals} {rocvalsDiff}];
+            end
             if ~exist(ROCmatPath,'file')
                 ROCmat=ROCmatTemp;
             elseif exist(ROCmatPath,'file')
