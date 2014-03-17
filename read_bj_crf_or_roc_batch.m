@@ -32,7 +32,8 @@ end
 if nargin<7||isempty(plotLeastSquares)
     plotLeastSquares=[];
 end
-excludeSessions=[26 50 306 312 316 322:328 342 398 451];
+excludeSessions=[26 50 306 312 316 322:328 342 398 451];%before blu-ray data added, from sessions for which raw data is missing
+excludeSessions=[26 50 306 312 342 398 451];
 test_epochs={0 512 512*2 512*3};durSpon=150;
 channels=main_channels(animal,area);
 [sampleContrasts testContrasts]=area_metadata(area);
