@@ -4,11 +4,13 @@ function remove_empty_333
 animal='blanco';
 area='v4_1';
 sessions=[311 333];
-sessions=[ 333];
 minTrials=[50 60];
-area='v1_2';
+area='v4_0_3';
+sessions=306;
+minTrials=[69];
+% area='v1_2';
 % sessions=[398 451];
-sessions=[ 451];
+% sessions=[ 451];
 if strcmp(area,'v1_2')
     numconds=12;
 else
