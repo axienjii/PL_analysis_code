@@ -57,6 +57,14 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
         sampleContrasts=30;
         roving=0;
         allConditions=1:14;
+    elseif length(sampleContrasts)==8
+        sampleContrasts=30;
+        roving=0;
+        allConditions=1:8;
+    elseif length(sampleContrasts)==12
+        sampleContrasts=30;
+        roving=0;
+        allConditions=1:12;
     end    
     
     nseName=['SpikeCh_',num2str(channel),'_.nse'];
@@ -153,6 +161,9 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                                 %     spikes(j)=DataPoints(:,:,SE_EV_TimeStamps(j));
                                 %     end
                                 if (vals(i,22)>-1)||(vals(i,23)>-1)%correct OR incorrect
+                                    if vals(i,4)==8
+                                       checkTrial=1; 
+                                    end
                                     matRowCount=matRowCount+1;
                                     numTrialsCond(1,h)=numTrialsCond(1,h)+1;%tally number of trials per condition
                                     temp1=find(SE_TimeStamps<vals(i,10));%spontaneous activity
@@ -402,8 +413,7 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
             eval(saveText);
             
             formats=[{'eps'} {'png'}];
-            formats={'fig'};
-            for j=1:1%2
+            for j=1:2%1
                 if plotRedArtifacts==1
                     imageFolderName=fullfile('F:','PL','PSTHs','plotRedArtifacts',animal,num2str(channel),formats{j});
                 else
@@ -413,10 +423,22 @@ if ~sum(session==[355.2 405.2 435.2])%for split sessions, run .1 and .2 at the s
                     mkdir(imageFolderName);
                 end
                 imageName=fullfile(imageFolderName,spikeDataName);
-                %export_fig(imageName,formats{j});
+%                 export_fig(imageName,formats{j});
                 printtext=sprintf('print -d%s %s',formats{j},imageName);
-                saveas(fig,imageName,'fig')
+                eval(printtext)
             end
+            formats={'fig'};
+            if plotRedArtifacts==1
+                imageFolderName=fullfile('F:','PL','PSTHs','plotRedArtifacts',animal,num2str(channel),formats{1});
+            else
+                imageFolderName=fullfile('F:','PL','PSTHs',animal,num2str(channel),formats{1});
+            end
+            if ~exist(imageFolderName,'dir')
+                mkdir(imageFolderName);
+            end
+            imageName=fullfile(imageFolderName,spikeDataName);
+            %                 export_fig(imageName,formats{j});
+            saveas(fig,imageName,'fig')
             
             if writeROC==1
                 %write ROC values and Weibull function constants to file:
