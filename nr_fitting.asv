@@ -1,4 +1,4 @@
-function [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE]=nr_fitting(datavals,sampleContrast,testContrast,i,slopeNeuro,chSSE,c50,minRate,maxRate,diffc50,plotDiffC50_30,calculateTangent,startEndTime,animal,area)
+function [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,xvals,yvals]=nr_fitting(datavals,sampleContrast,testContrast,i,slopeNeuro,chSSE,c50,minRate,maxRate,diffc50,plotDiffC50_30,calculateTangent,startEndTime,animal,area)
 %Naka-Rushton counterpart of weibull_fitting function
         xvals=testContrast(1):1:testContrast(end);
         hold on
@@ -46,11 +46,11 @@ function [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE]=nr_fitting(datavals,samp
                 if strcmp(animal,'blanco')
                     upperMaxs=[X(1)+1 X(1)+2 X(1)+3];%blanco: upperMax=[X(1)+1 X(1)+2 X(1)+3]
                     lowerMins=[X(4)-1];%blanco: lowerMin=[X(4)-1]
-                    c50Seeds=[5 50];%blanco: c50Seed=[5 50]
+                    c50Seeds=[X(2)];%blanco: c50Seed=[5 50]
                     if strcmp(animal,'blanco')
                         X0=[max(datavals) testContrast(end)-1 0.1 min(datavals)];
                         if strcmp(area,'v1_1')
-                            if i==10
+                            if i==12||i==14
                                 c50Seeds=[5 50];%blanco: c50Seed=[5 50] 
                             end
                         end
@@ -58,14 +58,14 @@ function [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE]=nr_fitting(datavals,samp
                 end
                 for upperMax=upperMaxs%blanco: upperMax=[X(1)+1 X(1)+2 X(1)+3]
                     for lowerMin=lowerMins%blanco: lowerMin=[X(4)-1]
-%                         for c50Seed=c50Seeds%blanco: c50Seed=[5 50]
-%                             X(2)=c50Seed;
+                        for c50Seed=c50Seeds%blanco: c50Seed=[5 50]
+                            X(2)=c50Seed;
                             [coefEsts2(InitVar,:)]=fminsearch(fittingFunction,X,options,testContrast,datavals,[1 1 0 0],[upperMax 100 5 0],[0 1 0 1],[0 0 0 lowerMin]);
                             fitted_yvals=coefEsts2(InitVar,1)*(testContrast.^coefEsts2(InitVar,3)./(testContrast.^coefEsts2(InitVar,3)+coefEsts2(InitVar,2).^coefEsts2(InitVar,3)))+coefEsts2(InitVar,4);
                             residuals=datavals-fitted_yvals;
                             sseCRFtemp(InitVar)=sum(residuals.^2);
                             InitVar=InitVar+1;
-%                         end
+                        end
                     end
                 end
                 [minSSE I]=min(sseCRFtemp);
@@ -80,7 +80,15 @@ function [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE]=nr_fitting(datavals,samp
         if calculateTangent==0
             slopeNeuro(1,i)=X(3);
         elseif calculateTangent==1
-            slopeNeuro(1,i)=X(2)^X(3)*sampleContrast^(X(3)-1)/(30^X(3)+X(2)^X(3))^2;
+            syms x a b c d
+            %f=X(1)*(x.^X(3)./(x.^X(3)+X(2).^X(3)))+X(4);
+            f=a*(x.^c./(x.^c+b.^c))+d;
+            diff(f)
+            slopeNeuro(1,i)=(a*c*x^(c - 1))/(b^c + x^c) - (a*c*x^c*x^(c - 1))/(b^c + x^c)^2
+            %slopeNeuro(1,i)=X(2)^X(3)*sampleContrast^(X(3)-1)/(30^X(3)+X(2)^X(3))^2;
+            if X(3)<0
+                slopeNeuro(1,i)=slopeNeuro(1,i)*-1;
+            end
         end
         maxFitted=max(fitted_yvals);
         minFitted=min(fitted_yvals);

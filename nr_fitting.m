@@ -80,10 +80,12 @@ function [slopeNeuro,c50,diffc50,minRate,maxRate,chSSE,xvals,yvals]=nr_fitting(d
         if calculateTangent==0
             slopeNeuro(1,i)=X(3);
         elseif calculateTangent==1
-            slopeNeuro(1,i)=X(2)^X(3)*sampleContrast^(X(3)-1)/(30^X(3)+X(2)^X(3))^2;
-%             if X(3)<0
-%                 slopeNeuro(1,i)=slopeNeuro(1,i)*-1;
-%             end
+            %syms x a b c d
+            %f=X(1)*(x.^X(3)./(x.^X(3)+X(2).^X(3)))+X(4);
+            %f=a*(x.^c./(x.^c+b.^c))+d;
+            %diff(f)
+            a=X(1);b=X(2);c=X(3);
+            slopeNeuro(1,i)=(a*c*sampleContrast^(c - 1))/(b^c + sampleContrast^c) - (a*c*sampleContrast^c*sampleContrast^(c - 1))/(b^c + sampleContrast^c)^2;
         end
         maxFitted=max(fitted_yvals);
         minFitted=min(fitted_yvals);
