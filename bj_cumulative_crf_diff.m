@@ -14,7 +14,7 @@ function bj_cumulative_crf_diff(exampleFig,cutoff,animals,useISI,areas,excludeSu
 %activity to max reocrded on individual channel before combing data across
 %channels; set normaliseSpontan to deduct spontaneous or ISI activity levels from
 %test response.
-roving=1;
+roving=0;
 analysisType='CRF';
 samePlot=1;
 useColMap=1;
@@ -29,9 +29,9 @@ plotDiffC50_30=1;
 calculateTangent=1;
 if nargin<3||isempty(animals)
     animals=[{'blanco'} {'jack'}];
-    animalTexts=[{'Monkey 1'} {'Monkey 2'}];
     % animals={'blanco'};
 end
+    animalTexts=[{'Monkey 1'} {'Monkey 2'}];
 if nargin<4||isempty(areas)
     areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
     areas=[{'v4_1'} {'v1_1'}];
@@ -282,20 +282,20 @@ for animalInd=1:length(animals)
             if exampleFig==0
                 figure(figROC);
                 subFolder='crf_meanchannels';
-                if normaliseCh
+                if normaliseCh==1
                     subFolder=[subFolder,'_normCh'];
                 end
-                if normaliseSpontan
+                if normaliseSpontan==1
                     if useISI==0
                         subFolder=[subFolder,'_normSpontan'];
                     elseif useISI==1
                         subFolder=[subFolder,'_normISI'];
                     end
                 end
-                if excludeSuppressed
+                if excludeSuppressed==1
                     subFolder=[subFolder,'_excludeSuppressed'];
                 end
-                if excludeNonmonotonic
+                if excludeNonmonotonic==1
                     subFolder=[subFolder,'_excludeNonmonotonic'];
                 end                
                 if useISI==0

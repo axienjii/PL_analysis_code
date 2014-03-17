@@ -29,12 +29,12 @@ plotDiffC50_30=1;
 calculateTangent=1;
 if nargin<3||isempty(animals)
     animals=[{'blanco'} {'jack'}];
-    animalTexts=[{'Monkey 1'} {'Monkey 2'}];
     % animals={'blanco'};
 end
+    animalTexts=[{'Monkey 1'} {'Monkey 2'}];
 if nargin<4||isempty(areas)
     areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
-    areas=[{'v4_1'} {'v1_1'} {'v1_2_1'} {'v1_2_2'} {'v1_2_3'}];
+    areas=[{'v4_1'} {'v1_1'}];
     if roving==1
         areas=[{'v1_2_1'} {'v1_2_2'} {'v1_2_3'}];
     end
@@ -67,12 +67,14 @@ for animalInd=1:length(animals)
         for sampleContrastsInd=1:length(sampleContrasts)
             sampleContrast=sampleContrasts(sampleContrastsInd);
             testContrast=testContrasts(sampleContrastsInd,:); 
-            if roving==0&&animalInd==0&&areaInd==0
+            if roving==0&&animalInd==1&&areaInd==1
             if samePlot==1
-                figSamePlot(areaInd)=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
-                set(figSamePlot(areaInd), 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+                figSamePlot=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+                set(figSamePlot, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
             end
             elseif roving==1&&animalInd==1&&sampleContrastsInd==1
+                figSamePlot(areaInd)=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+                set(figSamePlot(areaInd), 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
             end
             %read in list of included channels
             if cutoff~=1
@@ -283,17 +285,17 @@ for animalInd=1:length(animals)
                 if normaliseCh
                     subFolder=[subFolder,'_normCh'];
                 end
-                if normaliseSpontan
+                if normaliseSpontan==1
                     if useISI==0
                         subFolder=[subFolder,'_normSpontan'];
                     elseif useISI==1
                         subFolder=[subFolder,'_normISI'];
                     end
                 end
-                if excludeSuppressed
+                if excludeSuppressed==1
                     subFolder=[subFolder,'_excludeSuppressed'];
                 end
-                if excludeNonmonotonic
+                if excludeNonmonotonic==1
                     subFolder=[subFolder,'_excludeNonmonotonic'];
                 end                
                 if useISI==0
@@ -333,11 +335,13 @@ for animalInd=1:length(animals)
     end
 end
 if samePlot==1
-    figure(figSamePlot)
-    subplot(2,2,3)
-    xlim([5 90])
-    subplot(2,2,4)
-    xlim([5 90])
+    if roving==0
+        figure(figSamePlot)
+        subplot(2,2,3)
+        xlim([5 90])
+        subplot(2,2,4)
+        xlim([5 90])
+    end
     if useISI==0
         imagename=['cumulative_CRFs_samePlot_',area,'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10)];
     elseif useISI==1
