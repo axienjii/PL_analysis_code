@@ -1,0 +1,24 @@
+function batch_downsample_9000_to_4000
+%Written by Xing 24/01/2014
+%Opens .ncs files that were previously stored on bluray discs (for sessions
+%without raw data). Downsamples data to around 4000 Hz, and writes new
+%file, ending in suffix '_downsamp.ncs' in same folder as original 9000 Hz
+%.ncs file.
+
+sessions=[316 322 323 324];
+sessions=[327 328];
+for sessionInd=1:length(sessions)
+    for chInd=1:64
+        name=['I:\blanco\',num2str(sessions(sessionInd)),'_ncs\spk_CSC',num2str(chInd),'.ncs'];
+        filter_NCS(name, 0,1)
+    end
+end
+
+% sessions=[316 322 323 324 327 328];
+% for sessionInd=1:length(sessions)
+%     for chInd=1:64
+%         name=['I:\blanco\MehdiCheetahData\',num2str(sessions(sessionInd)),'\spk_CSC',num2str(chInd),'_downsamp.ncs'];
+%         name2=['I:\blanco\MehdiCheetahData\',num2str(sessions(sessionInd)),'\spk_CSC',num2str(chInd),'.ncs'];
+%         movefile(name,name2);
+%     end
+% end
