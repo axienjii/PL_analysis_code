@@ -1,4 +1,4 @@
-function bj_roc_diff_figure(exampleFig,cutoff,animals,useISI,areas,excludeSuppressed,normalize)
+function bj_roc_diff_figure(exampleFig,cutoff,animals,useISI,areas,excludeSuppressed,normalize,paperSessions)
 %Written by Xing 01/10/13
 %Generate figure for methods paper, comparing AUROC and COBAM methods.
 %Read activity levels for all trials (pooled across sessions) for each
@@ -18,13 +18,13 @@ criterionType=0;
 calculateTangent=1;
 equalCount=0;
 notEqualCount=0;
-calcParams=0;
+calcParams=1;
 if useISI==1
     analysisType='ROC';
 else
     analysisType='ROC_zero_one';
 end
-counter=0;%8 values- spiking B V4, B V1, J V4, J V1, MUA B V4, B V1, J V4, J V1
+counter=1;%8 values- spiking B V4, B V1, J V4, J V1, MUA B V4, B V1, J V4, J V1
 slopeNeuro_sglroc3=[];
 PNE_sglroc3=[];
 minRate_sglroc3=[];
@@ -50,7 +50,7 @@ if nargin<4||isempty(areas)
     areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
     areas=[{'v4_1'} {'v1_1'}];
 end
-readData=0;
+readData=1;
 if readData==1
     for animalInd=1:length(animals)
         animal=animals{animalInd};
@@ -86,6 +86,7 @@ if readData==1
                 loadText=['load ',pathname,' includeSessionsAll'];
                 eval(loadText);
                 rocvals_sglroc3=zeros(1,length(testContrast));
+                rocvals_sglroc3_smallbins=zeros(1,length(testContrast));
                 rocvals=zeros(1,length(testContrast));
                 if useISI==0
                     allEpoch2=cell(length(channels),length(testContrast));%array to store activity for each ch and cond across sessions and trials
@@ -104,7 +105,7 @@ if readData==1
                             end
                             includeRows=includeSessionsAll(find(includeSessionsAll(:,1)==channels(chInd)),2);%include this session in analysis
                             includeRow=find(includeRows==sessionNums(i));
-%                             if matExists==1&&~isempty(includeRow)&&includeCh
+                            if matExists==1&&~isempty(includeRow)%&&includeCh
                                 eval(loadText);
                                 if useISI==0
                                     allEpoch2{chInd,condInd}=[allEpoch2{chInd,condInd} epoch2{condInd}];
@@ -118,13 +119,13 @@ if readData==1
                                 else
                                     maxval=1;
                                 end
-%                             end
+                            end
                             if chInd==1
                                 numSessTrials(i,condInd)=size(epoch2{condInd},2);
                             end
-                            if chInd==15
-                                numSessTrials49(i,condInd)=size(epoch2{condInd},2);
-                            end
+%                             if chInd==15
+%                                 numSessTrials49(i,condInd)=size(epoch2{condInd},2);
+%                             end
                         end
                     end
                     for condInd=1:length(testContrast)
@@ -138,13 +139,13 @@ if readData==1
                                     elseif allEpoch2{chInd,condInd}(n)>allEpoch4{chInd,condInd}(n)
                                         lowerTestAct=lowerTestAct+1;
                                     end
-                                elseif criterionType==1%exclude trials where responses to sample and test are equal
+                                elseif criterionType==1%for trials where responses to sample and test are equal, assign to 'higher test' category
                                     if allEpoch2{chInd,condInd}(n)<=allEpoch4{chInd,condInd}(n)
                                         higherTestAct=higherTestAct+1;
                                     elseif allEpoch2{chInd,condInd}(n)>allEpoch4{chInd,condInd}(n)
                                         lowerTestAct=lowerTestAct+1;
                                     end
-                                elseif criterionType==2%exclude trials where responses to sample and test are equal
+                                elseif criterionType==2%for trials where responses to sample and test are equal, assign to 'lower test' category
                                     if allEpoch2{chInd,condInd}(n)<allEpoch4{chInd,condInd}(n)
                                         higherTestAct=higherTestAct+1;
                                     elseif allEpoch2{chInd,condInd}(n)>=allEpoch4{chInd,condInd}(n)
@@ -166,9 +167,13 @@ if readData==1
                         end
                         rocvals_sglroc3(chInd,condInd)=sglroc3(allEpoch4{chInd,condInd},allEpoch2{chInd,condInd});%old method
                         rocvals(chInd,condInd)=higherTestAct/(higherTestAct+lowerTestAct);%new method
+%                         if length(allEpoch4{chInd,1})~=1204
+%                             pauseHere=1;
+%                         end
                     end
                 end
                 allROCvals_sglroc3{areaInd,animalInd}=rocvals_sglroc3;
+                allROCvals_sglroc3_smallbins{areaInd,animalInd}=rocvals_sglroc3_smallbins;
                 allROCvals{areaInd,animalInd}=rocvals;
                 allSubjectsEpoch4{areaInd,animalInd}=allEpoch4;
                 allSubjectsEpoch2{areaInd,animalInd}=allEpoch2;
@@ -198,6 +203,9 @@ if readData==1
                 subFolder=[subFolder,'_equalOrLower'];
             elseif criterionType==2
                 subFolder=[subFolder,'_equalOrHigher'];
+            end
+            if paperSessions
+                subFolder=[subFolder,'_paperSessions'];
             end
             if useISI==0
                 imagename=['all_ind_chs_ROCs_old_new_',area,'_',num2str(sampleContrast),'_cutoff',num2str(cutoff*10)];
@@ -379,8 +387,8 @@ for animalInd=1:length(animals)
                 end
                 rocvals_sglroc3_allCumulative(condInd)=sglroc3(cumulativeChAct4,cumulativeChAct2);%old method
                 rocvals_allCumulative(condInd)=higherTestAct/(higherTestAct+lowerTestAct);%new method
-                plot(testContrast(condInd),rocvals_sglroc3_allCumulative(condInd),'ro','MarkerSize',3);
-                plot(testContrast(condInd),rocvals_allCumulative(condInd),'bo','MarkerSize',3);
+                plot(testContrast(condInd),rocvals_sglroc3_allCumulative(condInd),'ro','MarkerSize',5);
+                plot(testContrast(condInd),rocvals_allCumulative(condInd),'bo','MarkerSize',5);
             end
             fillCoords=[iqr_roc_upper fliplr(iqr_roc_lower)];
             fillCoords_sglroc3=[iqr_roc_sglroc3_upper fliplr(iqr_roc_sglroc3_lower)];
@@ -809,6 +817,7 @@ set(gca, 'box', 'off')
 
 %plots of range of individual channel MUA data, plus cumulative values
 %across all channels
+counter=1;
 figure(figContrasts);
 if excludeSuppressed==0
     loadText=['load F:\PL\ROC_zero_one\allIndividualChs_AUROC_COBAM_vals_MUA allROCvals_sglroc3 allROCvals allSubjectsEpoch2 allSubjectsEpoch4 allChannels'];
@@ -890,8 +899,8 @@ for animalInd=1:length(animals)
                 rocvals_sglroc3_allCumulative(condInd)=rocMUA(cumulativeChAct4,cumulativeChAct2);%traditional method, can handle negative MUA values
                 %rocvals_sglroc3_allCumulative(condInd)=sglroc3(cumulativeChAct4,cumulativeChAct2);%old method, cannot handle negative MUA values
                 rocvals_allCumulative(condInd)=higherTestAct/(higherTestAct+lowerTestAct);%new method
-                plot(testContrast(condInd),rocvals_sglroc3_allCumulative(condInd),'ro','MarkerSize',3);
-                plot(testContrast(condInd),rocvals_allCumulative(condInd),'bo','MarkerSize',3);
+                plot(testContrast(condInd),rocvals_sglroc3_allCumulative(condInd),'ro','MarkerSize',5);
+                plot(testContrast(condInd),rocvals_allCumulative(condInd),'bo','MarkerSize',5);
             end
             fillCoords=[iqr_roc_upper fliplr(iqr_roc_lower)];
             fillCoords_sglroc3=[iqr_roc_sglroc3_upper fliplr(iqr_roc_sglroc3_lower)];
