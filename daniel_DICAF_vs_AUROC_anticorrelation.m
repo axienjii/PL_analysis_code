@@ -1,0 +1,105 @@
+function daniel_DICAF_vs_AUROC_anticorrelation
+% %%%p(r_1|s_1) gaussian with mean 20 and std =1
+% N = 5000;
+% r1 = 20+randn(N,1);
+% 
+% %%%p(r_2|s_2,r_1) gaussian with mean 23 - r_1/10 and std = 1, that is
+% %%%negative correlation between r_1 and r_2
+% r2 = zeros(N,1);
+% for i = 1:N
+% r2(i) = 23 - r1(i)/10 +randn;
+% end
+% 
+% %%%DICAF
+% dt = r2-r1;
+% tdt = find(dt>0);
+% tdtt = find(dt==0);
+% ui2 = length(tdt)/N+length(tdtt)/(2*N)
+% ui2=length(tdt)/(N-length(tdtt))
+% 
+% %%%%AUROC
+% maxr = max([max(r1) max(r2)]);
+% minr = min([min(r1) min(r2)]);
+% ib = minr-(maxr-minr)/500:(maxr-minr)/500:maxr+(maxr-minr)/500;
+% n1 = histc(squeeze(r1),ib)/N;
+% n2 = histc(squeeze(r2),ib)/N;
+% mk = length(n1);
+% ui =0;
+% for jj = 1:mk
+% ui = ui + n1(jj)*sum(n2(jj+1:mk))+n1(jj)*n2(jj)/2;
+% end
+% ROC=sglroc3(r2',r1');%Alex's function (number of bins affects result)
+% [X,Y,T,AUC] = perfcurve(labels,r1r2,0)
+% [X,Y,T,AUC] = perfcurve(labels,r1r2,1);
+% AUC%matlab function, 'perfcurve'
+% 
+% %%comparison
+% ['AUROC=', num2str(ui), ' DICAF=', num2str(ui2)]
+% ['Daniel AUROC=', num2str(ui),'Alex AUROC=', num2str(ROC),'Matlab AUROC=', num2str(AUC),' DICAF=', num2str(ui2)]
+% 
+% %matlab-provided example, on usage of perfcurve:
+% load fisheriris
+% x = meas(51:end,1:2);
+% % Iris data, 2 classes and 2 features
+% y = (1:100)'>50;
+% % Versicolor = 0, virginica = 1
+% b = glmfit(x,y,'binomial');
+% % Logistic regression
+% p = glmval(b,x,'logit');
+% % Fit probabilities for scores
+% [X,Y,T,AUC] = perfcurve(species(51:end,:),p,'virginica');
+
+%%Daniel's example where positive correlations are present but DICAF
+%%performs more poorly:
+as = [1 3 8 20 50 200];%% these values are the shape parameters 
+%%used for gamma distributions. 1 correspond to an exponential 
+%%%distribution, when the parameter increases the distribution 
+%%becomes more and more symmetric, approaching a gaussian 
+ 
+ui0 = zeros(length(as),1);
+ui2 = zeros(length(as),1);
+m1s = zeros(length(as),1);
+m2s = zeros(length(as),1);
+rhos = zeros(length(as),1);
+N = 100000;
+
+for j = 1:length(as)
+    j
+    %%%p(r_1|s_1) gamma distribution with mean 40
+    r1 = gamrnd(as(j), (40)/as(j),[N 1]);
+    m1s(j)= mean(r1);
+    r2 = zeros(N,1);
+    mr1 = mean(r1);
+    
+    %%%p(r_2|s_2,r_1) gamma distribution with mean 41 + r_1/15, that is
+    %%%positive correlation between r_1 and r_2
+    for i = 1:N
+        r2(i) = 82-gamrnd(as(j), (41-r1(i)/15)/as(j));
+    end
+    m2s(j) = mean(r2);
+    rhos(j)=corr(r1,r2,'type','Spearman');
+    
+    %%%DICAF
+    dt = r2-r1;
+    tdt = find(dt>0);
+    tdtt = find(dt==0);
+    ui2(j) = length(tdt)/N+length(tdtt)/(2*N);
+    
+    %%%%AUROC
+    maxr = max([max(r1) max(r2)]);
+    minr = min([min(r1) min(r2)]);
+    ib = minr-(maxr-minr)/5000:(maxr-minr)/5000:maxr+(maxr-minr)/5000;
+    n1 = histc(squeeze(r1),ib)/N;
+    n2 = histc(squeeze(r2),ib)/N;
+    mk = length(n1);
+    ui =0;
+    
+    for jj = 1:mk
+        ui = ui + n1(jj)*sum(n2(jj+1:mk))+n1(jj)*n2(jj)/2;
+    end
+    ui0(j)=ui;
+end
+
+plot(ui2)
+hold
+plot(ui0,'g')
