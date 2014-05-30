@@ -167,14 +167,14 @@ for sampleContrastsInd=1:length(sampleContrasts)
     end
     for paramInd=1:size(chCoefficients,2)
         if calcPartial==0
-%             sigInd=find(chps(:,paramInd)<0.05/size(chps,1));
-sigInd=[];
-for rowInd=1:size(chCoefficients,1)
-    if chps(:,paramInd)<alpha(rowInd)
-            sigInd=[sigInd ];%FDR correction for slope, PNE, min and max
-    end
-end
-%             sigInd=find(chps(:,paramInd)<0.05/4);%FDR correction for slope, PNE, min and max
+        %sigInd=find(chps(:,paramInd)<0.05/size(chps,1));
+        sigInd=[];
+        for rowInd=1:size(chCoefficients,1)
+            if chps(rowInd,paramInd)<alpha(rowInd)
+                sigInd=[sigInd rowInd];%FDR correction for slope, PNE, min and max
+            end
+        end
+        %sigInd=find(chps(:,paramInd)<0.05/4);%FDR correction for slope, PNE, min and max
         elseif calcPartial==1
             sigInd=find(chps(:,paramInd)<0.05);
         end
@@ -202,7 +202,7 @@ end
                 end
             elseif paramInd==2%sig change in C50
                 for chRowInd=1:length(sigInd)
-                    sigchC50s=c50s{sigInd};
+                    sigchC50s=c50s{sigInd(chRowInd)};
                     lengthThird=floor(size(sigchC50s,2)/3);
                     if mean(sigchC50s(1:lengthThird))<30&&mean(sigchC50s(1:lengthThird))<mean(sigchC50s(end-lengthThird+1:end))||mean(sigchC50s(1:lengthThird))>30&&mean(sigchC50s(1:lengthThird))>mean(sigchC50s(end-lengthThird+1:end))
                         dir30(1,1)=dir30(1)+1;%towards 30%
@@ -215,7 +215,7 @@ end
                 end
             elseif paramInd==3%sig change in min
                 for chRowInd=1:length(sigInd)
-                    sigchMins=mins{sigInd};
+                    sigchMins=mins{sigInd(chRowInd)};
                     lengthThird=floor(size(sigchMins,2)/3);
                     if mean(sigchMins(1:lengthThird))<mean(sigchMins(end-lengthThird+1:end))
                         dirMin(1,1)=dirMin(1)+1;
@@ -228,7 +228,7 @@ end
                 end
             elseif paramInd==4%sig change in max
                 for chRowInd=1:length(sigInd)
-                    sigchMaxs=maxs{sigInd};
+                    sigchMaxs=maxs{sigInd(chRowInd)};
                     lengthThird=floor(size(sigchMaxs,2)/3);
                     if mean(sigchMaxs(1:lengthThird))<mean(sigchMaxs(end-lengthThird+1:end))
                         dirMax(1,1)=dirMax(1)+1;
@@ -243,6 +243,9 @@ end
         end
     end
     sigChs%1 slope 2 C50 3 min 4 max 5 neuro vs psycho slopes
+    %coefficients for 6 measures of ROC:
+    %1 slope vs time; 2 PNE vs time; 3 neuro vs psycho slopes; 4
+    %abs(PNE-30) vs time; 5 min vs time; 6 max vs time
     sigDirection
     dir30
     formattedTable=[sigDirection(1:2);dirSlope;sigDirection(3:4);dir30;dirMin;dirMax;sigDirection(end-1:end)];
