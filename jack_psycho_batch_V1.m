@@ -16,7 +16,7 @@ function jack_psycho_batch_V1(animal,area,psychoOnly,plotLinear)
 % monkeys=[{'blanco'} {'jack'}];
 % areas=[{'v4_1'} {'v4_2'} {'v1'}];
 roving=0;
-readData=1;
+readData=0;
 onExternalHD=0;
 if onExternalHD==1
     rootFolder='G:\PL_backup_060413';
@@ -254,7 +254,7 @@ taskCols=[204/256 153/256 256/256;255/256 222/256 173/256;154/256 205/256 50/256
 taskColsDark=[153/256 50/256 204/256;210/256 105/256 30/256;34/256 139/256 34/256];%purple;orange;green
 taskColsVDark=[84/256 3/256 163/256;166/256 121/256 3/256;79/256 117/256 2/256];%purple;orange;green, for fitted line
 
-plotRoving=1;
+plotRoving=0;
 preflankerOnly=5;%1: flankers absent, 2: flankers present 3: control task, flankers absent 4: control task, flankers present 0: all roving 5: pre-flanker, flanker & post-flanker V1_2
 if plotRoving==1
     if strcmp(animal,'jack')
@@ -528,7 +528,7 @@ end
 close all
 
 %analyse performance between pairs of sample contrasts
-plotPairSample=0;
+plotPairSample=1;
 preflankerOnly=1;%1: flankers absent, 2: flankers present 
 if plotPairSample==1
     animals=[{'blanco'} {'jack'}];
@@ -580,6 +580,11 @@ if plotPairSample==1
                 ylabel('performance');
                 xlabel('performance');
             end
+            %perform partial correlation to control for possible
+            %effect of session number:
+            [r p]=partialcorr([zscore(perf(comparisons(comparisonInd,2),:))' zscore(perf(comparisons(comparisonInd,1),:))'],[1:size(perf,2)]','type','Spearman');
+            rPartial(animalInd,comparisonInd)=r(2);
+            pPartial(animalInd,comparisonInd)=p(2);
         end
         if preflankerOnly==1
             subplot(1,2,1)
