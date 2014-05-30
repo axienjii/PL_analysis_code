@@ -1,0 +1,32 @@
+%%%% V4 location
+if strcmp(animal,'blanco')
+    cdText=['cd V:\thielelab\Groups\ThieleGroup\monkey_data\blanco\_grid\',area,'_events_files\',num2str(sessions(j))];
+cd E:\data\raw_data\PL_LFP\blanco\307
+cell_list=[1 2 3 4 12 13 14 18 20 22 24 33 34 36 38 40 41 42 49 50 51 52 53 54 55 56 57 58 59 60];
+for i=1:length(cell_list)
+    chan_name=sprintf('lfp_CSC%d.ncs',cell_list(i));
+    perceptual_learning_LFP([],[],{chan_name}, 1,,[1],1) %%%..
+end
+% %%%% V1 blanco location
+% cd E:\data\raw_data\bottom_up_attention\data\blanco\378\LFP %%%% blanco V4
+% cell_list=[8 9 10 11 15 17 19 21 23 25 26 27 28 29 31 44 45 46 47 61 62 63 64];
+% cell_list=[ 9 10 11 15 17 19 21 23 25 26 27 28 29 31 44 45 46 47 61 62 63 64];
+% for i=1:length(cell_list)
+%     chan_name=sprintf('lfp_CSC%d.ncs',cell_list(i));
+%     bottom_up_attention_LFP_MP({'bu_sac.'},[1],{chan_name}, 1,'E:\data\raw_data\bottom_up_attention\data\blanco\378\LFP',[1],1, 'SU') %%%..
+% end
+%%%% V1 Jack location
+% cd E:\data\raw_data\bottom_up_attention\data\jack\125\LFP %%%% jack V1
+% cell_list=[7 9 11 12 13 14 15 16 17 18 19 20 21 22 23 25 26 27 28 29 30 31 32 51 55];
+% for i=1: length(cell_list)
+%     chan_name=sprintf('lfp_CSC%d.ncs',cell_list(i));
+%     bottom_up_attention_LFP_MP({'bu_jack.'},[1],{chan_name}, 1,'E:\data\raw_data\bottom_up_attention\data\jack\125\LFP',[1],1, 'SU') %%%..
+% end
+%%%% V4 Jack location
+% cd E:\data\raw_data\bottom_up_attention\data\jack\124\LFP %%%% jack V4
+% cell_list=[1 2 3 4 6 8 10 24 35 37 39 40 41 49 50 52 53 54 56];
+% for i=1:length(cell_list)
+%     chan_name=sprintf('lfp_CSC%d.ncs',cell_list(i));
+%     bottom_up_attention_LFP_MP({'bu_jack.'},[1],{chan_name}, 1,'E:\data\raw_data\bottom_up_attention\data\jack\124\LFP',[1],1, 'SU') %%%..
+% end
+
