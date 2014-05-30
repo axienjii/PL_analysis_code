@@ -19,7 +19,15 @@ maxRate=[];
 yLimData=[];
 threshold82lower=[];
 threshold82higher=[];
+testContrastFull=testContrast;
 for i=1:numsessions
+        if dataArray{i,1}==304||dataArray{i,1}==22%v4_0_1
+            testContrast=[5 10 20 25 35 40 60 90];
+        elseif dataArray{i,1}==305||dataArray{i,1}==23%v4_0_2
+            testContrast=[10 15 20 25 27 29 31 33 35 40 50 60];
+        else
+            testContrast=testContrastFull;
+        end
     datavals=dataArray{i,3};%for channel of interest, for each session
     subplot(ceil(numsessions/5),5,i);
     if strcmp(analysisType,'CRF')
