@@ -29,6 +29,7 @@ if strcmp(analysisType,'ROC_diff')||strcmp(analysisType,'ROC_diff2')
     plotPsychoFig=0;
 end
 excludeSessions=[26 50 306 312 316 322:328 342];
+excludeSessions=[26 50 312 342 398 451];
 % loadText=['load ',folder,'\allChROC',appendText,'.mat allChROC'];
 % eval(loadText)
 SSEcutoff=0.09;

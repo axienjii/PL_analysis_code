@@ -33,7 +33,7 @@ if nargin<7||isempty(plotLeastSquares)
     plotLeastSquares=[];
 end
 excludeSessions=[26 50 306 312 316 322:328 342 398 451];%before blu-ray data added, from sessions for which raw data is missing
-excludeSessions=[26 50 306 312 342 398 451];
+excludeSessions=[26 50 312 342 398 451];
 test_epochs={0 512 512*2 512*3};durSpon=150;
 channels=main_channels(animal,area);
 [sampleContrasts testContrasts]=area_metadata(area);
@@ -62,6 +62,10 @@ for i=1:length(channels)
                         matPath=fullfile('F:','PL',ROC1,animal,area,matName);
                         loadText=['load ',matPath,' ','ROCmat'];
                         eval(loadText);
+                        [sessionsSorted ind]=sort(cell2mat(ROCmat(includeInd,1)));
+                        ROCmat=ROCmat(ind,:);
+                        saveText=['save ',matPath,' ','ROCmat'];
+                        eval(saveText);
                         dataArray=ROCmat;
                         includeMatch=[];
                         for includeInd=1:size(dataArray,1)
@@ -76,6 +80,7 @@ for i=1:length(channels)
                         matName=[analysisType,'_Ch',num2str(channels(i)),'_',num2str(sampleContrast),startEndTime,'.mat'];
                         matPath=fullfile('F:','PL',analysisType,animal,area,matName);
                         loadText=['load ',matPath,' ',analysisType,'mat'];
+                        saveText=['save ',matPath,' ',analysisType,'mat ROCmat'];
                     elseif strcmp(analysisType,'ROC_zero_one')
                         matName=['ROC_Ch',num2str(channels(i)),'_',num2str(sampleContrast),startEndTime,'.mat'];
                         matPath=fullfile('F:','PL',analysisType,'ROC',animal,area,matName);
@@ -95,8 +100,14 @@ for i=1:length(channels)
                     end
                     eval(loadText);
                     if strcmp(analysisType,'CRF')
+                        [sessionsSorted ind]=sort(cell2mat(CRFmat(:,1)));
+                        CRFmat=CRFmat(ind,:);
+                        eval(saveText)
                         dataArray=CRFmat;
                     elseif strcmp(analysisType,'ROC')||strcmp(analysisType,'ROC_zero_one')
+                        [sessionsSorted ind]=sort(cell2mat(ROCmat(:,1)));
+                        ROCmat=ROCmat(ind,:);
+                        eval(saveText)
                         dataArray=ROCmat;
                     elseif strcmp(analysisType,'ROC_diff')
                         dataArray=ROCmat;
