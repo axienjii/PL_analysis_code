@@ -1,0 +1,140 @@
+function bj_state_LFP(animal,area)
+onExternalHD=0;
+roving=0;
+if onExternalHD==1
+    rootFolder='G:\PL_backup_060413';
+else
+    rootFolder='F:';
+end
+if nargin<1||isempty(animal)
+    animals=[{'blanco'} {'jack'}];
+end
+if nargin<2||isempty(area)
+    if roving==0
+        areas=[{'v4_1'} {'v1_1'}];
+    elseif roving==1
+        areas=[{'v1_2_1'} {'v1_2_2'}];
+        areas=[{'v1_2_1'}];
+    end
+end
+ttestTableSample=cell(length(animals),length(areas));
+ttestTableTest=cell(length(animals),length(areas));
+for animalInd=1:length(animals)
+    animal=animals{animalInd};
+    for areaInd=1:length(areas)
+        area=areas{areaInd};
+        load(['F:\PL\LFP\dataalphapower',animal,'_',area,'.mat'])
+        figSample=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+        set(figSample, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+        figTest=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+        set(figTest, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+        figAllConds=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
+        set(figAllConds, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
+        allSampleFirstQ=[];allTestFirstQ=[];
+        allSampleLastQ=[];allTestLastQ=[];
+        allMeanSampleFirstQ=[];allMeanTestFirstQ=[];
+        allMeanSampleLastQ=[];allMeanTestLastQ=[];
+        for condInd=1:size(mLfppower,1)
+            for sessInd=1:size(mLfppower,3)
+                spontanLFPSess=mLfppower(condInd,1:numseltrials(condInd,sessInd),sessInd,1);%find spontaneous activity for all trials for a given session and condition
+                spkSampSess=poolSps(condInd,1:numseltrials(condInd,sessInd),sessInd,2);%find sample-evoked activity for all trials for a given session and condition
+                spkTestSess=poolSps(condInd,1:numseltrials(condInd,sessInd),sessInd,4);%find test-evoked activity for all trials for a given session and condition
+                [sortLFPSess ind]=sort(spontanLFPSess);
+                numTrialsQuartile=floor(length(spkSampSess)/4);
+                figure(figSample)
+                %         subplot(2,size(mLfppower,1),condInd);
+                subplot(4,size(mLfppower,1)/2,condInd);
+                firstQuartileSPKsamp=spkSampSess(ind(1:numTrialsQuartile));
+                lastQuartileSPKsamp=spkSampSess(ind(end-numTrialsQuartile)+1:end);
+                plot(mean(firstQuartileSPKsamp),mean(lastQuartileSPKsamp),'ko');hold on
+                %         errorbar(sessInd,mean(firstQuartileSPKsamp),std(firstQuartileSPKsamp),'ko');hold on
+                %         errorbar(sessInd+0.3,mean(lastQuartileSPKsamp),std(lastQuartileSPKsamp),'ro');
+                %         figure(figTest)
+                %         subplot(2,size(mLfppower,1),condInd+size(mLfppower,1));
+                subplot(4,size(mLfppower,1)/2,condInd+size(mLfppower,1));
+                firstQuartileSPKtest=spkTestSess(ind(1:numTrialsQuartile));
+                lastQuartileSPKtest=spkTestSess(ind(end-numTrialsQuartile)+1:end);
+                plot(mean(firstQuartileSPKtest),mean(lastQuartileSPKtest),'ko');hold on
+                %         errorbar(sessInd,mean(firstQuartileSPKtest),std(firstQuartileSPKtest),'ko');hold on
+                %         errorbar(sessInd+0.3,mean(lastQuartileSPKtest),std(lastQuartileSPKtest),'ro');
+                figure(figAllConds)%plot values across all the conditions
+                subplot(1,2,1);%sample
+                plot(mean(firstQuartileSPKsamp),mean(lastQuartileSPKsamp),'ko');hold on
+                allMeanSampleFirstQ=[allMeanSampleFirstQ mean(firstQuartileSPKsamp)];%combine mean values of spiking activity across sessions and cnoditions
+                allMeanSampleLastQ=[allMeanSampleLastQ mean(lastQuartileSPKsamp)];
+                allSampleFirstQ=[allSampleFirstQ firstQuartileSPKsamp];%combine mean values of spiking activity across sessions and cnoditions
+                allSampleLastQ=[allSampleLastQ lastQuartileSPKsamp];
+                subplot(1,2,2);%test
+                plot(mean(firstQuartileSPKtest),mean(lastQuartileSPKtest),'ko');hold on
+                allMeanTestFirstQ=[allMeanTestFirstQ mean(firstQuartileSPKtest)];
+                allMeanTestLastQ=[allMeanTestLastQ mean(lastQuartileSPKtest)];
+                allTestFirstQ=[allTestFirstQ firstQuartileSPKtest];
+                allTestLastQ=[allTestLastQ lastQuartileSPKtest];
+            end
+            figure(figSample)
+            subplot(4,size(mLfppower,1)/2,condInd);
+            xlims=get(gca,'Xlim');
+            ylims=get(gca,'Ylim');
+            newlims(1)=min([xlims(1) ylims(1)]);
+            newlims(2)=max([xlims(2) ylims(2)]);
+            plot([newlims(1) newlims(2)],[newlims(1) newlims(2)],'k:');
+            axis square
+            xlim([newlims(1) newlims(2)]);
+            ylim([newlims(1) newlims(2)]);
+            xlabel('spiking, first quartile');
+            ylabel('spiking, last quartile');
+            title(['sample period, cond ',num2str(condInd)]);
+            subplot(4,size(mLfppower,1)/2,condInd+size(mLfppower,1));
+            xlims=get(gca,'Xlim');
+            ylims=get(gca,'Ylim');
+            newlims(1)=min([xlims(1) ylims(1)]);
+            newlims(2)=max([xlims(2) ylims(2)]);
+            plot([newlims(1) newlims(2)],[newlims(1) newlims(2)],'k:');
+            axis square
+            xlim([newlims(1) newlims(2)]);
+            ylim([newlims(1) newlims(2)]);
+            xlabel('spiking, first quartile');
+            ylabel('spiking, last quartile');
+            title(['test period, cond ',num2str(condInd)]);
+        end
+        figure(figSample)
+        imagename=[animal,'_',area,'_conds_mean_spiking_act'];
+        pathname=fullfile(rootFolder,'PL','LFP',imagename);
+        printtext=sprintf('print -dpng %s.png',pathname);
+        set(gcf,'PaperPositionMode','auto')
+        eval(printtext);
+        figure(figAllConds)%plot values across all the conditions
+        sampleTestText=[{'sample'} {'test'}];
+        for stimInd=1:2
+            subplot(1,2,stimInd);
+            xlims=get(gca,'Xlim');
+            ylims=get(gca,'Ylim');
+            newlims(1)=min([xlims(1) ylims(1)]);
+            newlims(2)=max([xlims(2) ylims(2)]);
+            plot([newlims(1) newlims(2)],[newlims(1) newlims(2)],'k:');
+            axis square
+            xlim([newlims(1) newlims(2)]);
+            ylim([newlims(1) newlims(2)]);
+            xlabel('spiking, first quartile');
+            ylabel('spiking, last quartile');
+            title([sampleTestText{stimInd},' period, all conds']);
+        end
+        imagename=[animal,'_',area,'_all_mean_spiking_act'];
+        pathname=fullfile(rootFolder,'PL','LFP',imagename);
+        printtext=sprintf('print -dpng %s.png',pathname);
+        set(gcf,'PaperPositionMode','auto')
+        eval(printtext);
+        [h p ci stats]=ttest2(allMeanSampleFirstQ,allMeanSampleLastQ);%paired t-test
+        ttestTableMeanSample{animalInd,areaInd}={stats.df stats.tstat p};%t-test df, t value, and p-val
+        [h p ci stats]=ttest2(allMeanTestFirstQ,allMeanTestLastQ);%paired t-test
+        ttestTableMeanTest{animalInd,areaInd}={stats.df stats.tstat p};%t-test df, t value, and p-val
+        [h p ci stats]=ttest2(allSampleFirstQ,allSampleLastQ);%paired t-test
+        ttestTableSample{animalInd,areaInd}={stats.df stats.tstat p};%t-test df, t value, and p-val
+        [h p ci stats]=ttest2(allTestFirstQ,allTestLastQ);%paired t-test
+        ttestTableTest{animalInd,areaInd}={stats.df stats.tstat p};%t-test df, t value, and p-val
+    end
+end
+matname=['ttest_across_conds_first_last_LFP_quartiles'];
+pathname=fullfile(rootFolder,'PL','LFP',matname);
+saveText=['save ',pathname,'.mat ttestTableSample ttestTableTest ttestTableMeanSample ttestTableMeanTest'];
+eval(saveText);
