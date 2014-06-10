@@ -57,7 +57,7 @@ if strcmp(analysisType,'ROC')||strcmp(analysisType,'NVP')||strcmp(analysisType,'
 end
 
 sessionSorted1=cell2mat(datamat(:,1))';
-numsessions=length(datamat);
+numsessions=length(sessionSorted1);
 chSSE=zeros(length(sessionSorted1),2);
 SSEMatFileName=[num2str(chNum),appendText,startEndTime,'_SSE_',area];
 SSEMatFolder=fullfile('F:','PL',analysisType,animal,'SSE_mat_files');
