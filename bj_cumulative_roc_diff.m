@@ -1,4 +1,4 @@
-function bj_cumulative_roc_diff(exampleFig,cutoff,animals,useISI,areas,excludeSuppressed,normalize)
+function bj_cumulative_roc_diff(exampleFig,cutoff,animals,useISI,areas,excludeSuppressed,normalize,readMehdiSNR)
 %Written by Xing 17/05/13
 %Set useISI to 1: based on pre-test vs test, not on sample vs test.
 %Set useISI to 0: sample vs test.
@@ -29,11 +29,15 @@ plotDiffC50_30=1;
 calculateTangent=1;
 if nargin<3||isempty(animals)
     animals=[{'blanco'} {'jack'}];
-    % animals={'blanco'};
+%     animals={'jack'};
+%     animals={'blanco'};
 end
 if nargin<4||isempty(areas)
     areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
     areas=[{'v4_1'} {'v1_1'} {'v1_2_1'} {'v1_2_2'} {'v1_2_3'}];
+    areas=[{'v4_0_1'} {'v4_0_2'} {'v4_0_3'}];
+    areas=[{'v4_0_1'} {'v4_0_2'}];
+%     areas=[{'v4_1'}];
 end
 if exampleFig==1
     animals={'jack'};
@@ -70,10 +74,14 @@ for animalInd=1:length(animals)
                 matname=['good_SNR_',area,'_',num2str(sampleContrast),'.mat'];
                 pathname=fullfile(rootFolder,'PL','SNR',animal,'cutoff_SNR_1',matname);
             end
-            loadText=['load ',pathname,' includeSessionsAll'];
-            eval(loadText);
+            if readMehdiSNR==1
+                loadText=['load ',pathname,' includeSessionsAll'];
+                eval(loadText);
+            end
             colmapText=colormap(jet(size(testContrast,2)));
-            colmapText=[colmapText(1,:);132/255 22/255 216/255;202/255 65/255 223/255;colmapText(3:7,:);157/255 212/255 61/255;colmapText(10:12,:);178/255 111/255 12/255;colmapText(end,:)];
+            if size(testContrast,2)==14
+                colmapText=[colmapText(1,:);132/255 22/255 216/255;202/255 65/255 223/255;colmapText(3:7,:);157/255 212/255 61/255;colmapText(10:12,:);178/255 111/255 12/255;colmapText(end,:)];
+            end
             if exampleFig==0
                 figROC=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
                 set(figROC, 'PaperUnits', 'centimeters', 'PaperType', 'A4', 'PaperOrientation', 'landscape', 'PaperPosition', [0.63452 0.63452 6.65 3.305]);
@@ -114,9 +122,14 @@ for animalInd=1:length(animals)
                         if exist(matPath,'file')
                             matExists=1;
                         end
-                        includeRows=includeSessionsAll(find(includeSessionsAll(:,1)==channels(chInd)),2);%include this session in analysis
-                        includeRow=find(includeRows==sessionNums(i));
-                        if matExists==1&&~isempty(includeRow)&&includeCh
+                        if readMehdiSNR
+                            includeRows=includeSessionsAll(find(includeSessionsAll(:,1)==channels(chInd)),2);%include this session in analysis
+                            includeRow=find(includeRows==sessionNums(i));
+                            SNRgood=~isempty(includeRow);
+                        else
+                            SNRgood=0;
+                        end
+                        if matExists==1&&SNRgood==1||matExists==1&&readMehdiSNR==0%&&includeCh
                             valsText=['load ',matPath,' matarray'];
                             eval(valsText);
                             if useISI==0
@@ -251,7 +264,11 @@ for animalInd=1:length(animals)
                             %bj_linearexpo_fitting(vec1',vec2',condInd,0,'NVP',0)
                         end
                     end
-                    rocvals_sglroc3(condInd)=sglroc3(allEpoch4',allEpoch2');%old method
+                    if useISI==0
+                        rocvals_sglroc3(condInd)=sglroc3(allEpoch4',allEpoch2');%old method
+                    elseif useISI==1
+                        rocvals_sglroc3(condInd)=sglroc3(allEpoch4',allEpoch3');%old method
+                    end
                     rocvals(condInd)=higherTestAct/(higherTestAct+lowerTestAct);%new method
                 end
                 if exampleFig==1
@@ -351,7 +368,11 @@ for animalInd=1:length(animals)
                 end
                 pathname=fullfile(rootFolder,'PL',analysisType,animal,subFolder,matname);
                 if sglroc3IndividualChs==1
-                    saveText=['save ',pathname,'.mat all_rocvals_sglroc3 all_rocvals slopeNeuroNew PNENew diffPNENew minRateNew maxRateNew chSSENew slopeNeuroOld PNEOld diffPNEOld minRateOld maxRateOld chSSEOld hS pS ciS statsS hmin pmin cimin statsmin hP pP ciP statsP hmax pmax cimax statsmax threshold82higher threshold82lower'];
+                    if useISI==0
+                        saveText=['save ',pathname,'.mat all_rocvals_sglroc3 all_rocvals slopeNeuroNew PNENew diffPNENew minRateNew maxRateNew chSSENew slopeNeuroOld PNEOld diffPNEOld minRateOld maxRateOld chSSEOld hS pS ciS statsS hmin pmin cimin statsmin hP pP ciP statsP hmax pmax cimax statsmax threshold82higher threshold82lower'];
+                    elseif useISI==1
+                        saveText=['save ',pathname,'.mat all_rocvals_sglroc3 all_rocvals slopeNeuroNew PNENew diffPNENew minRateNew maxRateNew chSSENew threshold82higher threshold82lower'];
+                    end
                 elseif sglroc3IndividualChs==0
                     if useISI==0
                         saveText=['save ',pathname,'.mat all_rocvals_sglroc3 all_rocvals slopeNeuroNew PNENew diffPNENew minRateNew maxRateNew chSSENew slopeNeuroOld PNEOld diffPNEOld minRateOld maxRateOld chSSEOld hS pS ciS statsS hmin pmin cimin statsmin hP pP ciP statsP hmax pmax cimax statsmax threshold82higher threshold82lower'];
