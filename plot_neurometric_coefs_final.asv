@@ -12,7 +12,7 @@ excludeSessions=[26 50 306 312 316 322:328 342];
 loadText=['load F:\PL\psycho_data\',animal,'\',area,'_psycho_all_sessions.mat psychoAll'];
 eval(loadText)
 for excludeCount=1:length(excludeSessions)
-    ind=(psychoAll(:,1)==excludeSessions(excludeCount));
+    ind=(psychoAll(:,1)==excludeSessions(excludeCount));    
     slopePsycho=psychoAll(~ind,17);
     sessionSorted2=psychoAll(~ind,1);
 end
@@ -355,7 +355,8 @@ sessionSorted1Final=sessionSorted1(goodSession);
                 saveText=['save ',coefMatPathname,'.mat coefficients sessionSorted1 slopeNeuro sessionSorted2 slopePsycho matchPsycho c50 minRate maxRate threshold82lower threshold82higher'];
             end
             %coefficients for ROC:
-            %1 slope vs time; 2 PNE vs time; 3 neuro vs psycho sl
+            %1 slope vs time; 2 PNE vs time; 3 neuro vs psycho slopes; 4
+            %abs(PNE-30) vs time; 5 min vs time; 6 max vs time
             eval(saveText)
             close all
         end

@@ -56,7 +56,7 @@ for i=1:length(channels)
                         matName=[analysisType,'_Ch',num2str(channels(i)),'_',num2str(sampleContrast),startEndTime,'.mat'];
                         matPath=fullfile('F:','PL',analysisType,animal,area,matName);
                         loadText=['load ',matPath,' ',analysisType,'mat'];
-                        saveText=['save ',matPath,' ',analysisType,'mat ROCmat'];
+                        saveText=['save ',matPath,' ',analysisType,'mat'];
                     elseif strcmp(analysisType,'ROC_zero_one')
                         matName=['ROC_Ch',num2str(channels(i)),'_',num2str(sampleContrast),startEndTime,'.mat'];
                         matPath=fullfile('F:','PL',analysisType,'ROC',animal,area,matName);
@@ -101,6 +101,9 @@ for i=1:length(channels)
                     %more refined session inclusion, based on Mehdi's SNR
                     %criteria:
                     loadText=['load F:\PL\SNR\',animal,'_',area,'_includeSessions.mat goodChannels goodSessions'];
+                    if strncmp(area,'v4_0',4)
+                        loadText=['load F:\PL\SNR\',animal,'_v4_1_includeSessions.mat goodChannels goodSessions'];
+                    end
                     eval(loadText)
                     chInd=find(goodChannels==channels(i));
                     if ~isempty(chInd)

@@ -37,10 +37,10 @@ if ispc
             %                 conditions = [10 15 20 25 27 28 29 31 32 33 35 40 50 60];
         case ['blanco','v4_1']
             sessions = [307 308 , 311 , 313 314 , 317 318 , 320 321 , 329:341];%before addition of 6 sessions for which raw data is lost
-            sessions = [307 308 311 313 314 316:318 320:324 , 327:341];
+            sessions = [306 307 308 311 313 314 316:318 320:324 , 327:341];
             if horz==1
                 sessions = [307 308 , 311 , 313 314 , 317 318 , 320 321 , 329:342];%before addition of 6 sessions for which raw data is lost
-                sessions = [307 308 311 313 314 316:318 320:324 , 327:342];
+                sessions = [306 307 308 311 313 314 316:318 320:324 , 327:342];
             end
             
         case ['blanco','v1']

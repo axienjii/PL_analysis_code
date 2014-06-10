@@ -12,8 +12,14 @@ excludeSessions=[26 50 306 312 316 322:328 342];
 loadText=['load F:\PL\psycho_data\',animal,'\',area,'_psycho_all_sessions.mat psychoAll'];
 eval(loadText)
 for excludeCount=1:length(excludeSessions)
-    ind=(psychoAll(:,1)==excludeSessions(excludeCount));
-    slopePsycho=psychoAll(~ind,17);
+    ind=(psychoAll(:,1)==excludeSessions(excludeCount));   
+    if strcmp(area,'v4_1')||strcmp(area,'v1_1')||strcmp(area,'v4_0_3')
+        slopePsycho=psychoAll(~ind,17);
+    elseif strcmp(area,'v1_2')||strcmp(area,'v4_0_2')
+        slopePsycho=psychoAll(~ind,15);
+    elseif strcmp(area,'v4_0_1')
+        slopePsycho=psychoAll(~ind,11);
+    end
     sessionSorted2=psychoAll(~ind,1);
 end
 if plotDiffC50_30==1

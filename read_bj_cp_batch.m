@@ -29,6 +29,7 @@ MarkerType='.';
 markerTexts='+x';
 markerText=MarkerType;
 excludeSessions=[26 50 306 312 316 322:328 342 398 451];
+excludeSessions=[26 50 342 398 451];
 test_epochs={0 512 512*2 512*3};durSpon=150;
 if roving==0
     figCPconds=figure('Color',[1,1,1],'Units','Normalized','Position',[0.1, 0.1, 0.8, 0.8]); %
@@ -80,6 +81,11 @@ for animalInd=1:length(animals)
                         matPath=fullfile('F:','PL',analysisType,animal,area,matName);
                         loadText=['load ',matPath,' ',analysisType,'mat'];
                         eval(loadText);
+                        sessionList=cell2mat(CPmat(:,1));
+                        [sessionList ind]=sort(sessionList);
+                        CPmat=CPmat(ind,:);
+                        saveText=['save ',matPath,' ',analysisType,'mat'];
+                        eval(saveText);
                         dataArray=CPmat;
                         includeMatch=[];
                         for includeInd=1:size(dataArray,1)

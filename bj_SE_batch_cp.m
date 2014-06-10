@@ -8,11 +8,12 @@ CPorTrialsAcrossSess='CP';
 % area='v4_1';
 if nargin<1||isempty(animals)
     animals=[{'blanco'} {'jack'}];
-    % animals={'blanco'};
+%     animals={'blanco'};
 end
 if nargin<2||isempty(areas)
     areas=[{'v4_1'} {'v4_2'} {'v1_1'} {'v1_2'}];
     areas=[{'v4_1'} {'v1_1'} {'v1_2_1'} {'v1_2_2'} {'v1_2_3'}];
+%     areas=[{'v4_1'}];
 end
 multipleTimes=0;
 minusSpon=0;
@@ -121,7 +122,7 @@ for animalInd=1:length(animals)
                     matFolder2=['F:\PL\spikeData\',animal,'\plotRedArtifacts\correct_trials_only'];
                     matPath2=fullfile(matFolder2,chStr);
                     mat2Exists=0;
-                    if exist(matPath2,'file')
+                    if exist(matPath2,'file')||sessionNums(i)==306
                         mat2Exists=1;
                     end
                     if mat1Exists==1&&mat2Exists==1
